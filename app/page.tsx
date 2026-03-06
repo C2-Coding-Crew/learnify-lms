@@ -92,7 +92,8 @@ export default function LearnifyPage() {
               {/* Tombol Daftar */}
               <Link
                 href="/signup"
-                className="px-6 py-2 text-[14px] font-bold text-slate-600 border border-slate-200 rounded-full hover:text-[#FF6B4A] hover:border-[#FF6B4A] hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-orange-100">
+                className="px-6 py-2 text-[14px] font-bold text-slate-600 border border-slate-200 rounded-full hover:text-[#FF6B4A] hover:border-[#FF6B4A] hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-orange-100"
+              >
                 Daftar
               </Link>
             </div>
@@ -301,14 +302,17 @@ export default function LearnifyPage() {
             </div>
 
             {/* Tab Navigation */}
-            <div className="flex justify-center gap-4 mb-16">
-              <button className="px-8 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-all">
+            <div className="flex flex-wrap justify-center gap-4 mb-16">
+              {/* Tab: Level Dasar */}
+              <button className="px-8 py-3 rounded-xl font-bold text-slate-600 border-2 border-transparent hover:border-orange-100 hover:bg-orange-50/30 hover:text-[#FF6B4A] hover:scale-105 active:scale-95 transition-all duration-300">
                 Level Dasar
               </button>
               <button className="px-8 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-all">
                 Level Menengah
               </button>
-              <button className="px-8 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-all">
+
+              {/* Tab: Level Profesional */}
+              <button className="px-8 py-3 rounded-xl font-bold text-slate-600 border-2 border-transparent hover:border-orange-100 hover:bg-orange-50/30 hover:text-[#FF6B4A] hover:scale-105 active:scale-95 transition-all duration-300">
                 Level Profesional
               </button>
             </div>
