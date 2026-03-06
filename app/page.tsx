@@ -34,8 +34,7 @@ export default function LearnifyPage() {
               {/* Link Kursus dengan efek titik */}
               <Link
                 href="/courses"
-                className="hover:text-[#FF6B4A] transition-colors flex items-center gap-1.5 group"
-              >
+                className="hover:text-[#FF6B4A] transition-colors flex items-center gap-1.5 group">
                 Kursus
                 <span className="w-1.5 h-1.5 bg-[#FF6B4A] rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
               </Link>
@@ -43,24 +42,21 @@ export default function LearnifyPage() {
               {/* Menu Katalog - Sekarang jadi Link biasa tanpa panah */}
               <Link
                 href="/catalog"
-                className="hover:text-[#FF6B4A] transition-colors"
-              >
+                className="hover:text-[#FF6B4A] transition-colors">
                 Katalog
               </Link>
 
               {/* Menu Tentang Kami */}
               <Link
                 href="/about"
-                className="hover:text-[#FF6B4A] transition-colors"
-              >
+                className="hover:text-[#FF6B4A] transition-colors">
                 Tentang Kami
               </Link>
 
               {/* Menu Hubungi Kami */}
               <Link
                 href="/contact"
-                className="hover:text-[#FF6B4A] transition-colors"
-              >
+                className="hover:text-[#FF6B4A] transition-colors">
                 Hubungi Kami
               </Link>
             </div>
@@ -311,9 +307,7 @@ export default function LearnifyPage() {
               <button className="px-8 py-3 rounded-xl font-bold text-slate-600 border-2 border-transparent hover:border-orange-100 hover:bg-orange-50/30 hover:text-[#FF6B4A] hover:scale-105 active:scale-95 transition-all duration-300">
                 Level Dasar
               </button>
-
-              {/* Tab: Level Menengah (Aktif) */}
-<button className="px-8 py-3 rounded-xl font-bold text-slate-600 border-2 border-transparent hover:border-orange-100 hover:bg-orange-50/30 hover:text-[#FF6B4A] hover:scale-105 active:scale-95 transition-all duration-300">
+              <button className="px-8 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-all">
                 Level Menengah
               </button>
 
