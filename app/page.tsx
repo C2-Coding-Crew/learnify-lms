@@ -14,7 +14,7 @@ import {
 
 export default function LearnifyPage() {
   return (
-    <div className="min-h-screen bg-white text-[#1E1E1E] font-sans" >
+    <div className="min-h-screen bg-white text-[#1E1E1E] font-sans">
       {/* --- NAVBAR --- */}
       <nav className="sticky top-0 z-[100] bg-white/80 backdrop-blur-md border-b border-slate-50">
         <div className="h-[80px] px-6 md:px-12 flex items-center justify-between max-w-[1440px] mx-auto">
@@ -30,22 +30,35 @@ export default function LearnifyPage() {
             </Link>
 
             {/* Navigation Links */}
-            <div className="hidden xl:flex items-center gap-7 text-[14px] font-semibold text-slate-500">
-              <Link href="#" className="hover:text-[#FF6B4A] transition-colors">
+            <div className="hidden xl:flex items-center gap-8 text-[14px] font-semibold text-slate-600">
+              {/* Link Kursus dengan efek titik */}
+              <Link
+                href="/courses"
+                className="hover:text-[#FF6B4A] transition-colors flex items-center gap-1.5 group">
+                Kursus
+                <span className="w-1.5 h-1.5 bg-[#FF6B4A] rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+              </Link>
+
+              {/* Menu Katalog - Sekarang jadi Link biasa tanpa panah */}
+              <Link
+                href="/catalog"
+                className="hover:text-[#FF6B4A] transition-colors">
                 Katalog
               </Link>
-              <button className="flex items-center gap-1.5 hover:text-[#FF6B4A] transition-all">
-                Usia Dini <ChevronDown className="h-4 w-4 opacity-50" />
-              </button>
-              <button className="flex items-center gap-1.5 hover:text-[#FF6B4A] transition-all">
-                Sekolah Menengah <ChevronDown className="h-4 w-4 opacity-50" />
-              </button>
-              <button className="flex items-center gap-1.5 hover:text-[#FF6B4A] transition-all">
-                Dunia Kuliah <ChevronDown className="h-4 w-4 opacity-50" />
-              </button>
-              <button className="flex items-center gap-1.5 hover:text-[#FF6B4A] transition-all">
-                Eksplorasi <ChevronDown className="h-4 w-4 opacity-50" />
-              </button>
+
+              {/* Menu Tentang Kami */}
+              <Link
+                href="/about"
+                className="hover:text-[#FF6B4A] transition-colors">
+                Tentang Kami
+              </Link>
+
+              {/* Menu Hubungi Kami */}
+              <Link
+                href="/contact"
+                className="hover:text-[#FF6B4A] transition-colors">
+                Hubungi Kami
+              </Link>
             </div>
           </div>
 
@@ -71,7 +84,8 @@ export default function LearnifyPage() {
               {/* Tombol Masuk */}
               <Link
                 href="/login"
-                className="px-6 py-2 text-[14px] font-bold text-slate-600 border border-slate-200 rounded-full hover:text-[#FF6B4A] hover:border-[#FF6B4A] hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-orange-100">
+                className="px-6 py-2 text-[14px] font-bold text-slate-600 border border-slate-200 rounded-full hover:text-[#FF6B4A] hover:border-[#FF6B4A] hover:bg-orange-50 transition-all duration-300 shadow-sm hover:shadow-orange-100"
+              >
                 Masuk
               </Link>
 
@@ -291,7 +305,7 @@ export default function LearnifyPage() {
               <button className="px-8 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-all">
                 Level Dasar
               </button>
-              <button className="px-8 py-3 rounded-xl font-bold bg-[#FF6B4A] text-white shadow-lg shadow-orange-100 -translate-y-1 transition-all">
+              <button className="px-8 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-all">
                 Level Menengah
               </button>
               <button className="px-8 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-all">
