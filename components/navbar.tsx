@@ -23,8 +23,16 @@ export default function Navbar() {
           {/* Navigation Links */}
           <div className="hidden xl:flex items-center gap-8 text-[14px] font-semibold text-slate-600">
             <Link
+              href="/"
+              className="hover:text-[#FF6B4A] transition-colors"
+            >
+              Home
+              <span className="w-1.5 h-1.5 bg-[#FF6B4A] rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+            </Link>
+
+            <Link
               href="/courses"
-              className="hover:text-[#FF6B4A] transition-colors group flex items-center gap-1"
+              className="hover:text-[#FF6B4A] transition-colors"
             >
               Kursus
               <span className="w-1.5 h-1.5 bg-[#FF6B4A] rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
