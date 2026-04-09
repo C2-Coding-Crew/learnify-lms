@@ -1,0 +1,290 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ─── Development: SQLite ─────────────────────────────────────────────────────
+// Production: ganti ke "postgresql" dan update DATABASE_URL ke Neon.tech / supabase
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  AUTH MODELS — String ID (Better Auth compatibility)
+//  Catatan: model ini dikelola oleh Better Auth, jangan diubah strukturnya
+// ═════════════════════════════════════════════════════════════════════════════
+
+model user {
+  id              String   @id
+  name            String
+  email           String   @unique
+  emailVerified   Boolean  @default(false)
+  image           String?
+
+  // ── Team Standard Fields ──────────────────────────────────────────────────
+  roleId          Int?
+  companyCode     String?  @default("LEARNIFY")
+  status          Int      @default(1)    // 1=aktif, 0=nonaktif
+  isDeleted       Int      @default(0)    // 0=ada, 1=terhapus (soft delete)
+  createdBy       String?  @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String?  @default("SYSTEM")
+  lastUpdatedDate DateTime @default(now()) @updatedAt
+
+  // ── Relations ─────────────────────────────────────────────────────────────
+  role          Role?            @relation(fields: [roleId], references: [id])
+  sessions      session[]
+  accounts      account[]
+  enrollments   Enrollment[]
+  invoices      Invoice[]
+  taughtCourses Course[]         @relation("InstructorCourses")
+  progress      LessonProgress[]
+}
+
+model session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  user      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+}
+
+model verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  BUSINESS MODELS — BigInt ID + Team Standard Pattern
+//  Setiap model wajib punya: companyCode, status, isDeleted, audit fields
+// ═════════════════════════════════════════════════════════════════════════════
+
+// ─── Role ────────────────────────────────────────────────────────────────────
+model Role {
+  id              Int      @id @default(autoincrement())
+  name            String   // "admin" | "instructor" | "student"
+  companyCode     String   @default("LEARNIFY")
+  status          Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  users user[]
+}
+
+// ─── Category ────────────────────────────────────────────────────────────────
+model Category {
+  id              Int      @id @default(autoincrement())
+  name            String
+  slug            String   @unique   // tambahan: untuk URL-friendly filter
+  companyCode     String   @default("LEARNIFY")
+  status          Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  courses Course[]
+}
+
+// ─── Course ───────────────────────────────────────────────────────────────────
+model Course {
+  id              Int      @id @default(autoincrement())
+  instructorId    String   // String: FK ke user (Better Auth)
+  categoryId      Int
+  title           String
+  slug            String   @unique   // tambahan: URL-friendly
+  description     String
+  thumbnail       String?            // tambahan: URL gambar thumbnail
+  price           Decimal           // 0 = gratis
+  level           String            // "Beginner" | "Intermediate" | "Advanced"
+  isPublished     Boolean  @default(false)   // tambahan: draft/publish
+  isPopular       Boolean  @default(false)   // tambahan: featured
+  totalLessons    Int      @default(0)       // tambahan: denormalized count
+  totalMinutes    Int      @default(0)       // tambahan: denormalized duration
+  rating          Float    @default(0)       // tambahan: average rating
+  reviewCount     Int      @default(0)       // tambahan: jumlah review
+  companyCode     String   @default("LEARNIFY")
+  status          Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  instructor  user         @relation("InstructorCourses", fields: [instructorId], references: [id])
+  category    Category     @relation(fields: [categoryId], references: [id])
+  lessons     Lesson[]
+  enrollments Enrollment[]
+  tags        CourseTag[]
+}
+
+// ─── Lesson ───────────────────────────────────────────────────────────────────
+model Lesson {
+  id              Int      @id @default(autoincrement())
+  courseId        Int
+  title           String
+  description     String?
+  videoUrl        String?             // URL video (YouTube / Cloudinary)
+  duration        Int      @default(0)  // dalam menit
+  order           Int                   // urutan lesson dalam kursus
+  isFree          Boolean  @default(false) // preview gratis?
+  companyCode     String   @default("LEARNIFY")
+  status          Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  course    Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  progress  LessonProgress[]
+}
+
+// ─── LessonProgress ──────────────────────────────────────────────────────────
+model LessonProgress {
+  id              BigInt    @id @default(autoincrement())
+  userId          String    // FK ke user (Better Auth)
+  lessonId        Int
+  isCompleted     Boolean   @default(false)
+  completedAt     DateTime?
+  watchedSecs     Int       @default(0)
+  companyCode     String    @default("LEARNIFY")
+  status          Int       @default(1)
+  isDeleted       Int       @default(0)
+  createdBy       String    @default("SYSTEM")
+  createdDate     DateTime  @default(now())
+  lastUpdatedBy   String    @default("SYSTEM")
+  lastUpdatedDate DateTime  @updatedAt
+
+  user   user   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+}
+
+// ─── CourseTag ───────────────────────────────────────────────────────────────
+model CourseTag {
+  id              Int      @id @default(autoincrement())
+  courseId        Int
+  name            String
+  companyCode     String   @default("LEARNIFY")
+  status          Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+// ─── Enrollment ──────────────────────────────────────────────────────────────
+model Enrollment {
+  id               Int       @id @default(autoincrement())
+  userId           String    // FK ke user (Better Auth)
+  courseId         Int
+  enrollmentStatus String    @default("active") // "active" | "completed" | "cancelled"
+  enrolledAt       DateTime  @default(now())
+  completedAt      DateTime?
+  companyCode      String    @default("LEARNIFY")
+  status           Int       @default(1)
+  isDeleted        Int       @default(0)
+  createdBy        String    @default("SYSTEM")
+  createdDate      DateTime  @default(now())
+  lastUpdatedBy    String    @default("SYSTEM")
+  lastUpdatedDate  DateTime  @updatedAt
+
+  user        user         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  certificate Certificate?
+
+  @@unique([userId, courseId])
+}
+
+// ─── Invoice ─────────────────────────────────────────────────────────────────
+model Invoice {
+  id              Int      @id @default(autoincrement())
+  userId          String   // FK ke user (Better Auth)
+  invoiceNumber   String   @unique  // format: INV-YYYYMMDD-XXXX
+  totalAmount     Decimal
+  invoiceStatus   String   @default("pending")  // "pending" | "paid" | "expired" | "cancelled"
+  dueDate         DateTime
+  companyCode     String   @default("LEARNIFY")
+  status          Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  user         user          @relation(fields: [userId], references: [id])
+  transactions Transaction[]
+}
+
+// ─── Transaction ─────────────────────────────────────────────────────────────
+model Transaction {
+  id                Int      @id @default(autoincrement())
+  invoiceId         Int
+  orderId           String   @unique   // dari Midtrans / payment gateway
+  grossAmount       Decimal
+  transactionStatus String   @default("pending")  // "pending" | "settlement" | "expire" | "cancel"
+  paymentType       String   // "bank_transfer" | "gopay" | "qris" | "credit_card"
+  signatureKey      String                         // validasi webhook dari Midtrans
+  transactionTime   DateTime
+  companyCode       String   @default("LEARNIFY")
+  status            Int      @default(1)
+  isDeleted         Int      @default(0)
+  createdBy         String   @default("SYSTEM")
+  createdDate       DateTime @default(now())
+  lastUpdatedBy     String   @default("SYSTEM")
+  lastUpdatedDate   DateTime @updatedAt
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+}
+
+// ─── Certificate ─────────────────────────────────────────────────────────────
+model Certificate {
+  id                Int      @id @default(autoincrement())
+  enrollmentId      Int   @unique
+  certificateNumber String   @unique  // format: CERT-LEARNIFY-XXXX
+  filePath          String?            // path file PDF sertifikat
+  issuedDate        DateTime @default(now())
+  companyCode       String   @default("LEARNIFY")
+  status            Int      @default(1)
+  isDeleted         Int      @default(0)
+  createdBy         String   @default("SYSTEM")
+  createdDate       DateTime @default(now())
+  lastUpdatedBy     String   @default("SYSTEM")
+  lastUpdatedDate   DateTime @updatedAt
+
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id])
+}

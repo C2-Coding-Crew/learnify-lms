@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
 import {
   LayoutDashboard,
   BookOpen,
@@ -37,7 +39,19 @@ interface Course {
   active: boolean;
 }
 
-export default function StudentDashboard() {
+interface StudentDashboardProps {
+  userName: string;
+  userEmail: string;
+}
+
+export default function StudentDashboard({ userName, userEmail }: StudentDashboardProps) {
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await authClient.signOut();
+    router.push("/");
+    router.refresh();
+  };
   // --- STATE MANAGEMENT ---
   const [todos, setTodos] = useState<Todo[]>([
     {
@@ -155,7 +169,10 @@ export default function StudentDashboard() {
         </nav>
 
         <div className="p-6 border-t border-slate-50">
-          <button className="flex items-center gap-3 px-4 py-3 w-full text-slate-400 font-semibold text-[14px] hover:text-red-500 transition-colors">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-4 py-3 w-full text-slate-400 font-semibold text-[14px] hover:text-red-500 transition-colors"
+          >
             <LogOut size={18} /> Logout
           </button>
         </div>
@@ -166,7 +183,7 @@ export default function StudentDashboard() {
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">
-              Hello Fauzi 👋
+              Hello {userName.split(" ")[0]} 👋
             </h1>
             <p className="text-slate-400 text-sm">
               Let&apos;s learn something new today!
@@ -189,14 +206,14 @@ export default function StudentDashboard() {
             </button>
             <div className="flex items-center gap-3 pl-4 border-l border-slate-200">
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-bold">Fauzi Aditya</p>
+                <p className="text-sm font-bold">{userName}</p>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                  Informatics Student
+                  {userEmail}
                 </p>
               </div>
               <div className="w-10 h-10 bg-slate-200 rounded-xl overflow-hidden shadow-sm ring-2 ring-white">
                 <img
-                  src="https://api.dicebear.com/7.x/avataaars/svg?seed=Fauzi"
+                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userName)}`}
                   alt="profile"
                 />
               </div>
