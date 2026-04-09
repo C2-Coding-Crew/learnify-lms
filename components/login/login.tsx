@@ -15,7 +15,23 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // ── Google OAuth ──────────────────────────────────────────────────────────
+  const handleGoogleLogin = async () => {
+    setError(null);
+    setIsGoogleLoading(true);
+    try {
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/dashboard",
+      });
+    } catch {
+      setError("Gagal masuk dengan Google. Silakan coba lagi.");
+      setIsGoogleLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,10 +129,16 @@ const LoginPage = () => {
 
           <button
             type="button"
-            className="w-full h-11 border border-slate-200 rounded-xl flex items-center justify-center gap-3 text-slate-700 font-bold hover:bg-slate-50 transition-all mb-6 group shadow-sm"
+            onClick={handleGoogleLogin}
+            disabled={isGoogleLoading || isLoading}
+            className="w-full h-11 border border-slate-200 rounded-xl flex items-center justify-center gap-3 text-slate-700 font-bold hover:bg-slate-50 transition-all mb-6 group shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            <Chrome className="w-5 h-5 text-red-500 group-hover:scale-110 transition-transform" />
-            <span className="text-sm">Masuk Cepat dengan Google</span>
+            {isGoogleLoading ? (
+              <div className="w-5 h-5 border-2 border-slate-300 border-t-red-500 rounded-full animate-spin" />
+            ) : (
+              <Chrome className="w-5 h-5 text-red-500 group-hover:scale-110 transition-transform" />
+            )}
+            <span className="text-sm">{isGoogleLoading ? "Menghubungkan..." : "Masuk Cepat dengan Google"}</span>
           </button>
 
           <div className="flex items-center gap-4 mb-6">

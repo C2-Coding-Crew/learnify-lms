@@ -15,16 +15,20 @@ export const auth = betterAuth({
     updateAge: 60 * 60 * 24,      // refresh setiap 1 hari
   },
   user: {
-    // ── Map nama field Better Auth → nama field di schema kita ───────────────
+    // ── Map Better Auth field names → nama field di schema kita ───────────────
     // Better Auth default: createdAt, updatedAt
     // Schema tim kita    : createdDate, lastUpdatedDate
     fields: {
       createdAt: "createdDate",
       updatedAt: "lastUpdatedDate",
     },
-    // CATATAN: Tidak pakai additionalFields untuk 'role' karena
-    // field 'role' di schema kita adalah FK relation ke tabel Role,
-    // bukan String biasa. Assignment roleId dilakukan setelah user dibuat.
+  },
+  // ── Google OAuth ────────────────────────────────────────────────────────────
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+    },
   },
 });
 
