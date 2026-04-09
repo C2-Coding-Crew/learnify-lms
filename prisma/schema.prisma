@@ -29,7 +29,7 @@ model user {
   createdBy       String?  @default("SYSTEM")
   createdDate     DateTime @default(now())
   lastUpdatedBy   String?  @default("SYSTEM")
-  lastUpdatedDate DateTime @updatedAt
+  lastUpdatedDate DateTime @default(now()) @updatedAt
 
   // ── Relations ─────────────────────────────────────────────────────────────
   role          Role?            @relation(fields: [roleId], references: [id])

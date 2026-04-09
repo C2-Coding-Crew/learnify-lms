@@ -1,11 +1,9 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { db } from "@/lib/db";
 
 export const auth = betterAuth({
-  database: prismaAdapter(prisma, {
+  database: prismaAdapter(db, {
     provider: "sqlite",
   }),
   emailAndPassword: {
@@ -17,14 +15,16 @@ export const auth = betterAuth({
     updateAge: 60 * 60 * 24,      // refresh setiap 1 hari
   },
   user: {
-    additionalFields: {
-      role: {
-        type: "string",
-        required: false,
-        defaultValue: "student",
-        input: false,
-      },
+    // ── Map nama field Better Auth → nama field di schema kita ───────────────
+    // Better Auth default: createdAt, updatedAt
+    // Schema tim kita    : createdDate, lastUpdatedDate
+    fields: {
+      createdAt: "createdDate",
+      updatedAt: "lastUpdatedDate",
     },
+    // CATATAN: Tidak pakai additionalFields untuk 'role' karena
+    // field 'role' di schema kita adalah FK relation ke tabel Role,
+    // bukan String biasa. Assignment roleId dilakukan setelah user dibuat.
   },
 });
 
