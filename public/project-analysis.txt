@@ -1,22 +1,23 @@
 ========================================================
   LEARNIFY LMS — PROJECT ANALYSIS REPORT (UPDATED)
-  Update Terakhir  : 08 April 2026 — Setelah Schema & Seed Data selesai
+  Update Terakhir  : 09 April 2026 — Auth Bug Fixed, Enrollment System, Git Push
   Teknologi Stack  : Next.js 16, React 19, Tailwind CSS v4,
                      shadcn/ui, Better Auth, Prisma v5 + SQLite,
                      Recharts, TanStack Table, Zod, Lucide React
   Team DB Standard : BigInt→Int ID, companyCode, audit fields, soft delete
+  Git Branch       : dashboard @ github.com/C2-Coding-Crew/learnify-lms
 ========================================================
 
 RINGKASAN STATISTIK (TERBARU)
 ------------------------------
-  Selesai & Bagus           : 7 fitur  (+2 dari sebelumnya)
+  Selesai & Bagus           : 9 fitur  (+2 dari sesi sebelumnya)
   UI Bagus, Perlu Backend   : 1 fitur
   Butuh Improvement         : 3 fitur
   Sebagian Dikerjakan       : 3 fitur
-  Belum Dikerjakan          : 4 fitur  (-2 dari sebelumnya)
+  Belum Dikerjakan          : 2 fitur  (-2 dari sebelumnya)
   TOTAL ITEM DIANALISIS     : 18 fitur
 
-  KEMAJUAN: ~55% (naik dari 45%)
+  KEMAJUAN: ~65% (naik dari 55%)
 
 
 ========================================================
@@ -29,51 +30,67 @@ RINGKASAN STATISTIK (TERBARU)
 
 2. STUDENT DASHBOARD
    File    : components/dashboard/dashboard.tsx · app/dashboard/page.tsx
-   Status  : 🟠 SEBAGIAN DIKERJAKAN (tidak berubah)
+   Status  : 🟠 SEBAGIAN DIKERJAKAN
    [OK] Nama user dari session nyata, logout berfungsi
    [!!] Data kursus & chart masih hardcoded
-   [!!] Todo list tidak persisten
+   [!!] Todo list tidak persisten ke database
 
 3. HALAMAN KURSUS
    File    : components/courses/courses.tsx
-   Status  : ✅ SELESAI & BAGUS (naik dari "Butuh Improvement")
-   Perubahan sesi ini:
-   [BARU] Fetch data dari database via /api/courses (bukan hardcoded)
-   [BARU] Filter kategori via FK relation (category.slug)
-   [BARU] Soft delete filter (isDeleted, status)
-   [BARU] Grid/List view toggle berfungsi penuh
-   [BARU] Loading state + empty state dengan reset filter
-   [BARU] Setiap card link ke /courses/[slug]
-   [OK] Search real-time dengan debounce 400ms
-   [OK] Rating, durasi, jumlah lesson dari DB
+   Status  : ✅ SELESAI & BAGUS
+   [OK] Fetch data dari database via /api/courses
+   [OK] Filter kategori via FK relation (category.slug)
+   [OK] Soft delete filter (isDeleted, status)
+   [OK] Grid/List view toggle berfungsi penuh
+   [OK] Loading state + empty state dengan reset filter
+   [OK] Setiap card link ke /courses/[slug]
+   [OK] Fix type Category: id, name, slug (bukan string)
+   [OK] Fix price: number | string (Prisma Decimal)
    [!!] Thumbnail masih placeholder (belum Cloudinary)
 
 4. HALAMAN LOGIN
    File    : components/login/login.tsx
-   Status  : ✅ SELESAI & BAGUS (tidak berubah)
+   Status  : ✅ SELESAI & BAGUS (fully functional)
+   [OK] Email + password form dengan validasi Zod
+   [OK] Error state dengan pesan yang jelas
+   [OK] callbackUrl support setelah login
 
 5. HALAMAN REGISTER
    File    : components/register/register.tsx
-   Status  : ✅ SELESAI & BAGUS (tidak berubah)
+   Status  : ✅ SELESAI & BAGUS (bug fix sesi ini)
+   [BUG FIXED] 422 error saat register — root cause:
+     • Better Auth pakai createdAt/updatedAt tapi schema pakai createdDate/lastUpdatedDate
+     • additionalFields.role (string) bentrok dengan FK relation Role
+   [OK] Register berhasil → redirect ke /dashboard
 
-6. HALAMAN DETAIL KURSUS (BARU!)
+6. HALAMAN DETAIL KURSUS
    File    : app/courses/[slug]/page.tsx · components/courses/course-detail.tsx
-   Status  : ✅ SELESAI & BAGUS (fitur baru!)
-   [BARU] Hero section — judul, deskripsi, stats dari DB
-   [BARU] Silabus / Curriculum — semua lesson dengan durasi & status Gratis/Terkunci
-   [BARU] Purchase Card sticky — harga, tombol enroll
-   [BARU] Detail stats — total materi, durasi, level, bahasa
-   [BARU] Instructor section — nama & info instruktur
-   [BARU] Tags dari database
-   [BARU] Mobile bottom CTA (responsive)
-   [BARU] Breadcrumb navigasi
-   [!!] Tombol Enroll belum terhubung ke system enrollment (placeholder)
+   Status  : ✅ SELESAI & BAGUS
+   [OK] Hero section — judul, deskripsi, stats dari DB
+   [OK] Silabus / Curriculum dengan status Gratis/Terkunci
+   [OK] Purchase Card sticky dengan tombol enroll dinamis
+   [OK] Banner "Sudah Terdaftar" jika sudah enroll
+   [OK] Lesson rows jadi link ke /learn setelah enroll
+   [OK] Mobile bottom CTA (responsive)
+   [!!] Video player belum ada (butuh Cloudinary/YouTube)
 
-7. HALAMAN ABOUT
+7. HALAMAN BELAJAR (BARU! sesi ini)
+   File    : app/courses/[slug]/learn/page.tsx · components/courses/learn-page.tsx
+   Status  : ✅ SELESAI & BAGUS
+   [OK] Auth guard + Enrollment guard (redirect jika belum login/enroll)
+   [OK] Dark-mode video player layout
+   [OK] Sidebar silabus dengan progress per lesson (✓ / ○ / ▶)
+   [OK] Tombol "Tandai Selesai" → kirim ke /api/progress
+   [OK] Progress bar keseluruhan kursus
+   [OK] Prev / Next lesson navigation
+   [OK] Mobile responsive dengan hamburger sidebar
+   [!!] Video placeholder (iframe siap, belum ada URL video nyata)
+
+8. HALAMAN ABOUT
    File    : components/about/about-me.tsx
    Status  : ✅ SELESAI & BAGUS (tidak berubah)
 
-8. HALAMAN CONTACT
+9. HALAMAN CONTACT
    File    : components/contact/contact.tsx
    Status  : ✅ SELESAI & BAGUS (tidak berubah)
 
@@ -82,164 +99,159 @@ RINGKASAN STATISTIK (TERBARU)
   BAGIAN 2 — KOMPONEN & INFRASTRUKTUR
 ========================================================
 
-9. NAVBAR & FOOTER
-   Status  : ⚠️ BUTUH IMPROVEMENT (tidak berubah)
+10. NAVBAR & FOOTER
+    Status  : ⚠️ BUTUH IMPROVEMENT (belum ada active state)
 
-10. UI COMPONENT LIBRARY (shadcn/ui)
+11. UI COMPONENT LIBRARY (shadcn/ui)
     Status  : ✅ SELESAI & BAGUS (tidak berubah)
 
-11. APP SIDEBAR
+12. APP SIDEBAR
     Status  : 🟠 SEBAGIAN DIKERJAKAN (tidak berubah)
 
-12. LIBRARY & UTILITIES
-    Status  : 🟠 SEBAGIAN DIKERJAKAN (bertambah)
-    [OK] lib/auth.ts, lib/auth-client.ts, lib/validations/auth.ts
-    [!!] Belum ada custom hooks (useCourses, useEnrollment, dll)
+13. LIBRARY & UTILITIES
+    Status  : ✅ SELESAI & BAGUS (naik sesi ini)
+    [OK] lib/db.ts — Prisma singleton (cegah connection leak)
+    [OK] lib/auth.ts — Better Auth config dengan field mapping yang benar
+    [OK] lib/auth-client.ts — Client-side auth hooks
+    [OK] lib/validations/auth.ts — Zod schema login/register
+    [OK] types/enrollment.ts — Shared TypeScript types
 
 
 ========================================================
   BAGIAN 3 — BACKEND & INTEGRASI
 ========================================================
 
-13. DATABASE & ORM (FULLY UPDATED)
+14. DATABASE & ORM
     File    : prisma/schema.prisma · prisma/dev.db · prisma/seed.ts
     Status  : ✅ SELESAI & BAGUS
-    Perubahan sesi ini:
-    [BARU] Merge schema: standard tim + kebutuhan LMS
-    [BARU] Role table — FK-based role management
-    [BARU] Category table — FK-based dengan slug
-    [BARU] Invoice, Transaction (Midtrans-ready), Certificate
-    [BARU] Semua model bisnis punya: companyCode, status, isDeleted, audit fields
-    [BARU] Seed data: 3 roles, 5 categories, 2 instructors, 6 courses, 64 lessons
-    [!!] Schema Course, Lesson dll: Int ID (SQLite dev) → BigInt saat migrate ke PostgreSQL
+    [OK] Merge schema: standard tim + kebutuhan LMS
+    [OK] Role, Category, Invoice, Transaction, Certificate
+    [OK] Audit fields di semua model bisnis
+    [OK] Seed: 3 roles, 5 categories, 2 instructors, 6 courses, 64 lessons
+    [OK] Fix lastUpdatedDate: @default(now()) agar Better Auth bisa insert user
+    [!!] Int ID (SQLite dev) → ganti BigInt saat migrate ke PostgreSQL
 
-14. SISTEM AUTENTIKASI
-    Status  : ✅ SELESAI & BAGUS (tidak berubah)
+15. SISTEM AUTENTIKASI
+    Status  : ✅ SELESAI & BAGUS (bug fix sesi ini)
+    [OK] Better Auth emailAndPassword aktif
+    [OK] Field mapping: createdAt→createdDate, updatedAt→lastUpdatedDate
+    [OK] Hapus additionalFields.role yang bentrok dengan FK relation
+    [OK] Register & Login berfungsi penuh
+    [OK] Session management (7 hari)
+    [OK] Route protection via middleware
 
-15. API ROUTES (LEBIH LENGKAP)
-    File    : app/api/courses/route.ts · app/api/courses/[slug]/route.ts
-    Status  : 🟠 SEBAGIAN DIKERJAKAN (naik dari sebelumnya)
-    [OK] GET /api/courses — filter by category.slug (FK), search, soft-delete
-    [OK] GET /api/courses/[slug] — detail + lessons + tags + instructor
+16. API ROUTES
+    Status  : ✅ SELESAI & BAGUS (naik dari Sebagian Dikerjakan)
+    [OK] GET  /api/courses — filter category.slug, search, soft-delete
+    [OK] GET  /api/courses/[slug] — detail lengkap
+    [OK] GET  /api/courses/[slug]/enrollment-status — cek status enroll
+    [OK] POST /api/enrollments — enroll (free langsung, paid buat invoice)
+    [OK] GET  /api/enrollments — list enrollment user + progress %
+    [OK] POST /api/progress — update progress lesson, auto-complete kursus
     [OK] /api/auth/[...all] — Better Auth handler
-    [!!] Belum ada POST /api/courses (admin create)
-    [!!] Belum ada POST /api/enrollments (enroll user ke kursus)
-    [!!] Belum ada GET /api/enrollments/[userId] (list enrollment user)
+    [!!] Belum ada POST /api/courses (admin upload kursus)
+    [!!] Midtrans webhook & payment confirmation belum ada
 
-16. UPLOAD MEDIA (CLOUDINARY)
-    Status  : ❌ BELUM DIKERJAKAN (tidak berubah)
+17. ENROLLMENT SYSTEM (BARU! sesi ini)
+    Status  : ✅ SELESAI & BAGUS
+    [OK] Free course → enrollment langsung, redirect ke /learn
+    [OK] Paid course → buat Invoice pending, redirect ke /checkout
+    [OK] Cek duplikat enrollment (409 Conflict)
+    [OK] Auto-update enrollment status ke "completed" saat 100% lesson selesai
+    [OK] Tombol di detail page berubah dinamis: "Enroll" → "Lanjut Belajar"
 
-17. SISTEM PEMBAYARAN (Invoice + Midtrans)
+18. UPLOAD MEDIA (CLOUDINARY)
     Status  : ❌ BELUM DIKERJAKAN
-    Schema sudah ada (Invoice, Transaction), belum ada integrasi Midtrans
 
-18. HALAMAN DETAIL & PLAYER KURSUS
-    Status  : ✅ SELESAI (naik dari "Harus Dikerjakan")
-    Catatan : Halaman detail selesai, video player belum ada (butuh Cloudinary/YouTube)
+19. SISTEM PEMBAYARAN (Invoice + Midtrans)
+    Status  : ❌ BELUM DIKERJAKAN
+    Schema Invoice + Transaction sudah ada, integrasi Midtrans belum
+
+20. VERSION CONTROL (BARU! sesi ini)
+    Status  : ✅ SELESAI
+    [OK] Git commit dengan Conventional Commits format
+    [OK] 4 commit: feat(db), feat(auth), feat(ui), fix(auth)
+    [OK] Push ke GitHub branch: dashboard
+    [OK] URL: github.com/C2-Coding-Crew/learnify-lms
 
 
 ========================================================
-  ROADMAP & REKOMENDASI PRIORITAS (UPDATED — 08 April 2026)
+  ROADMAP & REKOMENDASI PRIORITAS (Updated 09 April 2026)
 ========================================================
 
-✅ SELESAI (tidak perlu dikerjakan lagi):
-  ✅ Auth & Database             → Login, register, session, route protection
+✅ SELESAI (Jangan diubah lagi):
+  ✅ Auth & Database             → Register, login, session, route protection — FULLY FIXED
   ✅ Schema Standard Tim         → Role, Category, Invoice, Transaction, Certificate
   ✅ Seed Data                   → 6 kursus, 64 lessons, 5 kategori
+  ✅ Enrollment System           → Free/paid routing, progress tracking, status check
   ✅ Halaman Kursus (List)       → Fetch dari DB, filter FK, grid/list, search
-  ✅ Halaman Detail Kursus       → Silabus, purchase card, instructor, tags
+  ✅ Halaman Detail Kursus       → Silabus, purchase card, instructor, tags, enroll
+  ✅ Halaman Belajar (/learn)    → Auth guard, sidebar progress, mark complete
+  ✅ Git & GitHub                → 4 commits, pushed ke branch dashboard
 
 ─────────────────────────────────────────────────────
-🔴 PRIORITAS 1 — Enrollment System (HARUS DIKERJAKAN)
+🔴 PRIORITAS 1 — Dashboard Dinamis (BLOCKING UX)
 ─────────────────────────────────────────────────────
-  Mengapa ini prioritas tertinggi?
-  → Enrollment adalah INTI dari LMS. Tanpa ini, user tidak bisa
-    "mendaftar" ke kursus sama sekali. Halaman detail sudah ada
-    tombol "Enroll", tapi belum terhubung ke backend.
-  → Invoice & Transaction schema SUDAH ADA — tinggal buat logic-nya.
-  → Ini BLOCKING semua fitur lain: progress tracking, sertifikat,
-    dashboard dinamis, semuanya bergantung pada enrollment.
-
-  Yang perlu dikerjakan:
-  → POST /api/enrollments — daftarkan user ke kursus
-  → GET  /api/enrollments/me — list kursus yang diikuti user
-  → Update tombol Enroll di course-detail.tsx
-  → Tampilkan status "Sudah Enroll / Belum" di course card
-
-─────────────────────────────────────────────────────
-🔴 PRIORITAS 2 — Dashboard Dinamis (BLOCKING UX)
-─────────────────────────────────────────────────────
-  Mengapa prioritas tinggi?
-  → Dashboard adalah halaman PERTAMA yang dilihat user setelah login.
-    Saat ini data chart & kursus masih hardcoded — tidak mencerminkan
-    aktivitas user yang sebenarnya.
-  → Setelah enrollment selesai, data nyata sudah tersedia — tinggal
-    ditampilkan di dashboard.
-  → User experience > fitur baru. Dashboard yang dinamis akan langsung
-    dirasakan oleh semua pengguna.
+  Mengapa prioritas tertinggi sekarang?
+  → Enrollment sudah selesai → data enrollment tersedia dari DB
+  → Dashboard masih hardcoded — tidak mencerminkan aktivitas user
+  → Ini yang pertama dilihat user setiap kali login
+  → Data sudah ada di DB, tinggal di-query dan ditampilkan
 
   Yang perlu dikerjakan:
-  → Query enrollment nyata user dari DB di dashboard/page.tsx
-  → Ganti list kursus hardcoded dengan kursus yang di-enroll
-  → Progress tracking per lesson (LessonProgress model sudah ada)
-  → Todo list persisten ke database
+  → Query GET /api/enrollments di dashboard/page.tsx
+  → Tampilkan daftar kursus yang di-enroll dengan progress bar
+  → Ganti chart hardcoded dengan data aktivitas nyata
+  → Todo list persisten ke DB
 
 ─────────────────────────────────────────────────────
-🟡 PRIORITAS 3 — Video Player & Progress Tracking
+🟡 PRIORITAS 2 — Video Player (Cloudinary/YouTube)
 ─────────────────────────────────────────────────────
-  Mengapa prioritas sedang?
-  → Ini adalah fitur core LMS kedua setelah enrollment.
-    Tanpa video, LMS tidak beda dengan website statis.
-  → LessonProgress model sudah ada di schema — tracking sudah didesain.
-  → Bisa mulai dengan YouTube embed (gratis) sebelum pindah ke Cloudinary.
-
-  Yang perlu dikerjakan:
-  → app/courses/[slug]/learn/page.tsx — halaman belajar
-  → Embed YouTube / Cloudinary video player
-  → POST /api/progress — update progress saat lesson selesai
-  → UI sidebar silabus dengan highlight lesson yang sudah selesai
+  → iframe video player sudah ada di /learn
+  → Tinggal tambahkan videoUrl ke seed data (YouTube embed)
+  → Update Lesson model untuk simpan videoUrl
 
 ─────────────────────────────────────────────────────
-🟡 PRIORITAS 4 — Sistem Pembayaran (Midtrans)
+🟡 PRIORITAS 3 — Sistem Pembayaran (Midtrans)
 ─────────────────────────────────────────────────────
-  Mengapa bisa belakangan?
-  → Invoice & Transaction schema sudah ada (dari standard tim).
-  → Kursus gratis bisa di-enroll tanpa payment — prioritas 1 & 2
-    bisa selesai dulu sambil payment dikerjakan paralel.
-  → Midtrans memerlukan akun merchant & environment terpisah.
-
-  Yang perlu dikerjakan:
-  → Integrasi Midtrans Snap API
-  → POST /api/invoices — buat invoice sebelum payment
-  → Webhook handler untuk konfirmasi pembayaran
-  → Halaman order history
+  → Invoice + Transaction schema SUDAH ADA
+  → Buat halaman /checkout/[invoiceNumber]
+  → Integrasi Midtrans Snap + webhook
 
 ─────────────────────────────────────────────────────
-🟢 PRIORITAS 5 — Polish & Deploy (Kapan ada waktu)
+🟢 PRIORITAS 4 — Polish & Deploy
 ─────────────────────────────────────────────────────
-  → Google OAuth di login & register
+  → Google OAuth
+  → Cloudinary thumbnail kursus
   → Navbar active state
-  → Loading skeleton states
-  → Migrate ke PostgreSQL (Neon.tech) untuk production
+  → Loading skeletons
+  → Migrate ke PostgreSQL (Neon.tech) — ubah Int → BigInt
   → Deploy ke Vercel
 
 
 ========================================================
-  ESTIMASI COMPLETION
+  ESTIMASI COMPLETION (Updated 09 April 2026)
 ========================================================
   UI Foundation    : ██████████ 90%
-  Auth & Database  : ██████████ 100% ✅
+  Auth & Register  : ██████████ 100% ✅ (bug fixed!)
   Kursus (List)    : ██████████ 100% ✅
-  Kursus (Detail)  : ████████░░  80% (player belum ada)
-  Enrollment       : ██░░░░░░░░  20% (schema ada, logic belum)
-  Dashboard        : █████░░░░░  50% (session ada, data masih hardcoded)
-  Payment          : ████░░░░░░  40% (schema ada, integrasi belum)
-  Video/Progress   : ██░░░░░░░░  20% (schema ada, player belum)
+  Kursus (Detail)  : ██████████ 100% ✅
+  Enrollment       : █████████░  90% ✅ (paid butuh Midtrans)
+  Halaman Belajar  : ████████░░  80% ✅ (video player kosong)
+  Dashboard        : █████░░░░░  50%  (session ada, data hardcoded)
+  Payment          : ████░░░░░░  40%  (schema ada, integrasi belum)
+  Video/Cloudinary : ██░░░░░░░░  20%  (placeholder ada, upload belum)
   ─────────────────────────────────────────────────────
-  OVERALL          : ~55% completion
+  OVERALL          : ~65% completion  (naik dari 55%)
 
-  Next Step: Enrollment System (POST /api/enrollments)!
+  Next Step: Dashboard Dinamis (query /api/enrollments)!
+
+  Git History (Branch: dashboard):
+  a0fb224  fix(auth): resolve 422 register error — Better Auth field mapping
+  7818750  feat(ui): course pages, enrollment UI, and learn page
+  fafc5dd  feat(auth): implement Better Auth + enrollment system API
+  753c00e  feat(db): merge enterprise schema with team standard pattern
 
 ========================================================
-  END OF REPORT (Updated 08 April 2026)
+  END OF REPORT (Updated 09 April 2026)
 ========================================================
