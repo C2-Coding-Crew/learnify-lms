@@ -31,6 +31,9 @@ model user {
   lastUpdatedBy   String?  @default("SYSTEM")
   lastUpdatedDate DateTime @default(now()) @updatedAt
 
+  // ── 2FA ──────────────────────────────────────────────────────────────────
+  twoFactorEnabled Boolean    @default(false)
+
   // ── Relations ─────────────────────────────────────────────────────────────
   role          Role?            @relation(fields: [roleId], references: [id])
   sessions      session[]
@@ -39,6 +42,19 @@ model user {
   invoices      Invoice[]
   taughtCourses Course[]         @relation("InstructorCourses")
   progress      LessonProgress[]
+  twoFactor     twoFactor?
+}
+
+// ── 2FA (TOTP) ────────────────────────────────────────────────────────────────
+// Tabel ini dikelola oleh Better Auth twoFactor plugin
+// secret      : TOTP secret key (terenkripsi di Better Auth)
+// backupCodes : JSON array backup codes untuk akses darurat
+model twoFactor {
+  id          String @id
+  secret      String
+  backupCodes String
+  userId      String @unique
+  user        user   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model session {

@@ -179,7 +179,7 @@ const LoginPage = () => {
                 <label className="text-xs font-bold text-slate-700 group-focus-within:text-[#FF6B4A]">
                   Kata Sandi
                 </label>
-                <Link href="#" className="text-[11px] font-bold text-[#FF6B4A] hover:underline">
+                <Link href="/auth/forgot-password" className="text-[11px] font-bold text-[#FF6B4A] hover:underline">
                   Lupa Password?
                 </Link>
               </div>
