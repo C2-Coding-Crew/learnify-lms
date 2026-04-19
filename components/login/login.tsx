@@ -14,24 +14,62 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<number>(2);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Google OAuth ──────────────────────────────────────────────────────────
-  const handleGoogleLogin = async () => {
-    setError(null);
-    setIsGoogleLoading(true);
-    try {
-      await authClient.signIn.social({
-        provider: "google",
-        callbackURL: "/dashboard",
-      });
-    } catch {
-      setError("Gagal masuk dengan Google. Silakan coba lagi.");
-      setIsGoogleLoading(false);
+const handleGoogleLogin = async () => {
+  setError(null);
+  setIsGoogleLoading(true);
+
+  try {
+    // 1. Tentukan path target seperti biasa
+    let targetPath = "/dashboard/student"; 
+    if (selectedRole === 1) targetPath = "/dashboard/admin";
+    if (selectedRole === 3) targetPath = "/dashboard/instructor";
+
+    // 2. Eksekusi Sign In
+    const result = await authClient.signIn.social({
+      provider: "google",
+      callbackURL: targetPath, 
+      // @ts-ignore
+      data: {
+        roleId: selectedRole,
+      },
+    });
+
+    // 3. LOGIKA 2FA: Cek apakah user butuh verifikasi kode
+    // Jika 2FA aktif, Better Auth biasanya akan melempar status 'two-factor-required'
+    if (
+      result &&
+      "data" in result &&
+      result.data &&
+      (result.data as { twoFactorRequired?: boolean }).twoFactorRequired
+    ) {
+      // Simpan targetPath sementara ke sessionStorage agar setelah 2FA 
+      // kita tahu harus redirect ke mana (admin/student/instructor)
+      sessionStorage.setItem("post_2fa_redirect", targetPath);
+      
+      // Lempar ke halaman verifikasi kode
+      router.push("/auth/verify-2fa");
+      return;
     }
-  };
+
+  } catch (err: any) {
+    // Cek error spesifik 2FA jika tidak tertangkap di result
+    if (err.code === "TWO_FACTOR_REQUIRED") {
+      let targetPath = selectedRole === 1 ? "/dashboard/admin" : 
+                       selectedRole === 3 ? "/dashboard/instructor" : "/dashboard/student";
+      sessionStorage.setItem("post_2fa_redirect", targetPath);
+      router.push("/auth/verify-2fa");
+      return;
+    }
+
+    setError("Gagal masuk dengan Google.");
+    setIsGoogleLoading(false);
+  }
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

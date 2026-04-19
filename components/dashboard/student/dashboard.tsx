@@ -42,15 +42,32 @@ interface Course {
 interface StudentDashboardProps {
   userName: string;
   userEmail: string;
+  userRole: string;
 }
 
-export default function StudentDashboard({ userName, userEmail }: StudentDashboardProps) {
+export default function StudentDashboard({
+  userName,
+  userEmail,
+  userRole,
+}: StudentDashboardProps) {
   const router = useRouter();
 
   const handleLogout = async () => {
-    await authClient.signOut();
-    router.push("/");
-    router.refresh();
+    try {
+      await authClient.signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            router.push("/");
+            router.refresh();
+          },
+        },
+      });
+    } catch (error) {
+      // Jika gagal secara API, paksa redirect ke home agar session di-clear
+      console.error("Logout error:", error);
+      router.push("/");
+      router.refresh();
+    }
   };
   // --- STATE MANAGEMENT ---
   const [todos, setTodos] = useState<Todo[]>([
@@ -208,7 +225,7 @@ export default function StudentDashboard({ userName, userEmail }: StudentDashboa
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-bold">{userName}</p>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                  {userEmail}
+                  {userRole}
                 </p>
               </div>
               <div className="w-10 h-10 bg-slate-200 rounded-xl overflow-hidden shadow-sm ring-2 ring-white">
@@ -395,7 +412,7 @@ export default function StudentDashboard({ userName, userEmail }: StudentDashboa
               </div>
               <div className="grid grid-cols-7 gap-1 text-center mb-2 text-[10px] font-bold text-slate-300">
                 {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
-                  <span key={`${d}-${i}`}>{d}</span> 
+                  <span key={`${d}-${i}`}>{d}</span>
                 ))}
               </div>
               <div className="grid grid-cols-7 gap-1 text-center">
