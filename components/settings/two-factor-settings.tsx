@@ -6,27 +6,31 @@ import { ShieldCheck, ShieldOff, Eye, EyeOff, Copy, Check, AlertCircle, Lock, Ch
 import { authClient, useSession } from "@/lib/auth-client";
 import QRCode from "qrcode";
 
-type SetupStep = "idle" | "confirm-password" | "show-qr" | "verify-code" | "show-backup";
+// ── Flow yang benar sesuai Better Auth: ──────────────────────────────────────
+// 1. getTotpUri({ password }) → dapat QR code
+// 2. User scan QR di Authenticator
+// 3. enable({ password, code }) → verifikasi SEKALIGUS aktifkan 2FA
+// ─────────────────────────────────────────────────────────────────────────────
+
+type SetupStep = "idle" | "confirm-password" | "show-qr" | "verify-and-enable" | "show-backup";
 type DisableStep = "idle" | "confirm-disable";
 
 const TwoFactorSettings = () => {
   const { data: session } = useSession();
   const is2FAEnabled = (session?.user as { twoFactorEnabled?: boolean })?.twoFactorEnabled ?? false;
 
-  // ── Deteksi apakah user adalah akun social (Google) tanpa password ───────────
+  // ── Deteksi tipe akun (Google vs Email/Password) ─────────────────────────────
   const [hasCredentialAccount, setHasCredentialAccount] = useState<boolean | null>(null);
 
   useEffect(() => {
     const checkAccountType = async () => {
       try {
         const { data: accounts } = await authClient.listAccounts();
-        // Cek apakah ada akun dengan providerId "credential" (email+password)
         const hasCredential = accounts?.some(
           (acc: { providerId: string }) => acc.providerId === "credential"
         ) ?? false;
         setHasCredentialAccount(hasCredential);
       } catch {
-        // Jika gagal cek, asumsikan punya credential (lebih aman)
         setHasCredentialAccount(true);
       }
     };
@@ -39,8 +43,8 @@ const TwoFactorSettings = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState("");
   const [totpUri, setTotpUri] = useState("");
-  const [backupCodes, setBackupCodes] = useState<string[]>([]);
   const [verifyCode, setVerifyCode] = useState("");
+  const [backupCodes, setBackupCodes] = useState<string[]>([]);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [allCopied, setAllCopied] = useState(false);
 
@@ -52,17 +56,20 @@ const TwoFactorSettings = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Helper: enable 2FA (support social & credential accounts) ────────────────
-  const doEnable2FA = async (pwd?: string) => {
+  const isSocialOnly = hasCredentialAccount === false;
+
+  // ── Step 1: Ambil TOTP URI / QR Code ─────────────────────────────────────────
+  // Menggunakan getTotpUri (bukan enable) agar tidak ada side effect sebelum verify
+  const handleGetQrCode = async (pwd: string) => {
     setIsLoading(true);
     setError(null);
     try {
-      const { data, error: authError } = await authClient.twoFactor.enable(
+      const { data, error: authError } = await authClient.twoFactor.getTotpUri(
         pwd ? { password: pwd } : { password: "" }
       );
 
       if (authError || !data) {
-        setError(authError?.message ?? "Gagal mengaktifkan 2FA. Coba lagi.");
+        setError(authError?.message ?? "Gagal mengambil QR code. Coba lagi.");
         return;
       }
 
@@ -70,7 +77,6 @@ const TwoFactorSettings = () => {
       setTotpUri(uri);
       const qr = await QRCode.toDataURL(uri, { width: 240, margin: 2 });
       setQrCodeDataUrl(qr);
-      setBackupCodes(data.backupCodes ?? []);
       setSetupStep("show-qr");
     } catch {
       setError("Terjadi kesalahan. Silakan coba lagi.");
@@ -79,22 +85,22 @@ const TwoFactorSettings = () => {
     }
   };
 
-  // ── Step 1a: Konfirmasi password (untuk akun email/password) ─────────────────
-  const handleStartSetupWithPassword = async (e: React.FormEvent) => {
+  const handleGetQrWithPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!password) return;
-    await doEnable2FA(password);
+    await handleGetQrCode(password);
   };
 
-  // ── Step 1b: Langsung mulai (untuk akun Google tanpa password) ───────────────
-  const handleStartSetupSocial = async () => {
-    await doEnable2FA();
+  const handleGetQrSocial = async () => {
+    await handleGetQrCode("");
   };
 
-  // ── Step 2: Verifikasi kode TOTP untuk konfirmasi setup ──────────────────────
-  const handleVerifySetup = async (e: React.FormEvent) => {
+  // ── Step 2: Verifikasi kode SEKALIGUS aktifkan 2FA ────────────────────────────
+  // enable() di sini menerima { code, password } untuk verifikasi final
+  const handleVerifyAndEnable = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
     if (verifyCode.length !== 6) {
       setError("Masukkan 6 digit kode dari Authenticator.");
       return;
@@ -102,16 +108,32 @@ const TwoFactorSettings = () => {
 
     setIsLoading(true);
     try {
-      const { error: authError } = await authClient.twoFactor.verifyTotp({
-        code: verifyCode,
-      });
+      const payload = isSocialOnly
+        ? { password: "", code: verifyCode }
+        : { password, code: verifyCode };
 
-      if (authError) {
-        setError("Kode salah atau sudah kadaluarsa. Coba lagi.");
+      const { data, error: authError } = await authClient.twoFactor.enable(payload as Parameters<typeof authClient.twoFactor.enable>[0]);
+
+      if (authError || !data) {
+        if (authError?.message?.toLowerCase().includes("invalid") ||
+            authError?.message?.toLowerCase().includes("expired")) {
+          setError(
+            "Kode salah atau sudah kadaluarsa. Pastikan jam HP dan laptop sudah sinkron, lalu coba lagi dengan kode baru dari Authenticator."
+          );
+        } else {
+          setError(authError?.message ?? "Gagal mengaktifkan 2FA. Coba lagi.");
+        }
+        setVerifyCode("");
         return;
       }
 
-      setSetupStep("show-backup");
+      // Simpan backup codes jika ada
+      if (data.backupCodes?.length) {
+        setBackupCodes(data.backupCodes);
+        setSetupStep("show-backup");
+      } else {
+        window.location.reload();
+      }
     } catch {
       setError("Terjadi kesalahan. Silakan coba lagi.");
     } finally {
@@ -125,14 +147,12 @@ const TwoFactorSettings = () => {
     setError(null);
     setIsLoading(true);
     try {
-      const payload = hasCredentialAccount && disablePassword
-        ? { password: disablePassword }
-        : { password: "" };
-
-      const { error: authError } = await authClient.twoFactor.disable(payload);
+      const { error: authError } = await authClient.twoFactor.disable(
+        isSocialOnly ? { password: "" } : { password: disablePassword }
+      );
 
       if (authError) {
-        setError(authError.message ?? "Gagal menonaktifkan 2FA. Coba lagi.");
+        setError(authError.message ?? "Gagal menonaktifkan 2FA.");
         return;
       }
 
@@ -146,7 +166,7 @@ const TwoFactorSettings = () => {
     }
   };
 
-  // ── Copy backup code ─────────────────────────────────────────────────────────
+  // ── Copy backup codes ────────────────────────────────────────────────────────
   const copyCode = (code: string, index: number) => {
     navigator.clipboard.writeText(code);
     setCopiedIndex(index);
@@ -161,9 +181,6 @@ const TwoFactorSettings = () => {
 
   // ─────────────────────────────────────────────────────────────────────────────
 
-  // Badge provider
-  const isSocialOnly = hasCredentialAccount === false;
-
   return (
     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
       {/* Header */}
@@ -171,8 +188,7 @@ const TwoFactorSettings = () => {
         <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${is2FAEnabled ? "bg-green-50" : "bg-slate-100"}`}>
           {is2FAEnabled
             ? <ShieldCheck className="w-6 h-6 text-green-500" />
-            : <ShieldOff className="w-6 h-6 text-slate-400" />
-          }
+            : <ShieldOff className="w-6 h-6 text-slate-400" />}
         </div>
         <div>
           <h2 className="font-bold text-slate-900 text-lg">Autentikasi Dua Faktor (2FA)</h2>
@@ -181,20 +197,11 @@ const TwoFactorSettings = () => {
               ? "2FA aktif — akunmu terlindungi dengan lapisan keamanan ekstra."
               : "Tambahkan lapisan keamanan ekstra menggunakan Google Authenticator."}
           </p>
-          {/* Badge metode login */}
           {hasCredentialAccount !== null && (
             <div className="flex items-center gap-1.5 mt-1.5">
-              {isSocialOnly ? (
-                <>
-                  <Chrome className="w-3.5 h-3.5 text-slate-400" />
-                  <span className="text-[11px] text-slate-400">Login via Google</span>
-                </>
-              ) : (
-                <>
-                  <Lock className="w-3.5 h-3.5 text-slate-400" />
-                  <span className="text-[11px] text-slate-400">Login via Email & Password</span>
-                </>
-              )}
+              {isSocialOnly
+                ? <><Chrome className="w-3.5 h-3.5 text-slate-400" /><span className="text-[11px] text-slate-400">Login via Google</span></>
+                : <><Lock className="w-3.5 h-3.5 text-slate-400" /><span className="text-[11px] text-slate-400">Login via Email & Password</span></>}
             </div>
           )}
         </div>
@@ -205,16 +212,16 @@ const TwoFactorSettings = () => {
 
       <div className="p-6">
         {error && (
-          <div className="mb-5 flex items-center gap-3 bg-red-50 border border-red-100 text-red-600 rounded-xl px-4 py-3 text-sm font-medium">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
-            {error}
+          <div className="mb-5 flex items-start gap-3 bg-red-50 border border-red-100 text-red-600 rounded-xl px-4 py-3 text-sm font-medium">
+            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+            <span>{error}</span>
           </div>
         )}
 
         {/* ── 2FA Belum Aktif ──────────────────────────────────────────────── */}
         {!is2FAEnabled && (
           <>
-            {/* IDLE: Tombol Mulai */}
+            {/* IDLE */}
             {setupStep === "idle" && (
               <div className="space-y-4">
                 <div className="bg-blue-50 rounded-xl p-4">
@@ -222,19 +229,17 @@ const TwoFactorSettings = () => {
                   <ol className="text-xs text-blue-700 space-y-1 list-decimal list-inside leading-relaxed">
                     <li>Install <strong>Google Authenticator</strong> atau <strong>Authy</strong> di HP</li>
                     <li>Scan QR code yang akan kami tampilkan</li>
-                    <li>Setiap login, masukkan kode 6 digit dari aplikasi</li>
+                    <li>Masukkan kode 6 digit untuk verifikasi</li>
+                    <li>Setiap login, gunakan kode dari aplikasi</li>
                   </ol>
                 </div>
 
-                {/* Info untuk akun Google */}
                 {isSocialOnly && (
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
                     <Chrome className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="text-xs font-bold text-amber-800">Akun Google Terdeteksi</p>
-                      <p className="text-xs text-amber-700 mt-0.5">
-                        Kamu login via Google, sehingga tidak perlu memasukkan password untuk mengaktifkan 2FA. Klik tombol di bawah untuk langsung mulai.
-                      </p>
+                      <p className="text-xs text-amber-700 mt-0.5">Tidak perlu memasukkan password. Klik tombol di bawah untuk langsung mulai.</p>
                     </div>
                   </div>
                 )}
@@ -242,39 +247,24 @@ const TwoFactorSettings = () => {
                 <button
                   onClick={() => {
                     setError(null);
-                    if (isSocialOnly) {
-                      // Akun Google: langsung mulai tanpa password
-                      handleStartSetupSocial();
-                    } else {
-                      // Akun email: minta konfirmasi password dulu
-                      setSetupStep("confirm-password");
-                    }
+                    isSocialOnly ? handleGetQrSocial() : setSetupStep("confirm-password");
                   }}
                   disabled={isLoading || hasCredentialAccount === null}
                   className="w-full h-12 bg-[#FF6B4A] hover:bg-[#fa5a35] text-white rounded-xl font-bold transition-all shadow-lg shadow-orange-100 flex items-center justify-center gap-2 disabled:opacity-50"
                 >
-                  {isLoading ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      <ShieldCheck className="w-5 h-5" />
-                      Aktifkan 2FA Sekarang
-                    </>
-                  )}
+                  {isLoading
+                    ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    : <><ShieldCheck className="w-5 h-5" />Aktifkan 2FA Sekarang</>}
                 </button>
               </div>
             )}
 
-            {/* STEP: Konfirmasi Password (khusus akun email/password) */}
+            {/* STEP: Konfirmasi Password (email/password accounts only) */}
             {setupStep === "confirm-password" && (
-              <form onSubmit={handleStartSetupWithPassword} className="space-y-4">
-                <p className="text-sm text-slate-600">
-                  Konfirmasi password untuk memulai setup 2FA.
-                </p>
+              <form onSubmit={handleGetQrWithPassword} className="space-y-4">
+                <p className="text-sm text-slate-600">Masukkan password untuk memulai setup 2FA.</p>
                 <div className="group">
-                  <label className="text-xs font-bold text-slate-700 mb-1.5 block group-focus-within:text-[#FF6B4A]">
-                    Password Saat Ini
-                  </label>
+                  <label className="text-xs font-bold text-slate-700 mb-1.5 block group-focus-within:text-[#FF6B4A]">Password Saat Ini</label>
                   <div className="relative">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
@@ -283,8 +273,7 @@ const TwoFactorSettings = () => {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Masukkan password kamu"
                       className="w-full h-11 bg-slate-50 border border-slate-100 rounded-xl pl-11 pr-11 outline-none focus:border-[#FF6B4A] focus:ring-2 focus:ring-orange-50 transition-all text-sm"
-                      required
-                      autoFocus
+                      required autoFocus
                     />
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -292,22 +281,22 @@ const TwoFactorSettings = () => {
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  <button type="button" onClick={() => { setSetupStep("idle"); setError(null); }} className="flex-1 h-11 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-all text-sm">
-                    Batal
-                  </button>
+                  <button type="button" onClick={() => { setSetupStep("idle"); setError(null); }} className="flex-1 h-11 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-all text-sm">Batal</button>
                   <button type="submit" disabled={isLoading || !password} className="flex-1 h-11 bg-[#FF6B4A] text-white rounded-xl font-bold hover:bg-[#fa5a35] transition-all text-sm disabled:opacity-50 flex items-center justify-center">
-                    {isLoading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Lanjut"}
+                    {isLoading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Tampilkan QR Code"}
                   </button>
                 </div>
               </form>
             )}
 
-            {/* STEP: Tampil QR Code */}
+            {/* STEP: Tampilkan QR Code */}
             {setupStep === "show-qr" && (
               <div className="space-y-5">
-                <p className="text-sm text-slate-600 leading-relaxed">
-                  Scan QR code ini dengan <strong>Google Authenticator</strong> atau <strong>Authy</strong>. Jika tidak bisa scan, salin kode di bawahnya.
-                </p>
+                <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
+                  <p className="text-xs text-blue-700 leading-relaxed">
+                    <strong>Langkah:</strong> Scan QR code ini dengan Authenticator app → setelah terscan, klik tombol di bawah → masukkan kode 6 digit.
+                  </p>
+                </div>
 
                 <div className="flex justify-center">
                   {qrCodeDataUrl && (
@@ -318,25 +307,28 @@ const TwoFactorSettings = () => {
                 </div>
 
                 <div className="bg-slate-50 rounded-xl p-3">
-                  <p className="text-xs font-bold text-slate-500 mb-1">Atau masukkan kode manual:</p>
-                  <p className="text-xs font-mono text-slate-700 break-all">{totpUri}</p>
+                  <p className="text-xs font-bold text-slate-500 mb-1">Tidak bisa scan? Masukkan kode manual:</p>
+                  <p className="text-xs font-mono text-slate-700 break-all leading-relaxed">{totpUri}</p>
                 </div>
 
                 <button
-                  onClick={() => { setSetupStep("verify-code"); setError(null); }}
+                  onClick={() => { setSetupStep("verify-and-enable"); setVerifyCode(""); setError(null); }}
                   className="w-full h-11 bg-[#FF6B4A] text-white rounded-xl font-bold hover:bg-[#fa5a35] transition-all text-sm"
                 >
-                  Sudah Scan → Verifikasi Kode
+                  Sudah Scan → Masukkan Kode Verifikasi
                 </button>
               </div>
             )}
 
-            {/* STEP: Verifikasi Kode */}
-            {setupStep === "verify-code" && (
-              <form onSubmit={handleVerifySetup} className="space-y-4">
-                <p className="text-sm text-slate-600">
-                  Masukkan kode 6 digit dari Authenticator untuk mengkonfirmasi setup.
-                </p>
+            {/* STEP: Verifikasi + Aktifkan */}
+            {setupStep === "verify-and-enable" && (
+              <form onSubmit={handleVerifyAndEnable} className="space-y-4">
+                <div className="bg-slate-50 rounded-xl p-3">
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Buka Authenticator app → cari <strong className="text-[#FF6B4A]">Learnify LMS</strong> → masukkan kode 6 digit yang tampil <strong>sekarang</strong>.
+                  </p>
+                </div>
+
                 <div className="group">
                   <label className="text-xs font-bold text-slate-700 mb-1.5 block group-focus-within:text-[#FF6B4A]">
                     Kode dari Authenticator
@@ -347,56 +339,43 @@ const TwoFactorSettings = () => {
                     value={verifyCode}
                     onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                     placeholder="123456"
-                    className="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl px-4 outline-none focus:border-[#FF6B4A] focus:ring-2 focus:ring-orange-50 transition-all text-center text-2xl font-bold font-mono tracking-[0.3em]"
+                    className="w-full h-14 bg-slate-50 border border-slate-100 rounded-xl px-4 outline-none focus:border-[#FF6B4A] focus:ring-2 focus:ring-orange-50 transition-all text-center text-3xl font-bold font-mono tracking-[0.4em]"
                     maxLength={6}
                     autoFocus
                   />
+                  <p className="text-[10px] text-slate-400 mt-1 text-center">Kode berubah setiap 30 detik — masukkan yang aktif saat ini</p>
                 </div>
+
                 <div className="flex gap-3">
-                  <button type="button" onClick={() => { setSetupStep("show-qr"); setError(null); }} className="flex-1 h-11 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-all text-sm">
-                    Kembali
-                  </button>
+                  <button type="button" onClick={() => { setSetupStep("show-qr"); setError(null); }} className="flex-1 h-11 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-all text-sm">Kembali</button>
                   <button type="submit" disabled={isLoading || verifyCode.length !== 6} className="flex-1 h-11 bg-[#FF6B4A] text-white rounded-xl font-bold hover:bg-[#fa5a35] transition-all text-sm disabled:opacity-50 flex items-center justify-center">
-                    {isLoading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Konfirmasi"}
+                    {isLoading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Aktifkan 2FA ✓"}
                   </button>
                 </div>
               </form>
             )}
 
-            {/* STEP: Tampil Backup Codes */}
+            {/* STEP: Backup Codes */}
             {setupStep === "show-backup" && (
               <div className="space-y-5">
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
                   <p className="text-sm font-bold text-amber-800 mb-1">⚠️ Simpan Backup Codes Ini!</p>
                   <p className="text-xs text-amber-700 leading-relaxed">
-                    Backup codes digunakan jika kamu kehilangan akses ke Authenticator. Setiap kode hanya bisa dipakai <strong>sekali</strong>. Simpan di tempat yang aman.
+                    Digunakan jika kamu kehilangan akses ke Authenticator. Setiap kode hanya bisa dipakai <strong>sekali</strong>.
                   </p>
                 </div>
-
                 <div className="grid grid-cols-2 gap-2">
                   {backupCodes.map((bc, i) => (
-                    <button
-                      key={i}
-                      onClick={() => copyCode(bc, i)}
-                      className="flex items-center justify-between bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 group transition-all"
-                    >
+                    <button key={i} onClick={() => copyCode(bc, i)} className="flex items-center justify-between bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 group transition-all">
                       <span className="font-mono text-xs text-slate-700">{bc}</span>
-                      {copiedIndex === i
-                        ? <Check className="w-3.5 h-3.5 text-green-500" />
-                        : <Copy className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-500" />
-                      }
+                      {copiedIndex === i ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-500" />}
                     </button>
                   ))}
                 </div>
-
                 <button onClick={copyAllCodes} className="w-full h-10 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all flex items-center justify-center gap-2">
-                  {allCopied ? <><Check className="w-4 h-4 text-green-500" /> Tersalin!</> : <><Copy className="w-4 h-4" /> Salin Semua Backup Codes</>}
+                  {allCopied ? <><Check className="w-4 h-4 text-green-500" />Tersalin!</> : <><Copy className="w-4 h-4" />Salin Semua</>}
                 </button>
-
-                <button
-                  onClick={() => window.location.reload()}
-                  className="w-full h-12 bg-[#FF6B4A] text-white rounded-xl font-bold hover:bg-[#fa5a35] transition-all shadow-lg shadow-orange-100"
-                >
+                <button onClick={() => window.location.reload()} className="w-full h-12 bg-[#FF6B4A] text-white rounded-xl font-bold hover:bg-[#fa5a35] transition-all shadow-lg shadow-orange-100">
                   Selesai — 2FA Aktif! ✅
                 </button>
               </div>
@@ -413,17 +392,14 @@ const TwoFactorSettings = () => {
                   <ShieldCheck className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm font-bold text-green-800">Akunmu Terlindungi</p>
-                    <p className="text-xs text-green-700 mt-1">
-                      Setiap login memerlukan kode dari Authenticator. Tidak ada yang bisa masuk meskipun tahu passwordmu.
-                    </p>
+                    <p className="text-xs text-green-700 mt-1">Setiap login memerlukan kode dari Authenticator.</p>
                   </div>
                 </div>
                 <button
                   onClick={() => { setDisableStep("confirm-disable"); setError(null); }}
                   className="w-full h-11 border-2 border-red-200 text-red-500 rounded-xl font-bold hover:bg-red-50 transition-all text-sm flex items-center justify-center gap-2"
                 >
-                  <ShieldOff className="w-4 h-4" />
-                  Nonaktifkan 2FA
+                  <ShieldOff className="w-4 h-4" />Nonaktifkan 2FA
                 </button>
               </div>
             )}
@@ -433,13 +409,10 @@ const TwoFactorSettings = () => {
                 <div className="bg-red-50 border border-red-100 rounded-xl p-4">
                   <p className="text-sm font-bold text-red-700 mb-1">⚠️ Yakin ingin menonaktifkan 2FA?</p>
                   <p className="text-xs text-red-600">
-                    {isSocialOnly
-                      ? "Akunmu akan kurang terlindungi. Login Google tidak memerlukan password."
-                      : "Akunmu akan kurang terlindungi. Masukkan password untuk konfirmasi."}
+                    {isSocialOnly ? "Akun Google — tidak perlu memasukkan password." : "Masukkan password untuk konfirmasi."}
                   </p>
                 </div>
 
-                {/* Password field hanya untuk akun email/password */}
                 {!isSocialOnly && (
                   <div className="group">
                     <label className="text-xs font-bold text-slate-700 mb-1.5 block">Password Saat Ini</label>
@@ -460,23 +433,16 @@ const TwoFactorSettings = () => {
                   </div>
                 )}
 
-                {/* Info untuk akun Google */}
                 {isSocialOnly && (
                   <div className="flex items-center gap-2 bg-slate-50 rounded-xl p-3">
                     <Chrome className="w-4 h-4 text-slate-400" />
-                    <p className="text-xs text-slate-500">Akun Google — tidak perlu memasukkan password</p>
+                    <p className="text-xs text-slate-500">Akun Google — tidak perlu password</p>
                   </div>
                 )}
 
                 <div className="flex gap-3">
-                  <button type="button" onClick={() => { setDisableStep("idle"); setError(null); }} className="flex-1 h-11 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-all text-sm">
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isLoading || (!isSocialOnly && !disablePassword)}
-                    className="flex-1 h-11 bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 transition-all text-sm disabled:opacity-50 flex items-center justify-center"
-                  >
+                  <button type="button" onClick={() => { setDisableStep("idle"); setError(null); }} className="flex-1 h-11 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-all text-sm">Batal</button>
+                  <button type="submit" disabled={isLoading || (!isSocialOnly && !disablePassword)} className="flex-1 h-11 bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 transition-all text-sm disabled:opacity-50 flex items-center justify-center">
                     {isLoading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Nonaktifkan"}
                   </button>
                 </div>
