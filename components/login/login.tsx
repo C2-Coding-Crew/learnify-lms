@@ -18,7 +18,9 @@ const LoginPage = () => {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Google OAuth ──────────────────────────────────────────────────────────
+  // ── Google OAuth ────────────────────────────────────────────
+  // callbackURL ke /dashboard — jika user punya 2FA, Better Auth akan
+  // mengarahkan ke /auth/two-factor secara otomatis via twoFactorClient
   const handleGoogleLogin = async () => {
     setError(null);
     setIsGoogleLoading(true);
@@ -37,7 +39,6 @@ const LoginPage = () => {
     e.preventDefault();
     setError(null);
 
-    // Validasi Zod di client
     const result = loginSchema.safeParse({ email, password });
     if (!result.success) {
       setError(result.error.issues[0].message);
@@ -46,20 +47,31 @@ const LoginPage = () => {
 
     setIsLoading(true);
     try {
+      // twoFactorClient akan otomatis redirect ke /auth/two-factor
+      // jika user punya 2FA aktif. Jangan push manual ke /dashboard.
       const { error: authError } = await authClient.signIn.email({
         email,
         password,
         rememberMe,
         callbackURL: "/dashboard",
+        fetchOptions: {
+          onSuccess: (ctx) => {
+            // Jika tidak ada 2FA redirect, halaman akan diarahkan oleh callbackURL
+            // twoFactorClient plugin menangani redirect ke /auth/two-factor
+            const redirectUrl = ctx.response.headers.get("location");
+            if (redirectUrl) {
+              router.push(redirectUrl);
+            } else {
+              router.push("/dashboard");
+            }
+            router.refresh();
+          },
+        },
       });
 
       if (authError) {
         setError("Email atau password salah. Silakan coba lagi.");
-        return;
       }
-
-      router.push("/dashboard");
-      router.refresh();
     } catch {
       setError("Terjadi kesalahan. Silakan coba lagi.");
     } finally {
