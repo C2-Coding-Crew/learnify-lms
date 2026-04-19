@@ -51,13 +51,15 @@ export const auth = betterAuth({
         period: 30,             // Berubah setiap 30 detik (standar TOTP RFC 6238)
       },
       // ── Email OTP: dikirim saat user memilih "Kode via Email" ─────────────────
-      sendOTP: async ({ user, otp }: { user: { email: string; name: string }; otp: string }) => {
-        console.log(`\n🔒 [2FA OTP] Mengirim kode OTP ke: ${user.email}`);
-        await sendEmail({
-          to: user.email,
-          subject: "🔒 Kode Verifikasi Login — Learnify LMS",
-          html: twoFactorOtpEmailTemplate(otp, user.name),
-        });
+      otpOptions: {
+        sendOTP: async ({ user, otp }: { user: { email: string; name: string }; otp: string }) => {
+          console.log(`\n🔒 [2FA OTP] Mengirim kode OTP ke: ${user.email}`);
+          await sendEmail({
+            to: user.email,
+            subject: "🔒 Kode Verifikasi Login — Learnify LMS",
+            html: twoFactorOtpEmailTemplate(otp, user.name),
+          });
+        },
       },
     }),
   ],

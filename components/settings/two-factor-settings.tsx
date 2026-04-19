@@ -103,11 +103,34 @@ const TwoFactorSettings = () => {
     await handleGetQrCode("");
   };
 
-  // ── Step 2: Selesai setup → langsung ke dashboard ───────────────────────
-  // verifyTotp() hanya bekerja dalam konteks LOGIN (ada cookie 2FA pending).
-  // Verifikasi nyata terjadi otomatis saat login berikutnya di /auth/two-factor.
-  const handleGoToDashboard = () => {
-    router.push("/dashboard");
+  // ── Step 2: Selesai setup → Verifikasi kode pertama kali untuk konfirmasi ─
+  const handleVerifyAndEnable = async () => {
+    if (!verifyCode || verifyCode.length !== 6) {
+      setError("Masukkan 6 digit kode dari aplikasi Authenticator.");
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    try {
+      // Better Auth MEWAJIBKAN kita memverifikasi OTP pertama kali setelah 'enable'
+      // Jika tidak diverifikasi, 2FA tidak akan ter-set menjadi true di database.
+      const { error: authError } = await authClient.twoFactor.verifyTotp({
+        code: verifyCode,
+      });
+
+      if (authError) {
+        setError(authError.message ?? "Kode tidak valid. Silakan coba lagi.");
+        return;
+      }
+
+      // Berhasil! Reload halaman agar state session ter-update
+      window.location.reload();
+    } catch {
+      setError("Terjadi kesalahan sistem.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // ── Disable 2FA ──────────────────────────────────────────────────────────────
@@ -307,25 +330,36 @@ const TwoFactorSettings = () => {
                   </div>
                 )}
 
-                {/* Status sukses */}
-                <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-start gap-2.5">
-                  <ShieldCheck className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-xs font-bold text-green-800">2FA Telah Diaktifkan!</p>
-                    <p className="text-xs text-green-700 mt-0.5">
-                      Scan QR di atas, simpan backup codes, lalu login ulang untuk mencoba kode 6 digit pertamamu.
-                    </p>
-                  </div>
-                </div>
+                {/* Form Verifikasi Kode */}
+                <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 mt-2">
+                  <label className="text-sm font-bold text-slate-700 mb-2 block">
+                    Masukkan Kode 6-Digit dari Aplikasi
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={6}
+                    value={verifyCode}
+                    onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, ""))}
+                    placeholder="Contoh: 123456"
+                    className="w-full h-12 bg-white border border-slate-200 rounded-xl px-4 text-center text-lg tracking-[0.5em] font-mono outline-none focus:border-[#FF6B4A] focus:ring-2 focus:ring-orange-50 transition-all mb-4"
+                    required
+                  />
 
-                <button
-                  type="button"
-                  onClick={handleGoToDashboard}
-                  className="w-full h-12 bg-[#FF6B4A] text-white rounded-xl font-bold hover:bg-[#fa5a35] transition-all shadow-lg shadow-orange-100 flex items-center justify-center gap-2"
-                >
-                  <ShieldCheck className="w-5 h-5" />
-                  Selesai &amp; Masuk Dashboard
-                </button>
+                  <button
+                    type="button"
+                    onClick={handleVerifyAndEnable}
+                    disabled={isLoading || verifyCode.length !== 6}
+                    className="w-full h-11 bg-[#FF6B4A] text-white rounded-xl font-bold hover:bg-[#fa5a35] transition-all shadow-md shadow-orange-100 flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {isLoading ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <ShieldCheck className="w-5 h-5" /> Verifikasi & Aktifkan
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             )}
           </>

@@ -16,13 +16,15 @@ import { NextRequest, NextResponse } from "next/server";
  */
 
 const SESSION_COOKIE = "better-auth.session_token";
+const SECURE_SESSION_COOKIE = "__Secure-better-auth.session_token";
 const TWO_FACTOR_COOKIE = "better-auth.two_factor";
+const SECURE_TWO_FACTOR_COOKIE = "__Secure-better-auth.two_factor";
 
 const DASHBOARD_PREFIX = "/dashboard";
 const AUTH_ROUTES = ["/auth/login", "/auth/register"];
 const TWO_FACTOR_ROUTE = "/auth/two-factor";
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // ── Skip: API routes & static files ─────────────────────────────────────────
@@ -34,8 +36,8 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const sessionToken = request.cookies.get(SESSION_COOKIE)?.value;
-  const twoFactorPending = request.cookies.get(TWO_FACTOR_COOKIE)?.value;
+  const sessionToken = request.cookies.get(SESSION_COOKIE)?.value || request.cookies.get(SECURE_SESSION_COOKIE)?.value;
+  const twoFactorPending = request.cookies.get(TWO_FACTOR_COOKIE)?.value || request.cookies.get(SECURE_TWO_FACTOR_COOKIE)?.value;
 
   const isAuthenticated = !!sessionToken;
   const has2FAPending = !!twoFactorPending;
@@ -43,6 +45,7 @@ export async function proxy(request: NextRequest) {
   // HANYA LOG JIKA BUKAN STATIC FILES UNTUK DEBUG
   if (pathname.startsWith("/dashboard") || pathname.startsWith("/auth/")) {
     console.log(`[Proxy] Path: ${pathname}`);
+    console.log(`  - All Cookies:`, request.cookies.getAll().map(c => c.name));
     console.log(`  - Has Session Cookie: ${isAuthenticated}`);
     console.log(`  - Has 2FA Pending Cookie: ${has2FAPending}`);
   }
@@ -75,10 +78,8 @@ export async function proxy(request: NextRequest) {
     if (!isAuthenticated && !has2FAPending) {
       return NextResponse.redirect(new URL("/auth/login", request.url));
     }
-    // Sudah verified (session ada, tidak ada pending) → ke dashboard
-    if (isAuthenticated && !has2FAPending) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
-    }
+    // Jika ada session tetapi tidak ada pending cookie (OAuth bypass case),
+    // izinkan akses ke /auth/two-factor agar mereka bisa mengisi kode dari layout.
   }
 
   return NextResponse.next();
