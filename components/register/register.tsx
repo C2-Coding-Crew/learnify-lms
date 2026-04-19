@@ -51,21 +51,24 @@ const RegisterPage = () => {
         email,
         password,
         callbackURL: "/dashboard",
+        fetchOptions: {
+          onSuccess: () => {
+            router.push("/dashboard");
+            router.refresh();
+          },
+        },
       });
 
       if (authError) {
         if (authError.code === "USER_ALREADY_EXISTS") {
           setError("Email sudah terdaftar. Silakan masuk menggunakan akun yang ada.");
         } else {
-          setError("Gagal membuat akun. Silakan coba lagi.");
+          // Tampilkan pesan error asli dari server untuk debugging
+          setError(authError.message ?? "Gagal membuat akun. Silakan coba lagi.");
         }
-        return;
       }
-
-      router.push("/dashboard");
-      router.refresh();
     } catch {
-      setError("Terjadi kesalahan. Silakan coba lagi.");
+      setError("Terjadi kesalahan koneksi. Pastikan server berjalan dan coba lagi.");
     } finally {
       setIsLoading(false);
     }

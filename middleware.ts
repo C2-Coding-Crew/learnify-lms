@@ -1,84 +1,75 @@
 import { NextRequest, NextResponse } from "next/server";
-import { betterFetch } from "@better-fetch/fetch";
 
-// ── Route groups ──────────────────────────────────────────────────────────────
-const PUBLIC_ROUTES = ["/", "/auth/login", "/auth/register", "/auth/forgot-password", "/auth/reset-password"];
+/**
+ * Middleware yang lebih sederhana dan reliabel.
+ * Daripada fetch session (fragile di Edge runtime), kita langsung cek cookie.
+ *
+ * Better Auth cookies:
+ * - "better-auth.session_token"  → user sudah login
+ * - "better-auth.two-factor"     → 2FA pending (harus verifikasi dulu)
+ *
+ * Proteksi yang diterapkan:
+ * 1. /dashboard → harus login (ada session cookie)
+ * 2. /dashboard → jika 2FA pending → arahkan ke /auth/two-factor
+ * 3. /auth/login, /auth/register → jika sudah login → arahkan ke /dashboard
+ * 4. /auth/two-factor → hanya bisa diakses jika ada 2FA pending cookie
+ */
+
+const SESSION_COOKIE = "better-auth.session_token";
+const TWO_FACTOR_COOKIE = "better-auth.two_factor";
+
+const DASHBOARD_PREFIX = "/dashboard";
 const AUTH_ROUTES = ["/auth/login", "/auth/register"];
 const TWO_FACTOR_ROUTE = "/auth/two-factor";
-const DASHBOARD_PREFIX = "/dashboard";
-
-// ── Session type dari Better Auth ─────────────────────────────────────────────
-type Session = {
-  user: {
-    id: string;
-    email: string;
-    twoFactorEnabled?: boolean;
-  };
-};
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip API routes dan static files
+  // ── Skip: API routes & static files ─────────────────────────────────────────
   if (
     pathname.startsWith("/api/") ||
     pathname.startsWith("/_next/") ||
-    pathname.includes(".")
+    pathname.match(/\.(.+)$/) // file extensions
   ) {
     return NextResponse.next();
   }
 
-  // Ambil session dari Better Auth
-  let session: Session | null = null;
-  try {
-    const { data } = await betterFetch<Session>("/api/auth/get-session", {
-      baseURL: request.nextUrl.origin,
-      headers: { cookie: request.headers.get("cookie") ?? "" },
-    });
-    session = data;
-  } catch {
-    session = null;
-  }
+  const sessionToken = request.cookies.get(SESSION_COOKIE)?.value;
+  const twoFactorPending = request.cookies.get(TWO_FACTOR_COOKIE)?.value;
 
-  const isAuthenticated = !!session?.user;
-  const has2FA = session?.user?.twoFactorEnabled ?? false;
+  const isAuthenticated = !!sessionToken;
+  const has2FAPending = !!twoFactorPending;
 
-  // ── Cek apakah ada TWO_FACTOR pending cookie ──────────────────────────────
-  // Better Auth set cookie ini saat login berhasil tapi 2FA belum diverifikasi
-  const twoFactorPending =
-    request.cookies.get("better-auth.two-factor.pending")?.value;
-
-  // ── Sudah login tapi akses route AUTH (login/register) → redirect ke dashboard
-  if (isAuthenticated && AUTH_ROUTES.some((r) => pathname.startsWith(r))) {
-    // Jika ada pending 2FA → redirect ke two-factor page
-    if (twoFactorPending) {
-      return NextResponse.redirect(new URL(TWO_FACTOR_ROUTE, request.url));
-    }
-    return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
-
-  // ── Akses /dashboard tanpa login → redirect ke login ─────────────────────
+  // ── (1) Akses /dashboard tanpa session → redirect ke login ──────────────────
   if (!isAuthenticated && pathname.startsWith(DASHBOARD_PREFIX)) {
-    return NextResponse.redirect(new URL("/auth/login", request.url));
+    const loginUrl = new URL("/auth/login", request.url);
+    loginUrl.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
-  // ── Akses /dashboard tapi 2FA belum diverifikasi → redirect ke two-factor ─
-  if (
-    isAuthenticated &&
-    has2FA &&
-    twoFactorPending &&
-    pathname.startsWith(DASHBOARD_PREFIX)
-  ) {
+  // ── (2) Akses /dashboard dengan 2FA pending → redirect ke 2FA page ─────────
+  if (isAuthenticated && has2FAPending && pathname.startsWith(DASHBOARD_PREFIX)) {
     return NextResponse.redirect(new URL(TWO_FACTOR_ROUTE, request.url));
   }
 
-  // ── Akses /auth/two-factor tanpa login atau tanpa pending → redirect ───────
+  // ── (3) Sudah login + akses halaman auth (login/register) → ke dashboard ───
+  if (isAuthenticated && !has2FAPending && AUTH_ROUTES.some((r) => pathname === r)) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  // ── (4) Sudah login + 2FA pending + akses auth routes → ke 2FA page ─────────
+  if (isAuthenticated && has2FAPending && AUTH_ROUTES.some((r) => pathname === r)) {
+    return NextResponse.redirect(new URL(TWO_FACTOR_ROUTE, request.url));
+  }
+
+  // ── (5) Akses /auth/two-factor → hanya jika ada 2FA pending ─────────────────
   if (pathname === TWO_FACTOR_ROUTE) {
-    if (!isAuthenticated && !twoFactorPending) {
+    // Tidak ada pending & tidak ada session → ke login
+    if (!isAuthenticated && !has2FAPending) {
       return NextResponse.redirect(new URL("/auth/login", request.url));
     }
-    // User sudah verify 2FA (tidak ada pending) & masuk ke two-factor page → dashboard
-    if (isAuthenticated && !twoFactorPending) {
+    // Sudah verified (session ada, tidak ada pending) → ke dashboard
+    if (isAuthenticated && !has2FAPending) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
   }
@@ -86,7 +77,6 @@ export async function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Matcher: semua halaman kecuali static files
 export const config = {
   matcher: [
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
