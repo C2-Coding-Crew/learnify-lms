@@ -19,6 +19,7 @@ import {
   Play,
   MoreVertical,
   Plus,
+  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -42,9 +43,10 @@ interface Course {
 interface StudentDashboardProps {
   userName: string;
   userEmail: string;
+  twoFactorEnabled?: boolean;
 }
 
-export default function StudentDashboard({ userName, userEmail }: StudentDashboardProps) {
+export default function StudentDashboard({ userName, userEmail, twoFactorEnabled }: StudentDashboardProps) {
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -142,28 +144,28 @@ export default function StudentDashboard({ userName, userEmail }: StudentDashboa
 
         <nav className="flex-1 px-4 space-y-1">
           {[
-            "Dashboard",
-            "Assignments",
-            "Schedule",
-            "Recordings",
-            "Resources",
-            "Settings",
-          ].map((item, idx) => (
+            { name: "Dashboard", id: "dashboard", icon: <LayoutDashboard size={18} /> },
+            { name: "Assignments", id: "assignments", icon: <FileText size={18} /> },
+            { name: "Schedule", id: "schedule", icon: <Calendar size={18} /> },
+            { name: "Recordings", id: "recordings", icon: <Video size={18} /> },
+            { name: "Resources", id: "resources", icon: <Download size={18} /> },
+            { name: "Settings", id: "settings", icon: <Settings size={18} /> },
+          ].map((item) => (
             <button
-              key={item}
+              key={item.id}
+              onClick={() => {
+                if (item.id === "settings") {
+                  router.push("/dashboard/settings/security");
+                }
+              }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-[14px] transition-all ${
-                idx === 0
+                item.id === "dashboard"
                   ? "bg-[#FF6B4A] text-white shadow-md shadow-orange-100"
                   : "text-slate-400 hover:bg-slate-50 hover:text-slate-600"
               }`}
             >
-              {item === "Dashboard" && <LayoutDashboard size={18} />}
-              {item === "Assignments" && <FileText size={18} />}
-              {item === "Schedule" && <Calendar size={18} />}
-              {item === "Recordings" && <Video size={18} />}
-              {item === "Resources" && <Download size={18} />}
-              {item === "Settings" && <Settings size={18} />}
-              {item}
+              {item.icon}
+              {item.name}
             </button>
           ))}
         </nav>
@@ -220,6 +222,33 @@ export default function StudentDashboard({ userName, userEmail }: StudentDashboa
             </div>
           </div>
         </header>
+
+        {/* --- 2FA ALERT BANNER --- */}
+        {!twoFactorEnabled && (
+          <div className="mb-8 bg-gradient-to-r from-orange-500 to-[#FF6B4A] p-6 rounded-[2rem] text-white shadow-xl shadow-orange-200/40 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden group">
+            <div className="flex items-center gap-5 z-10">
+              <div className="w-14 h-14 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-extrabold tracking-tight">Amankan Akun Kamu! 🛡️</h2>
+                <p className="text-white/80 text-sm max-w-md mt-0.5 font-medium leading-relaxed">
+                  Aktifkan Autentikasi Dua Faktor (2FA) sekarang untuk melindungi data belajar dan akses akunmu dari peretasan.
+                </p>
+              </div>
+            </div>
+            <Button 
+              onClick={() => router.push("/dashboard/settings/security")}
+              className="bg-white text-[#FF6B4A] hover:bg-slate-50 font-black px-8 py-6 rounded-2xl text-sm transition-all active:scale-[0.98] shadow-lg shadow-black/5 shrink-0 z-10"
+            >
+              Aktifkan Sekarang →
+            </Button>
+            
+            {/* Dekorasi Background */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-[80px] -mr-32 -mt-32 transition-all duration-1000 group-hover:bg-white/20" />
+            <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-black/10 rounded-full blur-[60px] opacity-50" />
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">

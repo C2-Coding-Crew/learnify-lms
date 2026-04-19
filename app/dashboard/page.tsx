@@ -12,5 +12,11 @@ export default async function DashboardPage() {
     redirect("/auth/login");
   }
 
-  return <StudentDashboard userName={session.user.name} userEmail={session.user.email} />;
+  return (
+    <StudentDashboard 
+      userName={session.user.name} 
+      userEmail={session.user.email} 
+      twoFactorEnabled={session.user.twoFactorEnabled}
+    />
+  );
 }
