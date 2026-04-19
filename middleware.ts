@@ -40,6 +40,13 @@ export async function middleware(request: NextRequest) {
   const isAuthenticated = !!sessionToken;
   const has2FAPending = !!twoFactorPending;
 
+  // HANYA LOG JIKA BUKAN STATIC FILES UNTUK DEBUG
+  if (pathname.startsWith("/dashboard") || pathname.startsWith("/auth/")) {
+    console.log(`[Middleware] Path: ${pathname}`);
+    console.log(`  - Has Session Cookie: ${isAuthenticated}`);
+    console.log(`  - Has 2FA Pending Cookie: ${has2FAPending}`);
+  }
+
   // ── (1) Akses /dashboard tanpa session → redirect ke login ──────────────────
   if (!isAuthenticated && pathname.startsWith(DASHBOARD_PREFIX)) {
     const loginUrl = new URL("/auth/login", request.url);
