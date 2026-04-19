@@ -12,7 +12,7 @@ import QRCode from "qrcode";
 // 3. enable({ password, code }) → verifikasi SEKALIGUS aktifkan 2FA
 // ─────────────────────────────────────────────────────────────────────────────
 
-type SetupStep = "idle" | "confirm-password" | "show-qr" | "verify-and-enable" | "show-backup";
+type SetupStep = "idle" | "confirm-password" | "scan-and-verify" | "show-backup";
 type DisableStep = "idle" | "confirm-disable";
 
 const TwoFactorSettings = () => {
@@ -77,7 +77,7 @@ const TwoFactorSettings = () => {
       setTotpUri(uri);
       const qr = await QRCode.toDataURL(uri, { width: 240, margin: 2 });
       setQrCodeDataUrl(qr);
-      setSetupStep("show-qr");
+      setSetupStep("scan-and-verify");
     } catch {
       setError("Terjadi kesalahan. Silakan coba lagi.");
     } finally {
@@ -289,46 +289,29 @@ const TwoFactorSettings = () => {
               </form>
             )}
 
-            {/* STEP: Tampilkan QR Code */}
-            {setupStep === "show-qr" && (
-              <div className="space-y-5">
-                <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
-                  <p className="text-xs text-blue-700 leading-relaxed">
-                    <strong>Langkah:</strong> Scan QR code ini dengan Authenticator app → setelah terscan, klik tombol di bawah → masukkan kode 6 digit.
+            {/* STEP: Scan QR + Masukkan Kode (1 halaman) */}
+            {setupStep === "scan-and-verify" && (
+              <form onSubmit={handleVerifyAndEnable} className="space-y-5">
+                {/* QR Code */}
+                <div className="flex flex-col items-center gap-3">
+                  <p className="text-sm text-slate-600 text-center">
+                    Scan QR ini dengan <strong>Google Authenticator</strong> atau <strong>Authy</strong>, lalu masukkan kode 6 digit di bawah.
                   </p>
-                </div>
-
-                <div className="flex justify-center">
                   {qrCodeDataUrl && (
                     <div className="p-3 bg-white border-2 border-slate-100 rounded-2xl shadow-sm">
-                      <Image src={qrCodeDataUrl} alt="QR Code 2FA" width={200} height={200} />
+                      <Image src={qrCodeDataUrl} alt="QR Code 2FA" width={180} height={180} />
                     </div>
                   )}
                 </div>
 
-                <div className="bg-slate-50 rounded-xl p-3">
-                  <p className="text-xs font-bold text-slate-500 mb-1">Tidak bisa scan? Masukkan kode manual:</p>
-                  <p className="text-xs font-mono text-slate-700 break-all leading-relaxed">{totpUri}</p>
-                </div>
-
-                <button
-                  onClick={() => { setSetupStep("verify-and-enable"); setVerifyCode(""); setError(null); }}
-                  className="w-full h-11 bg-[#FF6B4A] text-white rounded-xl font-bold hover:bg-[#fa5a35] transition-all text-sm"
-                >
-                  Sudah Scan → Masukkan Kode Verifikasi
-                </button>
-              </div>
-            )}
-
-            {/* STEP: Verifikasi + Aktifkan */}
-            {setupStep === "verify-and-enable" && (
-              <form onSubmit={handleVerifyAndEnable} className="space-y-4">
-                <div className="bg-slate-50 rounded-xl p-3">
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    Buka Authenticator app → cari <strong className="text-[#FF6B4A]">Learnify LMS</strong> → masukkan kode 6 digit yang tampil <strong>sekarang</strong>.
+                <div className="relative">
+                  <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-px bg-slate-100" />
+                  <p className="relative text-center text-[11px] font-bold text-slate-400 bg-white px-3 w-fit mx-auto">
+                    Setelah scan, masukkan kode yang muncul
                   </p>
                 </div>
 
+                {/* Input Kode */}
                 <div className="group">
                   <label className="text-xs font-bold text-slate-700 mb-1.5 block group-focus-within:text-[#FF6B4A]">
                     Kode dari Authenticator
@@ -341,15 +324,26 @@ const TwoFactorSettings = () => {
                     placeholder="123456"
                     className="w-full h-14 bg-slate-50 border border-slate-100 rounded-xl px-4 outline-none focus:border-[#FF6B4A] focus:ring-2 focus:ring-orange-50 transition-all text-center text-3xl font-bold font-mono tracking-[0.4em]"
                     maxLength={6}
-                    autoFocus
                   />
                   <p className="text-[10px] text-slate-400 mt-1 text-center">Kode berubah setiap 30 detik — masukkan yang aktif saat ini</p>
                 </div>
 
                 <div className="flex gap-3">
-                  <button type="button" onClick={() => { setSetupStep("show-qr"); setError(null); }} className="flex-1 h-11 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-all text-sm">Kembali</button>
-                  <button type="submit" disabled={isLoading || verifyCode.length !== 6} className="flex-1 h-11 bg-[#FF6B4A] text-white rounded-xl font-bold hover:bg-[#fa5a35] transition-all text-sm disabled:opacity-50 flex items-center justify-center">
-                    {isLoading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Aktifkan 2FA ✓"}
+                  <button
+                    type="button"
+                    onClick={() => { setSetupStep("idle"); setError(null); setVerifyCode(""); }}
+                    className="flex-1 h-11 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-all text-sm"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isLoading || verifyCode.length !== 6}
+                    className="flex-1 h-11 bg-[#FF6B4A] text-white rounded-xl font-bold hover:bg-[#fa5a35] transition-all text-sm disabled:opacity-50 flex items-center justify-center"
+                  >
+                    {isLoading
+                      ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      : "Aktifkan 2FA ✓"}
                   </button>
                 </div>
               </form>
