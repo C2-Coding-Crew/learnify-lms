@@ -20,8 +20,8 @@ model user {
   image         String?
 
   // -- Field yang diperbaiki agar sinkron dengan Better Auth --
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdDate     DateTime  @default(now())
+  lastUpdatedDate DateTime  @updatedAt
 
   // -- Custom Fields --
   roleId        Int?      
@@ -49,14 +49,13 @@ model session {
   id        String   @id
   expiresAt DateTime
   token     String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdDate DateTime @default(now())
+  lastUpdatedDate DateTime @updatedAt
   ipAddress String?
   userAgent String?
   userId    String
   user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // --- TAMBAHKAN BARIS INI ---
   twoFactorVerified Boolean? @default(false) 
 }
 
@@ -73,8 +72,8 @@ model account {
   refreshTokenExpiresAt DateTime?
   scope                 String?
   password              String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  createdDate             DateTime  @default(now())
+  lastUpdatedDate         DateTime  @updatedAt
 }
 
 model verification {
@@ -82,8 +81,8 @@ model verification {
   identifier String
   value      String
   expiresAt  DateTime
-  createdAt  DateTime? @default(now())
-  updatedAt  DateTime? @updatedAt
+  createdDate      DateTime  @default(now())
+  lastUpdatedDate  DateTime  @updatedAt
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -97,9 +96,9 @@ model Role {
   status          Int      @default(1)
   isDeleted       Int      @default(0)
   createdBy       String   @default("SYSTEM")
-  createdAt       DateTime @default(now())
+  createdDate     DateTime @default(now())
   lastUpdatedBy   String   @default("SYSTEM")
-  updatedAt       DateTime @updatedAt
+  lastUpdatedDate DateTime @updatedAt
 
   users user[]
 }
@@ -112,9 +111,9 @@ model Category {
   status          Int      @default(1)
   isDeleted       Int      @default(0)
   createdBy       String   @default("SYSTEM")
-  createdAt       DateTime @default(now())
+  createdDate     DateTime @default(now())
   lastUpdatedBy   String   @default("SYSTEM")
-  updatedAt       DateTime @updatedAt
+  lastUpdatedDate DateTime @updatedAt
 
   courses Course[]
 }
@@ -139,9 +138,9 @@ model Course {
   status          Int      @default(1)
   isDeleted       Int      @default(0)
   createdBy       String   @default("SYSTEM")
-  createdAt       DateTime @default(now())
+  createdDate     DateTime @default(now())
   lastUpdatedBy   String   @default("SYSTEM")
-  updatedAt       DateTime @updatedAt
+  lastUpdatedDate DateTime @updatedAt
 
   instructor  user      @relation("InstructorCourses", fields: [instructorId], references: [id])
   category    Category  @relation(fields: [categoryId], references: [id])
@@ -163,9 +162,9 @@ model Lesson {
   status          Int      @default(1)
   isDeleted       Int      @default(0)
   createdBy       String   @default("SYSTEM")
-  createdAt       DateTime @default(now())
+  createdDate     DateTime @default(now())
   lastUpdatedBy   String   @default("SYSTEM")
-  updatedAt       DateTime @updatedAt
+  lastUpdatedDate DateTime @updatedAt
 
   course   Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
   progress LessonProgress[]
@@ -182,9 +181,9 @@ model LessonProgress {
   status          Int       @default(1)
   isDeleted       Int       @default(0)
   createdBy       String    @default("SYSTEM")
-  createdAt       DateTime  @default(now())
+  createdDate     DateTime  @default(now())
   lastUpdatedBy   String    @default("SYSTEM")
-  updatedAt       DateTime  @updatedAt
+  lastUpdatedDate DateTime  @updatedAt
 
   user   user   @relation(fields: [userId], references: [id], onDelete: Cascade)
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
@@ -200,9 +199,9 @@ model CourseTag {
   status          Int      @default(1)
   isDeleted       Int      @default(0)
   createdBy       String   @default("SYSTEM")
-  createdAt       DateTime @default(now())
+  createdDate     DateTime @default(now())
   lastUpdatedBy   String   @default("SYSTEM")
-  updatedAt       DateTime @updatedAt
+  lastUpdatedDate DateTime @updatedAt
 
   course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 }
@@ -240,9 +239,9 @@ model Invoice {
   status          Int      @default(1)
   isDeleted       Int      @default(0)
   createdBy       String   @default("SYSTEM")
-  createdAt       DateTime @default(now())
+  createdDate     DateTime @default(now())
   lastUpdatedBy   String   @default("SYSTEM")
-  updatedAt       DateTime @updatedAt
+  lastUpdatedDate DateTime @updatedAt
 
   user         user          @relation(fields: [userId], references: [id])
   transactions Transaction[]

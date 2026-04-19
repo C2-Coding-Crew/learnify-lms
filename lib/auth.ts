@@ -22,6 +22,10 @@ export const auth = betterAuth({
   },
 
   user: {
+    fields: {
+      createdAt: "createdDate",
+      updatedAt: "lastUpdatedDate",
+    },
     additionalFields: {
       roleId: {
         type: "number",
@@ -29,6 +33,27 @@ export const auth = betterAuth({
         defaultValue: 2,
         map: (value: unknown) => Number(value),
       },
+    },
+  },
+
+  session: {
+    fields: {
+      createdAt: "createdDate",
+      updatedAt: "lastUpdatedDate",
+    },
+  },
+
+  account: {
+    fields: {
+      createdAt: "createdDate",
+      updatedAt: "lastUpdatedDate",
+    },
+  },
+
+  verification: {
+    fields: {
+      createdAt: "createdDate",
+      updatedAt: "lastUpdatedDate",
     },
   },
 
