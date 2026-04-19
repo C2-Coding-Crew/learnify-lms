@@ -45,6 +45,7 @@ export const auth = betterAuth({
   plugins: [
     twoFactor({
       issuer: "Learnify LMS",   // Nama yang tampil di aplikasi Authenticator
+      allowPasswordless: true,  // Izinkan user Google OAuth (tanpa password) aktifkan 2FA
       totpOptions: {
         digits: 6,              // Kode 6 digit (standar)
         period: 30,             // Berubah setiap 30 detik (standar TOTP RFC 6238)
