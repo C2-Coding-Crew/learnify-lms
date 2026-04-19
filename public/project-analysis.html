@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
@@ -24,111 +24,92 @@
       --slate-800: #1E293B;
       --slate-900: #0F172A;
     }
-    body {
-      font-family: 'Inter', sans-serif;
-      background: #F0F2F8;
-      color: var(--slate-800);
-      min-height: 100vh;
-    }
+    body { font-family: 'Inter', sans-serif; background: #F0F2F8; color: var(--slate-800); min-height: 100vh; }
 
     /* HEADER */
     .header {
       background: var(--dark);
-      padding: 28px 48px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      padding: 20px 48px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
       box-shadow: 0 4px 24px rgba(0,0,0,0.2);
     }
-    .logo {
-      display: flex; align-items: center; gap: 12px;
-    }
+    .logo { display: flex; align-items: center; gap: 12px; }
     .logo-icon {
-      width: 36px; height: 36px;
-      background: var(--orange);
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
+      width: 36px; height: 36px; background: var(--orange);
+      border-radius: 10px; display: flex; align-items: center; justify-content: center;
     }
     .logo-icon::after {
-      content: '';
-      width: 14px; height: 14px;
-      background: white;
-      border-radius: 3px;
-      transform: rotate(45deg);
+      content: ''; width: 14px; height: 14px;
+      background: white; border-radius: 3px; transform: rotate(45deg);
     }
     .logo-text { font-size: 20px; font-weight: 800; color: white; }
     .logo-text span { color: var(--orange); }
+    .header-right { display: flex; align-items: center; gap: 12px; }
     .header-badge {
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.12);
-      color: rgba(255,255,255,0.6);
-      padding: 6px 16px; border-radius: 100px;
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.6); padding: 5px 14px; border-radius: 100px;
       font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    }
+    .header-progress {
+      background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3);
+      color: #34D399; padding: 5px 14px; border-radius: 100px;
+      font-size: 12px; font-weight: 800; letter-spacing: 0.05em;
     }
 
     /* MAIN */
-    .main { max-width: 1280px; margin: 0 auto; padding: 40px 48px 80px; }
+    .main { max-width: 1280px; margin: 0 auto; padding: 36px 48px 80px; }
 
     /* HERO */
-    .hero { margin-bottom: 40px; }
-    .hero h1 { font-size: 32px; font-weight: 900; color: var(--slate-900); margin-bottom: 8px; }
-    .hero p { color: var(--slate-400); font-size: 15px; }
+    .hero { margin-bottom: 32px; }
+    .hero h1 { font-size: 30px; font-weight: 900; color: var(--slate-900); margin-bottom: 6px; }
+    .hero p { color: var(--slate-400); font-size: 14px; }
+    .hero-meta { display: flex; gap: 24px; margin-top: 12px; flex-wrap: wrap; }
+    .hero-meta-item { font-size: 12px; color: var(--slate-400); font-weight: 500; display: flex; align-items: center; gap: 6px; }
+    .hero-meta-item strong { color: var(--slate-600); }
 
     /* SUMMARY CARDS */
     .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 16px;
-      margin-bottom: 40px;
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      gap: 14px; margin-bottom: 36px;
     }
     .summary-card {
-      background: white;
-      border-radius: 20px;
-      padding: 24px 20px;
-      border: 1px solid var(--slate-200);
-      text-align: center;
+      background: white; border-radius: 20px; padding: 22px 16px;
+      border: 1px solid var(--slate-200); text-align: center;
       transition: transform 0.2s, box-shadow 0.2s;
     }
     .summary-card:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,0.07); }
-    .summary-card .num {
-      font-size: 36px; font-weight: 900; margin-bottom: 4px;
-    }
-    .summary-card .label {
-      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
-      color: var(--slate-400);
-    }
+    .summary-card .num { font-size: 36px; font-weight: 900; margin-bottom: 4px; }
+    .summary-card .label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--slate-400); }
     .num-done { color: var(--green); }
-    .num-good { color: var(--blue); }
     .num-improve { color: var(--yellow); }
     .num-partial { color: var(--orange); }
     .num-todo { color: var(--red); }
+    .num-total { color: var(--purple); }
 
-    /* PROGRESS BAR */
+    /* PROGRESS BARS */
     .progress-section {
-      background: white;
-      border-radius: 24px;
-      padding: 28px 32px;
-      margin-bottom: 40px;
-      border: 1px solid var(--slate-200);
+      background: white; border-radius: 24px; padding: 28px 32px;
+      margin-bottom: 36px; border: 1px solid var(--slate-200);
     }
-    .progress-section h2 { font-size: 16px; font-weight: 800; margin-bottom: 20px; }
-    .progress-bar-wrap { height: 14px; background: var(--slate-100); border-radius: 100px; overflow: hidden; display: flex; }
-    .pb-seg { height: 100%; transition: width 0.8s ease; }
-    .pb-done { background: var(--green); }
-    .pb-good { background: var(--blue); }
-    .pb-improve { background: var(--yellow); }
-    .pb-partial { background: var(--orange); }
-    .pb-todo { background: var(--red); }
-    .pb-legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; }
-    .pb-legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--slate-600); }
-    .pb-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .progress-section h2 { font-size: 15px; font-weight: 800; margin-bottom: 20px; color: var(--slate-900); }
+    .progress-row { margin-bottom: 14px; }
+    .progress-row-label { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .progress-row-label span:first-child { font-size: 12px; font-weight: 700; color: var(--slate-700); }
+    .progress-row-label span:last-child { font-size: 12px; font-weight: 800; }
+    .progress-bar-wrap { height: 10px; background: var(--slate-100); border-radius: 100px; overflow: hidden; }
+    .pb-fill { height: 100%; border-radius: 100px; transition: width 1s ease; }
+    .pb-100 { background: var(--green); }
+    .pb-90 { background: #34D399; }
+    .pb-80 { background: var(--blue); }
+    .pb-50 { background: var(--yellow); }
+    .pb-40 { background: var(--orange); }
+    .pb-20 { background: var(--red); }
+    .pb-overall { background: linear-gradient(90deg, var(--green), var(--blue)); height: 14px; }
 
     /* SECTION TITLE */
     .section-title {
-      font-size: 13px; font-weight: 800; text-transform: uppercase;
+      font-size: 12px; font-weight: 800; text-transform: uppercase;
       letter-spacing: 0.1em; color: var(--slate-400);
       margin-bottom: 16px; padding-left: 4px;
       display: flex; align-items: center; gap: 10px;
@@ -137,84 +118,97 @@
 
     /* FEATURE GRID */
     .feature-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: 20px;
-      margin-bottom: 40px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 18px; margin-bottom: 36px;
     }
     .feature-card {
-      background: white;
-      border-radius: 24px;
-      padding: 24px;
+      background: white; border-radius: 22px; padding: 22px;
       border: 1px solid var(--slate-200);
       transition: transform 0.2s, box-shadow 0.2s;
     }
     .feature-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
-    .card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
-    .card-icon {
-      width: 44px; height: 44px; border-radius: 14px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px; flex-shrink: 0;
-    }
-    .card-title { font-size: 15px; font-weight: 800; color: var(--slate-900); margin-bottom: 2px; }
-    .card-file { font-size: 11px; color: var(--slate-400); font-weight: 500; font-family: monospace; }
+    .card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .card-icon { width: 42px; height: 42px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 19px; flex-shrink: 0; }
+    .card-title { font-size: 14px; font-weight: 800; color: var(--slate-900); margin-bottom: 2px; }
+    .card-file { font-size: 10px; color: var(--slate-400); font-weight: 500; font-family: monospace; line-height: 1.4; }
     .badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 5px 12px; border-radius: 100px;
-      font-size: 11px; font-weight: 700; white-space: nowrap; flex-shrink: 0;
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 100px;
+      font-size: 10px; font-weight: 700; white-space: nowrap; flex-shrink: 0;
     }
-    .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
     .badge-done { background: #D1FAE5; color: #065F46; }
-    .badge-good { background: #DBEAFE; color: #1E40AF; }
     .badge-improve { background: #FEF3C7; color: #92400E; }
     .badge-partial { background: #FFEDD5; color: #9A3412; }
     .badge-todo { background: #FEE2E2; color: #991B1B; }
-    .badge-must { background: #EDE9FE; color: #5B21B6; }
+    .badge-new { background: #EDE9FE; color: #5B21B6; }
 
-    .card-desc { font-size: 13px; color: var(--slate-600); line-height: 1.7; margin-bottom: 14px; }
-    .card-items { list-style: none; }
+    .card-items { list-style: none; margin-top: 10px; }
     .card-items li {
-      font-size: 12px; color: var(--slate-600);
-      padding: 5px 0;
-      border-bottom: 1px solid var(--slate-100);
-      display: flex; align-items: center; gap: 8px;
+      font-size: 11.5px; color: var(--slate-600);
+      padding: 4px 0; border-bottom: 1px solid var(--slate-100);
+      display: flex; align-items: flex-start; gap: 7px; line-height: 1.5;
     }
     .card-items li:last-child { border-bottom: none; }
-    .ci-ok { color: var(--green); font-size: 14px; }
-    .ci-warn { color: var(--yellow); font-size: 14px; }
-    .ci-err { color: var(--red); font-size: 14px; }
-    .ci-info { color: var(--blue); font-size: 14px; }
+    .ci-ok { color: var(--green); font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+    .ci-warn { color: var(--yellow); font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+    .ci-err { color: var(--red); font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+    .ci-fix { color: var(--blue); font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+
+    /* TAG ROW */
+    .card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .tag {
+      background: var(--slate-100); border-radius: 6px;
+      padding: 2px 8px; font-size: 10px; font-weight: 600; color: var(--slate-500);
+    }
+
+    /* GIT LOG */
+    .git-section {
+      background: var(--dark); border-radius: 22px; padding: 24px 28px;
+      margin-bottom: 36px;
+    }
+    .git-section h2 { font-size: 14px; font-weight: 800; color: white; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .git-commit { display: flex; align-items: baseline; gap: 14px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .git-commit:last-child { border-bottom: none; }
+    .git-hash { font-family: monospace; font-size: 11px; color: var(--orange); font-weight: 700; flex-shrink: 0; }
+    .git-msg { font-size: 12px; color: rgba(255,255,255,0.7); }
+    .git-type { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 5px; flex-shrink: 0; }
+    .gt-feat { background: rgba(16,185,129,0.2); color: #34D399; }
+    .gt-fix { background: rgba(239,68,68,0.2); color: #FCA5A5; }
+    .gt-docs { background: rgba(139,92,246,0.2); color: #C4B5FD; }
+    .gt-ux { background: rgba(59,130,246,0.2); color: #93C5FD; }
 
     /* RECOMMENDATION */
     .rec-section {
-      background: var(--dark);
-      border-radius: 28px;
-      padding: 36px 40px;
-      color: white;
-      margin-top: 40px;
+      background: var(--dark); border-radius: 26px; padding: 32px 36px;
+      color: white; margin-top: 36px;
     }
-    .rec-section h2 { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
-    .rec-section p { font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 28px; }
-    .rec-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+    .rec-section h2 { font-size: 17px; font-weight: 800; margin-bottom: 4px; }
+    .rec-section > p { font-size: 13px; color: rgba(255,255,255,0.45); margin-bottom: 24px; }
+    .rec-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
     .rec-item {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 18px;
-      padding: 20px;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px; padding: 20px;
     }
     .rec-priority { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
-    .pri-high { color: #FCA5A5; }
-    .pri-med { color: #FDE68A; }
-    .pri-low { color: #86EFAC; }
-    .rec-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
-    .rec-desc { font-size: 12px; color: rgba(255,255,255,0.5); line-height: 1.6; }
+    .p-red { color: #FCA5A5; }
+    .p-yellow { color: #FDE68A; }
+    .p-green { color: #6EE7B7; }
+    .rec-item h3 { font-size: 14px; font-weight: 700; color: white; margin-bottom: 6px; }
+    .rec-item p { font-size: 12px; color: rgba(255,255,255,0.5); line-height: 1.6; }
+    .rec-item ul { list-style: none; margin-top: 8px; }
+    .rec-item ul li { font-size: 11px; color: rgba(255,255,255,0.5); padding: 3px 0; display: flex; align-items: flex-start; gap: 6px; }
+    .rec-item ul li::before { content: '→'; color: var(--orange); flex-shrink: 0; }
 
-    @media (max-width: 768px) {
+    /* FOOTER */
+    .footer { text-align: center; padding: 32px; font-size: 12px; color: var(--slate-400); }
+    .footer strong { color: var(--slate-600); }
+
+    @media (max-width: 900px) {
       .main { padding: 24px 20px 60px; }
-      .header { padding: 20px 24px; }
-      .summary-grid { grid-template-columns: repeat(2, 1fr); }
+      .header { padding: 16px 20px; }
+      .summary-grid { grid-template-columns: repeat(3, 1fr); }
       .feature-grid { grid-template-columns: 1fr; }
-      .rec-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -226,376 +220,594 @@
     <div class="logo-icon"></div>
     <span class="logo-text">Learnify<span>.</span></span>
   </div>
-  <span class="header-badge">📊 Project Analysis Dashboard</span>
+  <div class="header-right">
+    <span class="header-progress">80% Complete</span>
+    <span class="header-badge">19 April 2026</span>
+  </div>
 </header>
 
-<!-- MAIN -->
-<div class="main">
+<main class="main">
 
   <!-- HERO -->
   <div class="hero">
-    <h1>Analisis Perkembangan Project ðŸ”</h1>
-    <p>Laporan lengkap status implementasi fitur-fitur Learnify LMS â€” <strong>Update: 09 April 2026 (sesi 4)</strong> Â· Auth Bug Fixed âœ… Â· Enrollment System âœ… Â· Halaman Belajar âœ… Â· Git Push âœ…</p>
+    <h1>Project Analysis Dashboard</h1>
+    <p>Status terkini implementasi Learnify LMS — diperbarui setelah sesi 2FA & Auth selesai.</p>
+    <div class="hero-meta">
+      <div class="hero-meta-item">🔀 <strong>Branch:</strong> dashboard @ C2-Coding-Crew/learnify-lms</div>
+      <div class="hero-meta-item">⚙️ <strong>Stack:</strong> Next.js 16 · Better Auth · Prisma v5 · Tailwind CSS v4</div>
+      <div class="hero-meta-item">🗄️ <strong>DB:</strong> SQLite (dev) → PostgreSQL (prod)</div>
+      <div class="hero-meta-item">📧 <strong>Email:</strong> Nodemailer + Gmail / Ethereal</div>
+    </div>
   </div>
 
   <!-- SUMMARY CARDS -->
   <div class="summary-grid">
-    <div class="summary-card"><div class="num num-done">11</div><div class="label">âœ… Selesai &amp; Bagus</div></div>
-    <div class="summary-card"><div class="num num-improve">3</div><div class="label">âš ï¸ Butuh Perbaikan</div></div>
-    <div class="summary-card"><div class="num num-partial">2</div><div class="label">ðŸŸ  Sebagian</div></div>
-    <div class="summary-card"><div class="num num-todo">2</div><div class="label">âŒ Belum</div></div>
-    <div class="summary-card"><div class="num" style="color:var(--orange)">65%</div><div class="label">ðŸ“ˆ Overall Progress</div></div>
+    <div class="summary-card">
+      <div class="num num-done">15</div>
+      <div class="label">Selesai & Bagus</div>
+    </div>
+    <div class="summary-card">
+      <div class="num num-improve">2</div>
+      <div class="label">Butuh Improvement</div>
+    </div>
+    <div class="summary-card">
+      <div class="num num-partial">2</div>
+      <div class="label">Sebagian Dikerjakan</div>
+    </div>
+    <div class="summary-card">
+      <div class="num num-todo">2</div>
+      <div class="label">Belum Dikerjakan</div>
+    </div>
+    <div class="summary-card">
+      <div class="num num-total">21</div>
+      <div class="label">Total Fitur</div>
+    </div>
   </div>
 
-  <!-- PROGRESS BAR -->
+  <!-- PROGRESS BARS -->
   <div class="progress-section">
-    <h2>Overall Project Completion â€” <span style="color:var(--green);font-size:14px">~65% selesai (+10% sesi ini ðŸŽ‰)</span></h2>
-    <div class="progress-bar-wrap">
-      <div class="pb-seg pb-done" style="width:59.3%"></div>
-      <div class="pb-seg pb-improve" style="width:15.6%"></div>
-      <div class="pb-seg pb-partial" style="width:10.3%"></div>
-      <div class="pb-seg pb-todo" style="width:14.8%"></div>
+    <h2>📊 Progress per Modul</h2>
+
+    <div class="progress-row">
+      <div class="progress-row-label">
+        <span>Auth & Register</span>
+        <span style="color:var(--green)">100%</span>
+      </div>
+      <div class="progress-bar-wrap"><div class="pb-fill pb-100" style="width:100%"></div></div>
     </div>
-    <div class="pb-legend">
-      <div class="pb-legend-item"><div class="pb-dot" style="background:var(--green)"></div> Selesai &amp; Bagus (11)</div>
-      <div class="pb-legend-item"><div class="pb-dot" style="background:var(--yellow)"></div> Butuh Improvement (3)</div>
-      <div class="pb-legend-item"><div class="pb-dot" style="background:var(--orange)"></div> Sebagian (2)</div>
-      <div class="pb-legend-item"><div class="pb-dot" style="background:var(--red)"></div> Belum Dikerjakan (2)</div>
+
+    <div class="progress-row">
+      <div class="progress-row-label">
+        <span>2FA System (TOTP + Email OTP + Backup)</span>
+        <span style="color:var(--green)">100%</span>
+      </div>
+      <div class="progress-bar-wrap"><div class="pb-fill pb-100" style="width:100%"></div></div>
+    </div>
+
+    <div class="progress-row">
+      <div class="progress-row-label">
+        <span>Lupa Password (Email Token Flow)</span>
+        <span style="color:var(--green)">100%</span>
+      </div>
+      <div class="progress-bar-wrap"><div class="pb-fill pb-100" style="width:100%"></div></div>
+    </div>
+
+    <div class="progress-row">
+      <div class="progress-row-label">
+        <span>Middleware (Route Protection)</span>
+        <span style="color:var(--green)">100%</span>
+      </div>
+      <div class="progress-bar-wrap"><div class="pb-fill pb-100" style="width:100%"></div></div>
+    </div>
+
+    <div class="progress-row">
+      <div class="progress-row-label">
+        <span>Halaman Kursus (List + Detail)</span>
+        <span style="color:var(--green)">100%</span>
+      </div>
+      <div class="progress-bar-wrap"><div class="pb-fill pb-100" style="width:100%"></div></div>
+    </div>
+
+    <div class="progress-row">
+      <div class="progress-row-label">
+        <span>Enrollment System</span>
+        <span style="color:#34D399">90%</span>
+      </div>
+      <div class="progress-bar-wrap"><div class="pb-fill pb-90" style="width:90%"></div></div>
+    </div>
+
+    <div class="progress-row">
+      <div class="progress-row-label">
+        <span>Halaman Belajar (/learn)</span>
+        <span style="color:var(--blue)">80%</span>
+      </div>
+      <div class="progress-bar-wrap"><div class="pb-fill pb-80" style="width:80%"></div></div>
+    </div>
+
+    <div class="progress-row">
+      <div class="progress-row-label">
+        <span>Student Dashboard</span>
+        <span style="color:var(--yellow)">50%</span>
+      </div>
+      <div class="progress-bar-wrap"><div class="pb-fill pb-50" style="width:50%"></div></div>
+    </div>
+
+    <div class="progress-row">
+      <div class="progress-row-label">
+        <span>Payment / Midtrans</span>
+        <span style="color:var(--orange)">40%</span>
+      </div>
+      <div class="progress-bar-wrap"><div class="pb-fill pb-40" style="width:40%"></div></div>
+    </div>
+
+    <div class="progress-row">
+      <div class="progress-row-label">
+        <span>Video Player / Cloudinary</span>
+        <span style="color:var(--red)">20%</span>
+      </div>
+      <div class="progress-bar-wrap"><div class="pb-fill pb-20" style="width:20%"></div></div>
+    </div>
+
+    <div style="margin-top:24px; padding-top:20px; border-top: 1px solid var(--slate-100);">
+      <div class="progress-row-label" style="margin-bottom:8px;">
+        <span style="font-size:14px;font-weight:800;color:var(--slate-900)">⚡ Overall Progress</span>
+        <span style="font-size:16px;font-weight:900;color:var(--green)">80%</span>
+      </div>
+      <div class="progress-bar-wrap" style="height:14px;">
+        <div class="pb-fill pb-overall" style="width:80%"></div>
+      </div>
+      <p style="font-size:11px;color:var(--slate-400);margin-top:8px;">Naik dari 65% → 80% setelah sistem 2FA, middleware, dan email selesai.</p>
     </div>
   </div>
 
-  <!-- SECTION: UI Pages -->
-  <div class="section-title">ðŸ–¥ï¸ Halaman &amp; UI Pages</div>
+  <!-- SECTION: HALAMAN & UI -->
+  <div class="section-title">🖥️ Bagian 1 — Halaman & UI Pages</div>
   <div class="feature-grid">
 
     <div class="feature-card">
       <div class="card-header">
-        <div class="card-icon" style="background:#FFF7ED;">ðŸ </div>
-        <div style="flex:1"><div class="card-title">Homepage</div><div class="card-file">components/homepage/homepage.tsx</div></div>
-        <span class="badge badge-done">âœ… Selesai</span>
-      </div>
-      <ul class="card-items">
-        <li><span class="ci-ok">âœ“</span> Hero, Features, Module Grid, CTA, Mentor, Footer</li>
-        <li><span class="ci-warn">âš </span> Search bar belum terhubung ke halaman kursus</li>
-      </ul>
-    </div>
-
-    <div class="feature-card">
-      <div class="card-header">
-        <div class="card-icon" style="background:#FFF7ED;">ðŸ“Š</div>
-        <div style="flex:1"><div class="card-title">Student Dashboard</div><div class="card-file">components/dashboard/dashboard.tsx</div></div>
-        <span class="badge badge-partial">ðŸŸ  Sebagian</span>
-      </div>
-      <p class="card-desc">Nama user dari session nyata, logout berfungsi. Data kursus &amp; chart masih hardcoded â€” menunggu integrasi /api/enrollments.</p>
-      <ul class="card-items">
-        <li><span class="ci-ok">âœ“</span> Nama user dari session, avatar dinamis, logout</li>
-        <li><span class="ci-err">âœ—</span> Data kursus &amp; chart masih hardcoded</li>
-        <li><span class="ci-err">âœ—</span> Todo list tidak persisten ke DB</li>
-      </ul>
-    </div>
-
-    <div class="feature-card">
-      <div class="card-header">
-        <div class="card-icon" style="background:#D1FAE5;">ðŸ“š</div>
-        <div style="flex:1"><div class="card-title">Halaman Kursus</div><div class="card-file">components/courses/courses.tsx</div></div>
-        <span class="badge badge-done">âœ… Selesai</span>
-      </div>
-      <ul class="card-items">
-        <li><span class="ci-ok">âœ“</span> Fetch dari /api/courses, filter category.slug (FK)</li>
-        <li><span class="ci-ok">âœ“</span> Grid/List toggle, search debounce, empty state</li>
-        <li><span class="ci-ok">âœ“</span> Fix: Category object, price number|string</li>
-        <li><span class="ci-warn">âš </span> Thumbnail masih placeholder</li>
-      </ul>
-    </div>
-
-    <div class="feature-card" style="border-color:#D1FAE5;">
-      <div class="card-header">
-        <div class="card-icon" style="background:#D1FAE5;">ðŸ”</div>
-        <div style="flex:1"><div class="card-title">Halaman Login</div><div class="card-file">components/login/login.tsx</div></div>
-        <span class="badge badge-done">âœ… Selesai</span>
-      </div>
-      <ul class="card-items">
-        <li><span class="ci-ok">âœ“</span> signIn.email(), validasi Zod, callbackUrl, remember me</li>
-        <li><span class="ci-warn">âš </span> Google OAuth belum dikonfigurasi</li>
-      </ul>
-    </div>
-
-    <div class="feature-card" style="border-color:#D1FAE5;">
-      <div class="card-header">
-        <div class="card-icon" style="background:#D1FAE5;">ðŸ“</div>
-        <div style="flex:1">
-          <div class="card-title">Halaman Register <span style="font-size:10px;background:#DCFCE7;color:#16A34A;padding:2px 6px;border-radius:4px;font-weight:700;">BUG FIXED 09/04</span></div>
-          <div class="card-file">register.tsx Â· lib/auth.ts</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="card-icon" style="background:#D1FAE5;">🏠</div>
+          <div>
+            <div class="card-title">Homepage</div>
+            <div class="card-file">components/homepage/homepage.tsx</div>
+          </div>
         </div>
-        <span class="badge badge-done">âœ… Selesai</span>
+        <span class="badge badge-done">Selesai</span>
       </div>
-      <p class="card-desc">Bug 422: Better Auth pakai createdAt/updatedAt, schema pakai createdDate/lastUpdatedDate. Field role string bentrok dengan FK relation.</p>
       <ul class="card-items">
-        <li><span class="ci-ok">âœ“</span> Fix: user.fields mapping createdAtâ†’createdDate</li>
-        <li><span class="ci-ok">âœ“</span> Fix: hapus additionalFields.role (FK conflict)</li>
-        <li><span class="ci-ok">âœ“</span> Register berhasil â†’ user tersimpan di DB</li>
+        <li><span class="ci-ok">✔</span>Landing page premium, hero, features, stats</li>
+        <li><span class="ci-ok">✔</span>Fully responsive + animasi smooth</li>
       </ul>
     </div>
 
-    <div class="feature-card" style="border-color:#D1FAE5;">
+    <div class="feature-card">
       <div class="card-header">
-        <div class="card-icon" style="background:#D1FAE5;">ðŸŽ¬</div>
-        <div style="flex:1"><div class="card-title">Halaman Detail Kursus</div><div class="card-file">app/courses/[slug]/page.tsx Â· course-detail.tsx</div></div>
-        <span class="badge badge-done">âœ… Selesai</span>
-      </div>
-      <ul class="card-items">
-        <li><span class="ci-ok">âœ“</span> Enrollment status check saat mount via API</li>
-        <li><span class="ci-ok">âœ“</span> Tombol dinamis: "Enroll" â†’ "Lanjut Belajar"</li>
-        <li><span class="ci-ok">âœ“</span> Banner terdaftar + lesson jadi link ke /learn</li>
-        <li><span class="ci-warn">âš </span> Video placeholder (belum ada URL nyata)</li>
-      </ul>
-    </div>
-
-    <div class="feature-card" style="border-color:#D1FAE5;">
-      <div class="card-header">
-        <div class="card-icon" style="background:#D1FAE5;">ðŸŽ“</div>
-        <div style="flex:1">
-          <div class="card-title">Halaman Belajar (/learn) ðŸ†•</div>
-          <div class="card-file">learn/page.tsx Â· learn-page.tsx</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="card-icon" style="background:#FFEDD5;">📊</div>
+          <div>
+            <div class="card-title">Student Dashboard</div>
+            <div class="card-file">components/dashboard/dashboard.tsx</div>
+          </div>
         </div>
-        <span class="badge badge-done">âœ… Selesai</span>
+        <span class="badge badge-partial">Sebagian</span>
       </div>
-      <p class="card-desc">Dark-mode video player layout dengan sidebar silabus, progress tracking, prev/next, dan auto-complete kursus.</p>
       <ul class="card-items">
-        <li><span class="ci-ok">âœ“</span> Auth guard + Enrollment guard (redirect jika belum)</li>
-        <li><span class="ci-ok">âœ“</span> Sidebar: âœ“/â—‹/â–¶ per-lesson + progress bar</li>
-        <li><span class="ci-ok">âœ“</span> "Tandai Selesai" â†’ POST /api/progress</li>
-        <li><span class="ci-ok">âœ“</span> Prev/Next navigation + mobile hamburger</li>
-        <li><span class="ci-warn">âš </span> Video placeholder âˆ’ menunggu URL nyata</li>
+        <li><span class="ci-ok">✔</span>Nama user dari session, logout berfungsi</li>
+        <li><span class="ci-ok">✔</span>Route protection via middleware (2FA-aware)</li>
+        <li><span class="ci-warn">⚠</span>Data kursus & chart masih hardcoded</li>
+        <li><span class="ci-warn">⚠</span>Todo list tidak persisten ke DB</li>
       </ul>
     </div>
 
     <div class="feature-card">
       <div class="card-header">
-        <div class="card-icon" style="background:#F0F9FF;">â„¹ï¸</div>
-        <div style="flex:1"><div class="card-title">Halaman About</div><div class="card-file">components/about/about-me.tsx</div></div>
-        <span class="badge badge-done">âœ… Selesai</span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="card-icon" style="background:#DBEAFE;">📚</div>
+          <div>
+            <div class="card-title">Halaman Kursus</div>
+            <div class="card-file">components/courses/courses.tsx</div>
+          </div>
+        </div>
+        <span class="badge badge-done">Selesai</span>
       </div>
       <ul class="card-items">
-        <li><span class="ci-ok">âœ“</span> Hero, Stats, Visi &amp; Misi, Budaya Belajar</li>
-        <li><span class="ci-warn">âš </span> Foto tim adalah placeholder</li>
+        <li><span class="ci-ok">✔</span>Fetch dari DB via /api/courses</li>
+        <li><span class="ci-ok">✔</span>Filter kategori (FK category.slug)</li>
+        <li><span class="ci-ok">✔</span>Grid/List view toggle, search, soft-delete filter</li>
+        <li><span class="ci-ok">✔</span>Loading state + empty state</li>
       </ul>
     </div>
 
     <div class="feature-card">
       <div class="card-header">
-        <div class="card-icon" style="background:#FDF4FF;">ðŸ“¬</div>
-        <div style="flex:1"><div class="card-title">Halaman Contact</div><div class="card-file">components/contact/contact.tsx</div></div>
-        <span class="badge badge-done">âœ… Selesai</span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="card-icon" style="background:#D1FAE5;">🔑</div>
+          <div>
+            <div class="card-title">Halaman Login</div>
+            <div class="card-file">components/login/login.tsx</div>
+          </div>
+        </div>
+        <span class="badge badge-done">Selesai</span>
       </div>
       <ul class="card-items">
-        <li><span class="ci-ok">âœ“</span> Form + FAQ accordion + WhatsApp CTA</li>
-        <li><span class="ci-warn">âš </span> Form belum terhubung ke email/API</li>
+        <li><span class="ci-ok">✔</span>Email + password dengan validasi Zod</li>
+        <li><span class="ci-ok">✔</span>Google OAuth (signIn.social)</li>
+        <li><span class="ci-ok">✔</span>Auto-redirect ke /auth/two-factor jika 2FA aktif</li>
+        <li><span class="ci-ok">✔</span>Link ke lupa password</li>
+      </ul>
+    </div>
+
+    <div class="feature-card">
+      <div class="card-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="card-icon" style="background:#D1FAE5;">📝</div>
+          <div>
+            <div class="card-title">Halaman Register</div>
+            <div class="card-file">components/register/register.tsx</div>
+          </div>
+        </div>
+        <span class="badge badge-done">Selesai</span>
+      </div>
+      <ul class="card-items">
+        <li><span class="ci-ok">✔</span>Validasi Zod (nama, email, password kuat)</li>
+        <li><span class="ci-ok">✔</span>Register → redirect ke /dashboard</li>
+        <li><span class="ci-fix">✦</span>Fix: error asli dari server ditampilkan</li>
+        <li><span class="ci-fix">✦</span>Fix: middleware tidak lagi memblokir post-register</li>
+      </ul>
+    </div>
+
+    <div class="feature-card">
+      <div class="card-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="card-icon" style="background:#EDE9FE;">🔐</div>
+          <div>
+            <div class="card-title">Lupa Password</div>
+            <div class="card-file">app/auth/forgot-password/page.tsx<br/>app/auth/reset-password/page.tsx</div>
+          </div>
+        </div>
+        <span class="badge badge-done">Selesai</span>
+      </div>
+      <ul class="card-items">
+        <li><span class="ci-ok">✔</span>Form request → kirim email token (1 jam)</li>
+        <li><span class="ci-ok">✔</span>Email HTML branded via Nodemailer</li>
+        <li><span class="ci-ok">✔</span>Halaman reset password baru + konfirmasi</li>
+        <li><span class="ci-ok">✔</span>Fallback Ethereal di development</li>
+      </ul>
+    </div>
+
+    <div class="feature-card">
+      <div class="card-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="card-icon" style="background:#EDE9FE;">🛡️</div>
+          <div>
+            <div class="card-title">2FA Setup</div>
+            <div class="card-file">components/settings/two-factor-settings.tsx</div>
+          </div>
+        </div>
+        <span class="badge badge-new">Baru!</span>
+      </div>
+      <ul class="card-items">
+        <li><span class="ci-ok">✔</span>Deteksi akun: credential vs Google OAuth</li>
+        <li><span class="ci-ok">✔</span>Google OAuth bisa 2FA (allowPasswordless)</li>
+        <li><span class="ci-ok">✔</span>QR Code + Backup codes ditampilkan</li>
+        <li><span class="ci-ok">✔</span>Salin backup code 1 per 1 atau semua sekaligus</li>
+        <li><span class="ci-ok">✔</span>Nonaktifkan 2FA juga tersedia</li>
+      </ul>
+    </div>
+
+    <div class="feature-card">
+      <div class="card-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="card-icon" style="background:#EDE9FE;">🔒</div>
+          <div>
+            <div class="card-title">2FA Verifikasi</div>
+            <div class="card-file">components/two-factor/two-factor-verify.tsx<br/>app/auth/two-factor/page.tsx</div>
+          </div>
+        </div>
+        <span class="badge badge-new">Baru!</span>
+      </div>
+      <ul class="card-items">
+        <li><span class="ci-ok">✔</span>Mode 1: Authenticator (TOTP) — 6 kotak auto-submit</li>
+        <li><span class="ci-ok">✔</span>Mode 2: OTP via Email — kirim + 60d cooldown</li>
+        <li><span class="ci-ok">✔</span>Mode 3: Backup Code — kode darurat sekali pakai</li>
+        <li><span class="ci-ok">✔</span>Panel kiri highlight mode aktif</li>
+        <li><span class="ci-ok">✔</span>Verifikasi berhasil → redirect /dashboard</li>
+      </ul>
+    </div>
+
+    <div class="feature-card">
+      <div class="card-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="card-icon" style="background:#DBEAFE;">📖</div>
+          <div>
+            <div class="card-title">Detail Kursus</div>
+            <div class="card-file">app/courses/[slug]/page.tsx</div>
+          </div>
+        </div>
+        <span class="badge badge-done">Selesai</span>
+      </div>
+      <ul class="card-items">
+        <li><span class="ci-ok">✔</span>Hero, silabus, purchase card, instructor info</li>
+        <li><span class="ci-ok">✔</span>Tombol dinamis: Enroll → Lanjut Belajar</li>
+        <li><span class="ci-ok">✔</span>Lock/unlock lesson berdasarkan enrollment</li>
+      </ul>
+    </div>
+
+    <div class="feature-card">
+      <div class="card-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="card-icon" style="background:#1E293B;">🎬</div>
+          <div>
+            <div class="card-title">Halaman Belajar (/learn)</div>
+            <div class="card-file">app/courses/[slug]/learn/page.tsx</div>
+          </div>
+        </div>
+        <span class="badge badge-done">Selesai</span>
+      </div>
+      <ul class="card-items">
+        <li><span class="ci-ok">✔</span>Auth guard + Enrollment guard</li>
+        <li><span class="ci-ok">✔</span>Sidebar silabus progress (✓/○/▶), dark mode</li>
+        <li><span class="ci-ok">✔</span>Tombol "Tandai Selesai" → /api/progress</li>
+        <li><span class="ci-ok">✔</span>Prev/Next navigation, progress bar</li>
+        <li><span class="ci-warn">⚠</span>videoUrl masih placeholder</li>
       </ul>
     </div>
 
   </div>
 
-  <!-- SECTION: Components -->
-  <div class="section-title">ðŸ§© Komponen &amp; Infrastruktur</div>
+  <!-- SECTION: INFRASTRUKTUR -->
+  <div class="section-title">⚙️ Bagian 2 — Infrastruktur & Backend</div>
   <div class="feature-grid">
 
     <div class="feature-card">
       <div class="card-header">
-        <div class="card-icon" style="background:#FFF7ED;">ðŸ”</div>
-        <div style="flex:1"><div class="card-title">Navbar &amp; Footer</div><div class="card-file">components/navbar.tsx Â· footer.tsx</div></div>
-        <span class="badge badge-improve">âš ï¸ Improvement</span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="card-icon" style="background:#EDE9FE;">🛤️</div>
+          <div>
+            <div class="card-title">Middleware</div>
+            <div class="card-file">middleware.ts</div>
+          </div>
+        </div>
+        <span class="badge badge-new">Baru!</span>
       </div>
       <ul class="card-items">
-        <li><span class="ci-ok">âœ“</span> Navbar responsif + footer terintegrasi</li>
-        <li><span class="ci-err">âœ—</span> Belum ada active state per halaman</li>
-        <li><span class="ci-err">âœ—</span> Hamburger menu mobile belum fungsional</li>
+        <li><span class="ci-ok">✔</span>Cookie-based (tidak ada API call — Edge-runtime safe)</li>
+        <li><span class="ci-ok">✔</span>/dashboard → redirect login jika belum auth</li>
+        <li><span class="ci-ok">✔</span>/dashboard → redirect 2FA jika pending cookie ada</li>
+        <li><span class="ci-ok">✔</span>/auth/login → redirect dashboard jika sudah login</li>
+        <li><span class="ci-fix">✦</span>Fix: betterFetch diganti cookie check (lebih reliabel)</li>
+      </ul>
+      <div class="card-tags">
+        <span class="tag">better-auth.session_token</span>
+        <span class="tag">better-auth.two_factor</span>
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="card-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="card-icon" style="background:#D1FAE5;">🔐</div>
+          <div>
+            <div class="card-title">Sistem Autentikasi</div>
+            <div class="card-file">lib/auth.ts · lib/auth-client.ts</div>
+          </div>
+        </div>
+        <span class="badge badge-done">Selesai</span>
+      </div>
+      <ul class="card-items">
+        <li><span class="ci-ok">✔</span>Email+password login & register</li>
+        <li><span class="ci-ok">✔</span>Google OAuth (signIn.social)</li>
+        <li><span class="ci-ok">✔</span>2FA TOTP plugin (Google Authenticator/Authy)</li>
+        <li><span class="ci-ok">✔</span>Email OTP (sendOTP / verifyOtp)</li>
+        <li><span class="ci-ok">✔</span>allowPasswordless — support 2FA untuk OAuth user</li>
+        <li><span class="ci-ok">✔</span>Session 7 hari, field mapping DB</li>
+        <li><span class="ci-ok">✔</span>sendResetPassword & sendOTP hooks</li>
       </ul>
     </div>
 
     <div class="feature-card">
       <div class="card-header">
-        <div class="card-icon" style="background:#F5F3FF;">ðŸŽ¨</div>
-        <div style="flex:1"><div class="card-title">UI Component Library</div><div class="card-file">components/ui/ (24 komponen)</div></div>
-        <span class="badge badge-done">âœ… Selesai</span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="card-icon" style="background:#FEF3C7;">📧</div>
+          <div>
+            <div class="card-title">Email System</div>
+            <div class="card-file">lib/email.ts</div>
+          </div>
+        </div>
+        <span class="badge badge-new">Baru!</span>
       </div>
       <ul class="card-items">
-        <li><span class="ci-ok">âœ“</span> shadcn/ui â€” 24 komponen siap pakai</li>
-        <li><span class="ci-ok">âœ“</span> Button, Card, Chart, Sidebar, Toast (Sonner)</li>
+        <li><span class="ci-ok">✔</span>Nodemailer (Gmail SMTP / Ethereal fallback)</li>
+        <li><span class="ci-ok">✔</span>Template: Reset Password (branded HTML)</li>
+        <li><span class="ci-ok">✔</span>Template: 2FA OTP (kode besar + warning)</li>
+        <li><span class="ci-ok">✔</span>Preview URL di terminal (dev mode)</li>
       </ul>
+      <div class="card-tags">
+        <span class="tag">resetPasswordEmailTemplate</span>
+        <span class="tag">twoFactorOtpEmailTemplate</span>
+      </div>
     </div>
 
-    <div class="feature-card" style="border-color:#D1FAE5;">
+    <div class="feature-card">
       <div class="card-header">
-        <div class="card-icon" style="background:#D1FAE5;">âš™ï¸</div>
-        <div style="flex:1"><div class="card-title">Library &amp; Utilities</div><div class="card-file">lib/db.ts Â· auth.ts Â· types/enrollment.ts</div></div>
-        <span class="badge badge-done">âœ… Selesai</span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="card-icon" style="background:#DBEAFE;">🗄️</div>
+          <div>
+            <div class="card-title">Database & ORM</div>
+            <div class="card-file">prisma/schema.prisma · seed.ts · dev.db</div>
+          </div>
+        </div>
+        <span class="badge badge-done">Selesai</span>
       </div>
       <ul class="card-items">
-        <li><span class="ci-ok">âœ“</span> lib/db.ts â€” Prisma singleton (cegah leak)</li>
-        <li><span class="ci-ok">âœ“</span> lib/auth.ts â€” field mapping benar (fixed)</li>
-        <li><span class="ci-ok">âœ“</span> types/enrollment.ts â€” shared TS interfaces</li>
+        <li><span class="ci-ok">✔</span>Auth models: user, session, account, twoFactor</li>
+        <li><span class="ci-ok">✔</span>Business: Role, Category, Course, Lesson, Enrollment</li>
+        <li><span class="ci-ok">✔</span>Invoice, Transaction, Certificate, LessonProgress</li>
+        <li><span class="ci-ok">✔</span>Seed: 3 roles, 5 kategori, 6 kursus, 64 lessons</li>
+        <li><span class="ci-warn">⚠</span>Int ID di SQLite → BigInt saat ke PostgreSQL</li>
       </ul>
     </div>
 
     <div class="feature-card">
       <div class="card-header">
-        <div class="card-icon" style="background:#ECFDF5;">ðŸ—‚ï¸</div>
-        <div style="flex:1"><div class="card-title">App Sidebar (Admin)</div><div class="card-file">components/app-sidebar.tsx</div></div>
-        <span class="badge badge-partial">ðŸŸ  Sebagian</span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="card-icon" style="background:#D1FAE5;">🔌</div>
+          <div>
+            <div class="card-title">API Routes</div>
+            <div class="card-file">app/api/...</div>
+          </div>
+        </div>
+        <span class="badge badge-done">Selesai</span>
       </div>
       <ul class="card-items">
-        <li><span class="ci-ok">âœ“</span> Komponen sidebar navigation</li>
-        <li><span class="ci-err">âœ—</span> Belum terintegrasi ke layout dashboard</li>
+        <li><span class="ci-ok">✔</span>GET /api/courses — filter, search, soft-delete</li>
+        <li><span class="ci-ok">✔</span>GET /api/courses/[slug] + enrollment-status</li>
+        <li><span class="ci-ok">✔</span>POST /api/enrollments — free/paid routing</li>
+        <li><span class="ci-ok">✔</span>POST /api/progress — update lesson progress</li>
+        <li><span class="ci-ok">✔</span>/api/auth/[...all] — Better Auth handler + 2FA</li>
+        <li><span class="ci-warn">⚠</span>POST /api/courses (admin) belum ada</li>
+        <li><span class="ci-warn">⚠</span>Midtrans webhook belum ada</li>
+      </ul>
+    </div>
+
+    <div class="feature-card">
+      <div class="card-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="card-icon" style="background:#D1FAE5;">📲</div>
+          <div>
+            <div class="card-title">Enrollment System</div>
+            <div class="card-file">app/api/enrollments/ · app/api/progress/</div>
+          </div>
+        </div>
+        <span class="badge badge-done">Selesai</span>
+      </div>
+      <ul class="card-items">
+        <li><span class="ci-ok">✔</span>Free course → enrollment langsung</li>
+        <li><span class="ci-ok">✔</span>Paid course → Invoice pending</li>
+        <li><span class="ci-ok">✔</span>Cek duplikat (409 Conflict)</li>
+        <li><span class="ci-ok">✔</span>Auto-complete saat 100% lesson selesai</li>
+        <li><span class="ci-warn">⚠</span>Paid → Midtrans belum terintegrasi</li>
+      </ul>
+    </div>
+
+    <div class="feature-card">
+      <div class="card-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="card-icon" style="background:#FEE2E2;">☁️</div>
+          <div>
+            <div class="card-title">Upload Media (Cloudinary)</div>
+            <div class="card-file">Belum dikerjakan</div>
+          </div>
+        </div>
+        <span class="badge badge-todo">Belum</span>
+      </div>
+      <ul class="card-items">
+        <li><span class="ci-fix">ℹ</span>Lesson.videoUrl sudah ada di schema</li>
+        <li><span class="ci-warn">⚠</span>Upload endpoint belum dibuat</li>
+        <li><span class="ci-warn">⚠</span>Cloudinary config belum ada di .env</li>
+      </ul>
+    </div>
+
+    <div class="feature-card">
+      <div class="card-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="card-icon" style="background:#FEE2E2;">💳</div>
+          <div>
+            <div class="card-title">Sistem Pembayaran</div>
+            <div class="card-file">Belum dikerjakan</div>
+          </div>
+        </div>
+        <span class="badge badge-todo">Belum</span>
+      </div>
+      <ul class="card-items">
+        <li><span class="ci-fix">ℹ</span>Schema Invoice + Transaction sudah ada</li>
+        <li><span class="ci-warn">⚠</span>Halaman /checkout belum ada</li>
+        <li><span class="ci-warn">⚠</span>Midtrans Snap + webhook belum diintegrasikan</li>
       </ul>
     </div>
 
   </div>
 
-  <!-- SECTION: Backend -->
-  <div class="section-title">ðŸ”§ Backend &amp; Integrasi</div>
-  <div class="feature-grid">
-
-    <div class="feature-card" style="border-color:#D1FAE5;">
-      <div class="card-header">
-        <div class="card-icon" style="background:#D1FAE5;">ðŸ—„ï¸</div>
-        <div style="flex:1">
-          <div class="card-title">Database &amp; ORM <span style="font-size:10px;color:#10B981">(Standard Tim âœ…)</span></div>
-          <div class="card-file">prisma/schema.prisma Â· seed.ts</div>
-        </div>
-        <span class="badge badge-done">âœ… Selesai</span>
-      </div>
-      <ul class="card-items">
-        <li><span class="ci-ok">âœ“</span> Role, Category, Invoice, Transaction, Certificate</li>
-        <li><span class="ci-ok">âœ“</span> Semua model: companyCode, status, isDeleted, audit</li>
-        <li><span class="ci-ok">âœ“</span> Seed: 3 roles, 5 kategori, 6 kursus, 64 lessons</li>
-        <li><span class="ci-ok">âœ“</span> Fix: lastUpdatedDate @default(now()) untuk Better Auth</li>
-        <li><span class="ci-warn">âš </span> Int ID â†’ BigInt saat migrate ke PostgreSQL</li>
-      </ul>
-    </div>
-
-    <div class="feature-card" style="border-color:#D1FAE5;">
-      <div class="card-header">
-        <div class="card-icon" style="background:#D1FAE5;">ðŸ”‘</div>
-        <div style="flex:1">
-          <div class="card-title">Sistem Autentikasi <span style="font-size:10px;background:#DCFCE7;color:#16A34A;padding:2px 6px;border-radius:4px;font-weight:700;">FIXED</span></div>
-          <div class="card-file">lib/auth.ts Â· proxy.ts</div>
-        </div>
-        <span class="badge badge-done">âœ… Selesai</span>
-      </div>
-      <ul class="card-items">
-        <li><span class="ci-ok">âœ“</span> user.fields: createdAtâ†’createdDate, updatedAtâ†’lastUpdatedDate</li>
-        <li><span class="ci-ok">âœ“</span> Hapus additionalFields.role (FK conflict)</li>
-        <li><span class="ci-ok">âœ“</span> db singleton, session 7 hari, route protection</li>
-        <li><span class="ci-warn">âš </span> Google OAuth belum dikonfigurasi</li>
-      </ul>
-    </div>
-
-    <div class="feature-card" style="border-color:#D1FAE5;">
-      <div class="card-header">
-        <div class="card-icon" style="background:#D1FAE5;">ðŸ› ï¸</div>
-        <div style="flex:1">
-          <div class="card-title">API Routes â€” Enrollment System ðŸ†•</div>
-          <div class="card-file">api/enrollments Â· api/progress Â· enrollment-status</div>
-        </div>
-        <span class="badge badge-done">âœ… Selesai</span>
-      </div>
-      <p class="card-desc">Industry-standard: free â†’ langsung enroll, paid â†’ invoice pending â†’ redirect checkout.</p>
-      <ul class="card-items">
-        <li><span class="ci-ok">âœ“</span> POST/GET /api/enrollments + progress %</li>
-        <li><span class="ci-ok">âœ“</span> GET courses/[slug]/enrollment-status</li>
-        <li><span class="ci-ok">âœ“</span> POST /api/progress â€” upsert + auto-complete</li>
-        <li><span class="ci-warn">âš </span> Midtrans webhook belum ada</li>
-      </ul>
-    </div>
-
-    <div class="feature-card" style="border-color:#D1FAE5;">
-      <div class="card-header">
-        <div class="card-icon" style="background:#D1FAE5;">ðŸ™</div>
-        <div style="flex:1">
-          <div class="card-title">Version Control (GitHub) ðŸ†•</div>
-          <div class="card-file">C2-Coding-Crew/learnify-lms Â· branch: dashboard</div>
-        </div>
-        <span class="badge badge-done">âœ… Selesai</span>
-      </div>
-      <ul class="card-items">
-        <li><span class="ci-ok">âœ“</span> feat(db): enterprise schema + seed</li>
-        <li><span class="ci-ok">âœ“</span> feat(auth): Better Auth + enrollment API</li>
-        <li><span class="ci-ok">âœ“</span> feat(ui): course pages + learn page</li>
-        <li><span class="ci-ok">âœ“</span> fix(auth): 422 register bug â€” field mapping</li>
-      </ul>
-    </div>
-
-    <div class="feature-card" style="border-color:#FEE2E2;">
-      <div class="card-header">
-        <div class="card-icon" style="background:#FEF2F2;">ðŸ“¤</div>
-        <div style="flex:1"><div class="card-title">Upload Media (Cloudinary)</div><div class="card-file">â€” belum ada</div></div>
-        <span class="badge badge-todo">âŒ Belum</span>
-      </div>
-      <ul class="card-items">
-        <li><span class="ci-err">âœ—</span> Cloudinary SDK belum diintegrasikan</li>
-        <li><span class="ci-err">âœ—</span> Thumbnail &amp; video upload belum ada</li>
-      </ul>
-    </div>
-
-    <div class="feature-card" style="border-color:#FEE2E2;">
-      <div class="card-header">
-        <div class="card-icon" style="background:#FEF2F2;">ðŸ’³</div>
-        <div style="flex:1"><div class="card-title">Sistem Pembayaran (Midtrans)</div><div class="card-file">Schema Invoice âœ… â€” integrasi belum</div></div>
-        <span class="badge badge-todo">âŒ Belum</span>
-      </div>
-      <ul class="card-items">
-        <li><span class="ci-ok">âœ“</span> Schema Invoice + Transaction ada di DB</li>
-        <li><span class="ci-ok">âœ“</span> Paid enrollment sudah buat invoice pending</li>
-        <li><span class="ci-err">âœ—</span> /checkout + Midtrans Snap belum ada</li>
-      </ul>
-    </div>
-
+  <!-- GIT LOG -->
+  <div class="section-title">📜 Git History (Terbaru)</div>
+  <div class="git-section">
+    <h2>🌿 Branch: dashboard @ C2-Coding-Crew/learnify-lms</h2>
+    <div class="git-commit"><span class="git-hash">fb8d753</span><span class="git-type gt-docs">docs</span><span class="git-msg">update project analysis to 19 April 2026 — 80% completion</span></div>
+    <div class="git-commit"><span class="git-hash">49667d7</span><span class="git-type gt-feat">feat</span><span class="git-msg">add email OTP as alternative 2FA verification method</span></div>
+    <div class="git-commit"><span class="git-hash">ce65b52</span><span class="git-type gt-fix">fix</span><span class="git-msg">fix registration flow and middleware blocking issue</span></div>
+    <div class="git-commit"><span class="git-hash">6f0197d</span><span class="git-type gt-feat">feat</span><span class="git-msg">enforce 2FA on login for both email and Google OAuth</span></div>
+    <div class="git-commit"><span class="git-hash">35712aa</span><span class="git-type gt-fix">fix</span><span class="git-msg">remove broken verifyTotp from setup, use proper login flow</span></div>
+    <div class="git-commit"><span class="git-hash">fe61258</span><span class="git-type gt-fix">fix</span><span class="git-msg">proper TOTP validation + redirect to dashboard on success</span></div>
+    <div class="git-commit"><span class="git-hash">e072523</span><span class="git-type gt-feat">feat</span><span class="git-msg">implement TOTP-based 2FA with Google Authenticator</span></div>
+    <div class="git-commit"><span class="git-hash">0ee2d09</span><span class="git-type gt-feat">feat</span><span class="git-msg">implement Google OAuth via Better Auth socialProviders</span></div>
+    <div class="git-commit"><span class="git-hash">a0fb224</span><span class="git-type gt-fix">fix</span><span class="git-msg">resolve 422 register error — Better Auth field mapping</span></div>
+    <div class="git-commit"><span class="git-hash">7818750</span><span class="git-type gt-feat">feat</span><span class="git-msg">course pages, enrollment UI, and learn page</span></div>
+    <div class="git-commit"><span class="git-hash">fafc5dd</span><span class="git-type gt-feat">feat</span><span class="git-msg">implement Better Auth + enrollment system API</span></div>
+    <div class="git-commit"><span class="git-hash">753c00e</span><span class="git-type gt-feat">feat</span><span class="git-msg">merge enterprise schema with team standard pattern</span></div>
   </div>
 
-  <!-- RECOMMENDATIONS -->
+  <!-- ROADMAP -->
+  <div class="section-title">🗺️ Roadmap & Prioritas</div>
   <div class="rec-section">
-    <h2>ðŸŽ¯ Roadmap &amp; Rekomendasi Prioritas (Sesi 4 â€” 09 April 2026)</h2>
-    <p>Enrollment âœ… Â· Auth Fixed âœ… Â· Halaman Belajar âœ… â€” fokus: <strong>Dashboard Dinamis</strong></p>
+    <h2>Next Steps</h2>
+    <p>Rekomendasi urutan pengerjaan berdasarkan dampak UX dan ketergantungan antar fitur.</p>
     <div class="rec-grid">
-      <div class="rec-item" style="border-color:rgba(16,185,129,0.3);">
-        <div class="rec-priority" style="color:#6EE7B7;">âœ… SELESAI sesi ini</div>
-        <div class="rec-title">Auth Fix, Enrollment, /learn, Git</div>
-        <div class="rec-desc">422 fixed, enrollment free/paid, halaman belajar dengan progress, 4 commits Conventional Commits di GitHub.</div>
-      </div>
+
       <div class="rec-item">
-        <div class="rec-priority pri-high">ðŸ”´ Prioritas 1</div>
-        <div class="rec-title">Dashboard Dinamis</div>
-        <div class="rec-desc">Halaman pertama setelah login masih hardcoded. Query GET /api/enrollments dan tampilkan kursus yang diikuti user dengan progress nyata.</div>
+        <div class="rec-priority p-red">🔴 Prioritas 1 — Blocking UX</div>
+        <h3>Dashboard Dinamis</h3>
+        <p>Dashboard masih hardcoded. Data enrollment & progress sudah ada di DB.</p>
+        <ul>
+          <li>Query GET /api/enrollments di page.tsx</li>
+          <li>Tampilkan kursus enrolled + progress bar</li>
+          <li>Ganti chart hardcoded dengan data nyata</li>
+        </ul>
       </div>
+
       <div class="rec-item">
-        <div class="rec-priority pri-med">ðŸŸ¡ Prioritas 2</div>
-        <div class="rec-title">Video Player (YouTube/Cloudinary)</div>
-        <div class="rec-desc">iframe di /learn sudah siap. Tambahkan videoUrl ke lesson seed data dan halaman belajar langsung menayangkan konten.</div>
+        <div class="rec-priority p-yellow">🟡 Prioritas 2 — Content</div>
+        <h3>Video Player</h3>
+        <p>iframe video sudah ada, tinggal mengisi videoUrl.</p>
+        <ul>
+          <li>Tambahkan YouTube embed URL ke seed</li>
+          <li>Update Lesson.videoUrl di schema</li>
+          <li>Opsional: Cloudinary untuk hosting</li>
+        </ul>
       </div>
+
       <div class="rec-item">
-        <div class="rec-priority pri-med">ðŸŸ¡ Prioritas 3</div>
-        <div class="rec-title">Pembayaran (Midtrans)</div>
-        <div class="rec-desc">Invoice schema ada. Buat /checkout/[invoiceNumber], integrasi Midtrans Snap, dan webhook konfirmasi pembayaran.</div>
+        <div class="rec-priority p-yellow">🟡 Prioritas 3 — Revenue</div>
+        <h3>Sistem Pembayaran</h3>
+        <p>Schema Invoice sudah ada, tinggal integrasi payment gateway.</p>
+        <ul>
+          <li>Halaman /checkout/[invoiceNumber]</li>
+          <li>Midtrans Snap integration</li>
+          <li>Webhook handler untuk konfirmasi</li>
+        </ul>
       </div>
+
       <div class="rec-item">
-        <div class="rec-priority pri-low">ðŸŸ¢ Prioritas 4</div>
-        <div class="rec-title">Polish &amp; Deploy</div>
-        <div class="rec-desc">Google OAuth, Cloudinary, navbar active. Migrate PostgreSQL (Neon.tech), ubah Int â†’ BigInt, deploy Vercel, PR dashboard â†’ main.</div>
+        <div class="rec-priority p-green">🟢 Prioritas 4 — Polish & Deploy</div>
+        <h3>Finishing & Production</h3>
+        <p>Siap untuk deployment setelah fitur inti selesai.</p>
+        <ul>
+          <li>Navbar active state</li>
+          <li>Email SMTP (isi .env EMAIL_USER)</li>
+          <li>Migrate ke PostgreSQL (Neon.tech)</li>
+          <li>Deploy ke Vercel</li>
+        </ul>
       </div>
+
     </div>
   </div>
 
-</div>
+</main>
 
-<script>
-  window.addEventListener('load', () => {
-    document.querySelectorAll('.pb-seg').forEach(el => {
-      const w = el.style.width;
-      el.style.width = '0';
-      setTimeout(() => { el.style.width = w; }, 200);
-    });
-  });
-</script>
+<footer class="footer">
+  <p>Learnify LMS · Project Analysis Dashboard · <strong>Diperbarui 19 April 2026</strong></p>
+  <p style="margin-top:6px;">Overall Progress: <strong style="color:var(--green)">80%</strong> · Next: Dashboard Dinamis</p>
+</footer>
+
 </body>
 </html>
