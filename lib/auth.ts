@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { twoFactor } from "better-auth/plugins";
 import { db } from "@/lib/db";
-import { sendEmail, resetPasswordEmailTemplate } from "@/lib/email";
+import { sendEmail, resetPasswordEmailTemplate, twoFactorOtpEmailTemplate } from "@/lib/email";
 
 export const auth = betterAuth({
   database: prismaAdapter(db, {
@@ -49,6 +49,15 @@ export const auth = betterAuth({
       totpOptions: {
         digits: 6,              // Kode 6 digit (standar)
         period: 30,             // Berubah setiap 30 detik (standar TOTP RFC 6238)
+      },
+      // ── Email OTP: dikirim saat user memilih "Kode via Email" ─────────────────
+      sendOTP: async ({ user, otp }: { user: { email: string; name: string }; otp: string }) => {
+        console.log(`\n🔒 [2FA OTP] Mengirim kode OTP ke: ${user.email}`);
+        await sendEmail({
+          to: user.email,
+          subject: "🔒 Kode Verifikasi Login — Learnify LMS",
+          html: twoFactorOtpEmailTemplate(otp, user.name),
+        });
       },
     }),
   ],

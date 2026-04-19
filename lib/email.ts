@@ -49,7 +49,7 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions) {
   if (!process.env.EMAIL_USER) {
     console.log("\n✅ [DEV EMAIL] Email terkirim (fake)!");
     console.log("   Preview URL:", nodemailer.getTestMessageUrl(info));
-    console.log("   Buka URL di atas untuk melihat email reset password\n");
+    console.log("   Buka URL di atas untuk melihat email\n");
   } else {
     console.log(`✅ [EMAIL] Terkirim ke: ${to}`);
   }
@@ -133,6 +133,95 @@ export function resetPasswordEmailTemplate(resetUrl: string, userName: string): 
             <td style="background:#F8FAFC;padding:24px 40px;text-align:center;border-top:1px solid #E2E8F0;">
               <p style="margin:0;font-size:12px;color:#94A3B8;">
                 © 2026 Learnify LMS · Email ini dikirim secara otomatis, mohon tidak membalas.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim();
+}
+
+// ── 2FA OTP Email Template ────────────────────────────────────────────────────
+// Digunakan untuk mengirim kode OTP via email saat verifikasi 2FA
+export function twoFactorOtpEmailTemplate(otp: string, userName: string): string {
+  return `
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kode Verifikasi — Learnify</title>
+</head>
+<body style="margin:0;padding:0;background:#F0F2F8;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F0F2F8;padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:24px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+
+          <!-- Header -->
+          <tr>
+            <td style="background:#100E2E;padding:32px 40px;text-align:center;">
+              <table cellpadding="0" cellspacing="0" style="margin:0 auto;">
+                <tr>
+                  <td style="background:#FF6B4A;width:36px;height:36px;border-radius:10px;text-align:center;vertical-align:middle;">
+                    <div style="width:16px;height:16px;background:white;border-radius:3px;transform:rotate(45deg);margin:10px auto;"></div>
+                  </td>
+                  <td style="padding-left:10px;">
+                    <span style="color:white;font-size:22px;font-weight:800;letter-spacing:-0.5px;">
+                      Learnify<span style="color:#FF6B4A;">.</span>
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:40px 40px 32px;">
+              <h1 style="margin:0 0 12px;font-size:24px;font-weight:800;color:#0F172A;">
+                Kode Verifikasi Login &#x1F512;
+              </h1>
+              <p style="margin:0 0 24px;font-size:15px;color:#64748B;line-height:1.6;">
+                Halo <strong style="color:#0F172A;">${userName}</strong>, gunakan kode di bawah untuk menyelesaikan proses login ke Learnify.
+              </p>
+
+              <!-- OTP Box -->
+              <div style="background:#FFF9F8;border:2px solid #FF6B4A;border-radius:16px;padding:28px;text-align:center;margin-bottom:24px;">
+                <p style="margin:0 0 8px;font-size:12px;color:#94A3B8;letter-spacing:0.08em;text-transform:uppercase;font-weight:700;">
+                  Kode Verifikasi
+                </p>
+                <p style="margin:0;font-size:44px;font-weight:900;letter-spacing:0.35em;color:#FF6B4A;font-family:monospace;">
+                  ${otp}
+                </p>
+                <p style="margin:10px 0 0;font-size:12px;color:#94A3B8;">
+                  Berlaku selama <strong>10 menit</strong>
+                </p>
+              </div>
+
+              <!-- Warning -->
+              <div style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:12px;padding:14px 18px;margin-bottom:16px;">
+                <p style="margin:0;font-size:13px;color:#9A3412;line-height:1.5;">
+                  &#x26A0;&#xFE0F; <strong>Jangan bagikan kode ini</strong> kepada siapa pun, termasuk tim Learnify.
+                </p>
+              </div>
+
+              <p style="margin:0;font-size:12px;color:#94A3B8;line-height:1.6;">
+                Jika kamu tidak sedang login, abaikan email ini dan pertimbangkan untuk mengganti password.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background:#F8FAFC;padding:24px 40px;text-align:center;border-top:1px solid #E2E8F0;">
+              <p style="margin:0;font-size:12px;color:#94A3B8;">
+                &#169; 2026 Learnify LMS &middot; Email otomatis, mohon tidak membalas.
               </p>
             </td>
           </tr>
