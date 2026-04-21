@@ -1,19 +1,13 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { db } from "./lib/db.ts";
+import { db } from "./lib/db";
 
 const auth = betterAuth({
   database: prismaAdapter(db, { provider: "sqlite" }),
   hooks: {
-    after: [{
-      matcher: (ctx) => {
-        console.log("HOOK MATCHED:", ctx.path);
-        return true;
-      },
-      handler: async (ctx) => {
-        console.log("HOOK RAN FOR:", ctx.path);
-      }
-    }]
+    after: async (ctx: any) => {
+      console.log("HOOK RAN FOR:", ctx.path || ctx?.request?.url);
+    }
   }
 });
 

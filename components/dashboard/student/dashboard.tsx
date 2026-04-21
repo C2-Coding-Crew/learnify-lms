@@ -44,15 +44,28 @@ interface StudentDashboardProps {
   userName: string;
   userEmail: string;
   twoFactorEnabled?: boolean;
+  userRole: string;
 }
 
-export default function StudentDashboard({ userName, userEmail, twoFactorEnabled }: StudentDashboardProps) {
+export default function StudentDashboard({ userName, userEmail }: StudentDashboardProps) {
   const router = useRouter();
 
   const handleLogout = async () => {
-    await authClient.signOut();
-    router.push("/");
-    router.refresh();
+    try {
+      await authClient.signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            router.push("/");
+            router.refresh();
+          },
+        },
+      });
+    } catch (error) {
+      // Jika gagal secara API, paksa redirect ke home agar session di-clear
+      console.error("Logout error:", error);
+      router.push("/");
+      router.refresh();
+    }
   };
   // --- STATE MANAGEMENT ---
   const [todos, setTodos] = useState<Todo[]>([
@@ -158,11 +171,10 @@ export default function StudentDashboard({ userName, userEmail, twoFactorEnabled
                   router.push("/dashboard/settings/security");
                 }
               }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-[14px] transition-all ${
-                item.id === "dashboard"
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-[14px] transition-all ${item.id === "dashboard"
                   ? "bg-[#FF6B4A] text-white shadow-md shadow-orange-100"
                   : "text-slate-400 hover:bg-slate-50 hover:text-slate-600"
-              }`}
+                }`}
             >
               {item.icon}
               {item.name}
@@ -210,7 +222,7 @@ export default function StudentDashboard({ userName, userEmail, twoFactorEnabled
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-bold">{userName}</p>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                  {userEmail}
+                  {userRole}
                 </p>
               </div>
               <div className="w-10 h-10 bg-slate-200 rounded-xl overflow-hidden shadow-sm ring-2 ring-white">
@@ -237,13 +249,13 @@ export default function StudentDashboard({ userName, userEmail, twoFactorEnabled
                 </p>
               </div>
             </div>
-            <Button 
+            <Button
               onClick={() => router.push("/dashboard/settings/security")}
               className="bg-white text-[#FF6B4A] hover:bg-slate-50 font-black px-8 py-6 rounded-2xl text-sm transition-all active:scale-[0.98] shadow-lg shadow-black/5 shrink-0 z-10"
             >
               Aktifkan Sekarang →
             </Button>
-            
+
             {/* Dekorasi Background */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-[80px] -mr-32 -mt-32 transition-all duration-1000 group-hover:bg-white/20" />
             <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-black/10 rounded-full blur-[60px] opacity-50" />
@@ -424,7 +436,7 @@ export default function StudentDashboard({ userName, userEmail, twoFactorEnabled
               </div>
               <div className="grid grid-cols-7 gap-1 text-center mb-2 text-[10px] font-bold text-slate-300">
                 {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
-                  <span key={`${d}-${i}`}>{d}</span> 
+                  <span key={`${d}-${i}`}>{d}</span>
                 ))}
               </div>
               <div className="grid grid-cols-7 gap-1 text-center">

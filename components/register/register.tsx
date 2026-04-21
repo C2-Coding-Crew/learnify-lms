@@ -2,14 +2,29 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Mail, Lock, User, Chrome, ChevronRight, X, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  Mail,
+  Lock,
+  User,
+  Chrome,
+  ChevronRight,
+  X,
+  Eye,
+  EyeOff,
+  AlertCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import { registerSchema } from "@/lib/validations/auth";
 
 const RegisterPage = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Ambil roleId dari URL (misal: ?roleId=3), default ke 2 (Siswa)
+  const roleIdFromUrl = Number(searchParams.get("roleId")) || 2;
+
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,7 +40,8 @@ const RegisterPage = () => {
     try {
       const { data, error: googleError } = await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/dashboard",
+        // Kirim roleId ke callbackURL agar ditangkap oleh databaseHooks di server
+        callbackURL: `/auth/select-role?roleId=${roleIdFromUrl}`,
       });
       if (googleError) {
         setError(googleError.message || "Gagal mendaftar dengan Google. Silakan coba lagi.");
@@ -37,12 +53,17 @@ const RegisterPage = () => {
     }
   };
 
+  // ── Email Register ────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
     // Validasi Zod di client
-    const result = registerSchema.safeParse({ name: fullName, email, password });
+    const result = registerSchema.safeParse({
+      name: fullName,
+      email,
+      password,
+    });
     if (!result.success) {
       setError(result.error.issues[0].message);
       return;
@@ -54,7 +75,9 @@ const RegisterPage = () => {
         name: fullName,
         email,
         password,
-        callbackURL: "/dashboard",
+        // @ts-ignore - Mengabaikan eror TS karena roleId adalah field tambahan (custom)
+        roleId: roleIdFromUrl,
+        callbackURL: "/auth/select-role",
         fetchOptions: {
           onSuccess: () => {
             router.push("/dashboard");
@@ -65,12 +88,17 @@ const RegisterPage = () => {
 
       if (authError) {
         if (authError.code === "USER_ALREADY_EXISTS") {
-          setError("Email sudah terdaftar. Silakan masuk menggunakan akun yang ada.");
+          setError(
+            "Email sudah terdaftar. Silakan masuk menggunakan akun yang ada.",
+          );
         } else {
           // Tampilkan pesan error asli dari server untuk debugging
           setError(authError.message ?? "Gagal membuat akun. Silakan coba lagi.");
         }
       }
+
+      router.push("/dashboard");
+      router.refresh();
     } catch {
       setError("Terjadi kesalahan koneksi. Pastikan server berjalan dan coba lagi.");
     } finally {
@@ -113,8 +141,12 @@ const RegisterPage = () => {
                 <User className="w-8 h-8 text-white" />
               </div>
               <div className="space-y-1 text-center">
-                <p className="text-slate-800 font-bold text-sm">Bergabung Bersama Kami</p>
-                <p className="text-slate-400 text-xs">20.000+ pelajar aktif</p>
+                <p className="text-slate-800 font-bold text-sm">
+                  Bergabung Bersama Kami
+                </p>
+                <p className="text-slate-400 text-xs font-bold uppercase">
+                  Pendaftaran: {roleIdFromUrl === 3 ? "Instructor" : "Student"}
+                </p>
               </div>
             </div>
           </div>
@@ -129,9 +161,14 @@ const RegisterPage = () => {
         {/* --- RIGHT SIDE --- */}
         <div className="w-full md:w-1/2 p-8 lg:p-14 bg-white flex flex-col justify-center relative overflow-y-auto">
           <div className="mb-6">
-            <h3 className="text-2xl font-bold text-slate-900 mb-2">Daftar Akun Baru</h3>
+            <h3 className="text-2xl font-bold text-slate-900 mb-2">
+              Daftar Akun Baru
+            </h3>
             <p className="text-slate-500 text-sm">
-              Lengkapi data di bawah untuk bergabung bersama kami.
+              Mendaftar sebagai{" "}
+              <span className="text-[#FF6B4A] font-bold uppercase">
+                {roleIdFromUrl === 3 ? "Instructor" : "Student"}
+              </span>
             </p>
           </div>
 
@@ -146,12 +183,18 @@ const RegisterPage = () => {
             ) : (
               <Chrome className="w-5 h-5 text-red-500 group-hover:scale-110 transition-transform" />
             )}
-            <span className="text-sm">{isGoogleLoading ? "Menghubungkan..." : "Daftar Cepat dengan Google"}</span>
+            <span className="text-sm">
+              {isGoogleLoading
+                ? "Menghubungkan..."
+                : "Daftar Cepat dengan Google"}
+            </span>
           </button>
 
           <div className="flex items-center gap-4 mb-4">
             <div className="h-[1px] bg-slate-100 flex-1" />
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Atau</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              Atau
+            </span>
             <div className="h-[1px] bg-slate-100 flex-1" />
           </div>
 
@@ -223,7 +266,11 @@ const RegisterPage = () => {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600"
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
                 </button>
               </div>
             </div>
@@ -246,7 +293,10 @@ const RegisterPage = () => {
 
           <p className="text-center text-xs font-medium text-slate-500 mt-6">
             Sudah bergabung?{" "}
-            <Link href="/auth/login" className="text-[#FF6B4A] font-bold hover:underline">
+            <Link
+              href="/auth/login"
+              className="text-[#FF6B4A] font-bold hover:underline"
+            >
               Masuk ke Akun
             </Link>
           </p>

@@ -3,6 +3,13 @@ import { twoFactorClient } from "better-auth/client/plugins";
 
 export const authClient = createAuthClient({
   baseURL: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+  user: {
+    additionalFields: {
+      roleId: {
+        type: "number",
+      },
+    },
+  },
   plugins: [
     twoFactorClient({
       // Redirect ke halaman ini jika user punya 2FA aktif saat login
