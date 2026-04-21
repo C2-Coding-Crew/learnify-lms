@@ -18,17 +18,18 @@ const LoginPage = () => {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Google OAuth ────────────────────────────────────────────
-  // callbackURL ke /dashboard — jika user punya 2FA, Better Auth akan
-  // mengarahkan ke /auth/two-factor secara otomatis via twoFactorClient
   const handleGoogleLogin = async () => {
     setError(null);
     setIsGoogleLoading(true);
     try {
-      await authClient.signIn.social({
+      const { data, error: googleError } = await authClient.signIn.social({
         provider: "google",
         callbackURL: "/dashboard",
       });
+      if (googleError) {
+        setError(googleError.message || "Gagal masuk dengan Google. Silakan coba lagi.");
+        setIsGoogleLoading(false);
+      }
     } catch {
       setError("Gagal masuk dengan Google. Silakan coba lagi.");
       setIsGoogleLoading(false);

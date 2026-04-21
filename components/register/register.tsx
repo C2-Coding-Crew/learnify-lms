@@ -23,10 +23,14 @@ const RegisterPage = () => {
     setError(null);
     setIsGoogleLoading(true);
     try {
-      await authClient.signIn.social({
+      const { data, error: googleError } = await authClient.signIn.social({
         provider: "google",
         callbackURL: "/dashboard",
       });
+      if (googleError) {
+        setError(googleError.message || "Gagal mendaftar dengan Google. Silakan coba lagi.");
+        setIsGoogleLoading(false);
+      }
     } catch {
       setError("Gagal mendaftar dengan Google. Silakan coba lagi.");
       setIsGoogleLoading(false);
