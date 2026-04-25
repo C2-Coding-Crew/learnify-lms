@@ -1,10 +1,10 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../node_modules/.prisma/client"
 }
 
+
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -18,24 +18,19 @@ model user {
   email         String    @unique
   emailVerified Boolean   @default(false)
   image         String?
+  twoFactorEnabled Boolean? @default(false)
 
-  // -- Field yang diperbaiki agar sinkron dengan Better Auth --
-  createdDate     DateTime  @default(now())
-  lastUpdatedDate DateTime  @updatedAt
+  // ── Team Standard Fields ──────────────────────────────────────────────────
+  roleId          Int?
+  companyCode     String?  @default("LEARNIFY")
+  status          Int      @default(1)    // 1=aktif, 0=nonaktif
+  isDeleted       Int      @default(0)    // 0=ada, 1=terhapus (soft delete)
+  createdBy       String?  @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String?  @default("SYSTEM")
+  lastUpdatedDate DateTime @default(now()) @updatedAt
 
-  // -- Custom Fields --
-  roleId        Int?      
-  companyCode   String?   @default("LEARNIFY")
-  status        Int       @default(1)
-  isDeleted     Int       @default(0)
-  createdBy     String?   @default("SYSTEM")
-  lastUpdatedBy String?   @default("SYSTEM")
-
-  twoFactorEnabled     Boolean? @default(false)
-  twoFactorSecret      String?
-  twoFactorBackupCodes String?
-
-  // -- Relations --
+  // ── Relations ─────────────────────────────────────────────────────────────
   role          Role?            @relation(fields: [roleId], references: [id])
   sessions      session[]
   accounts      account[]
@@ -43,6 +38,19 @@ model user {
   invoices      Invoice[]
   taughtCourses Course[]         @relation("InstructorCourses")
   progress      LessonProgress[]
+  twoFactor     twoFactor?
+}
+
+// ── 2FA (TOTP) ────────────────────────────────────────────────────────────────
+// Tabel ini dikelola oleh Better Auth twoFactor plugin
+// secret      : TOTP secret key (terenkripsi di Better Auth)
+// backupCodes : JSON array backup codes untuk akses darurat
+model twoFactor {
+  id          String @id
+  secret      String
+  backupCodes String
+  userId      String @unique
+  user        user   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model session {
@@ -50,7 +58,7 @@ model session {
   expiresAt DateTime
   token     String   @unique
   createdDate DateTime @default(now())
-  lastUpdatedDate DateTime @updatedAt
+  lastUpdatedDate DateTime @default(now()) @updatedAt
   ipAddress String?
   userAgent String?
   userId    String
@@ -73,7 +81,7 @@ model account {
   scope                 String?
   password              String?
   createdDate             DateTime  @default(now())
-  lastUpdatedDate         DateTime  @updatedAt
+  lastUpdatedDate         DateTime  @default(now()) @updatedAt
 }
 
 model verification {
@@ -82,7 +90,7 @@ model verification {
   value      String
   expiresAt  DateTime
   createdDate      DateTime  @default(now())
-  lastUpdatedDate  DateTime  @updatedAt
+  lastUpdatedDate  DateTime  @default(now()) @updatedAt
 }
 
 // ═════════════════════════════════════════════════════════════════════════════

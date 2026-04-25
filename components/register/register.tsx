@@ -26,23 +26,29 @@ const RegisterPage = () => {
   const roleIdFromUrl = Number(searchParams.get("roleId")) || 2;
 
   const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(searchParams.get("email") || "");
+
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [alreadyExists, setAlreadyExists] = useState(false);
 
   // ── Google OAuth ──────────────────────────────────────────────────────────
   const handleGoogleRegister = async () => {
     setError(null);
     setIsGoogleLoading(true);
     try {
-      await authClient.signIn.social({
+      const { data, error: googleError } = await authClient.signIn.social({
         provider: "google",
         // Kirim roleId ke callbackURL agar ditangkap oleh databaseHooks di server
         callbackURL: `/auth/select-role?roleId=${roleIdFromUrl}`,
       });
+      if (googleError) {
+        setError(googleError.message || "Gagal mendaftar dengan Google. Silakan coba lagi.");
+        setIsGoogleLoading(false);
+      }
     } catch {
       setError("Gagal mendaftar dengan Google. Silakan coba lagi.");
       setIsGoogleLoading(false);
@@ -53,6 +59,7 @@ const RegisterPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setAlreadyExists(false);
 
     // Validasi Zod di client
     const result = registerSchema.safeParse({
@@ -71,26 +78,26 @@ const RegisterPage = () => {
         name: fullName,
         email,
         password,
-        // @ts-ignore - Mengabaikan eror TS karena roleId adalah field tambahan (custom)
-        roleId: roleIdFromUrl,
-        callbackURL: "/auth/select-role",
+        fetchOptions: {
+          onSuccess: () => {
+            router.push("/dashboard");
+            router.refresh(); // Tambahkan refresh untuk memastikan session terbaca
+          },
+        },
       });
+
 
       if (authError) {
         if (authError.code === "USER_ALREADY_EXISTS") {
-          setError(
-            "Email sudah terdaftar. Silakan masuk menggunakan akun yang ada.",
-          );
+          setAlreadyExists(true);
+          setError(null);
         } else {
-          setError("Gagal membuat akun. Silakan coba lagi.");
+          // Tampilkan pesan error asli dari server untuk debugging
+          setError(authError.message ?? "Gagal membuat akun. Silakan coba lagi.");
         }
-        return;
       }
-
-      router.push("/auth/select-role");
-      router.refresh();
     } catch {
-      setError("Terjadi kesalahan. Silakan coba lagi.");
+      setError("Terjadi kesalahan koneksi. Pastikan server berjalan dan coba lagi.");
     } finally {
       setIsLoading(false);
     }
@@ -121,22 +128,18 @@ const RegisterPage = () => {
           </Link>
 
           <h2 className="text-3xl font-bold text-slate-900 mb-4 leading-tight z-10">
-            Buat Akun <br />
-            <span className="text-[#FF6B4A]">Mulai Belajar</span> Sekarang
+            Mari Mulai <br />
+            <span className="text-[#FF6B4A]">Petualangan Belajar</span> Anda
           </h2>
 
           <div className="relative w-full aspect-square max-w-[280px] flex items-center justify-center z-10">
-            <div className="w-full h-full bg-gradient-to-br from-orange-50 to-purple-50 rounded-3xl flex flex-col items-center justify-center gap-4 p-10">
-              <div className="w-16 h-16 bg-[#FF6B4A] rounded-full flex items-center justify-center shadow-lg shadow-orange-200">
-                <User className="w-8 h-8 text-white" />
+            <div className="w-full h-full bg-gradient-to-br from-orange-50 to-purple-50 rounded-3xl flex flex-col items-center justify-center gap-6 p-10">
+              <div className="w-20 h-20 bg-[#FF6B4A] rounded-2xl flex items-center justify-center shadow-lg shadow-orange-200">
+                <div className="w-10 h-10 bg-white rounded-lg rotate-45" />
               </div>
-              <div className="space-y-1 text-center">
-                <p className="text-slate-800 font-bold text-sm">
-                  Bergabung Bersama Kami
-                </p>
-                <p className="text-slate-400 text-xs font-bold uppercase">
-                  Pendaftaran: {roleIdFromUrl === 3 ? "Instructor" : "Student"}
-                </p>
+              <div className="space-y-2 text-center">
+                <p className="text-slate-800 font-bold text-sm">Akses 300+ Kursus</p>
+                <p className="text-slate-400 text-xs">Belajar kapan saja, di mana saja</p>
               </div>
             </div>
           </div>
@@ -150,15 +153,12 @@ const RegisterPage = () => {
 
         {/* --- RIGHT SIDE --- */}
         <div className="w-full md:w-1/2 p-8 lg:p-14 bg-white flex flex-col justify-center relative overflow-y-auto">
-          <div className="mb-6">
+          <div className="mb-8">
             <h3 className="text-2xl font-bold text-slate-900 mb-2">
               Daftar Akun Baru
             </h3>
             <p className="text-slate-500 text-sm">
-              Mendaftar sebagai{" "}
-              <span className="text-[#FF6B4A] font-bold uppercase">
-                {roleIdFromUrl === 3 ? "Instructor" : "Student"}
-              </span>
+              Akses ribuan materi belajar eksklusif sekarang.
             </p>
           </div>
 
@@ -187,6 +187,38 @@ const RegisterPage = () => {
             </span>
             <div className="h-[1px] bg-slate-100 flex-1" />
           </div>
+
+          {/* Already Exists Banner */}
+          {alreadyExists && (
+            <div className="mb-4 bg-orange-50 border border-orange-200 rounded-2xl p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <AlertCircle className="w-5 h-5 text-[#FF6B4A]" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-slate-800 text-sm">Email sudah terdaftar!</p>
+                  <p className="text-slate-500 text-xs mt-0.5 leading-relaxed">
+                    Akun dengan email <span className="font-bold text-[#FF6B4A]">{email}</span> sudah ada. Silakan masuk dengan akun tersebut.
+                  </p>
+                  <div className="flex items-center gap-2 mt-3">
+                    <Link
+                      href={`/auth/login?email=${encodeURIComponent(email)}`}
+                      className="h-8 px-4 bg-[#FF6B4A] text-white text-xs font-bold rounded-lg hover:bg-[#fa5a35] transition-colors flex items-center gap-1.5"
+                    >
+                      Masuk Sekarang <ChevronRight className="w-3 h-3" />
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setAlreadyExists(false)}
+                      className="h-8 px-3 text-slate-400 text-xs font-bold hover:text-slate-600 transition-colors"
+                    >
+                      Coba email lain
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Error Message */}
           {error && (

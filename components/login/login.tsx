@@ -18,64 +18,35 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [userNotFound, setUserNotFound] = useState(false);
 
-const handleGoogleLogin = async () => {
-  setError(null);
-  setIsGoogleLoading(true);
 
-  try {
-    // 1. Tentukan path target seperti biasa
-    let targetPath = "/dashboard/student"; 
-    if (selectedRole === 1) targetPath = "/dashboard/admin";
-    if (selectedRole === 3) targetPath = "/dashboard/instructor";
-
-    // 2. Eksekusi Sign In
-    const result = await authClient.signIn.social({
-      provider: "google",
-      callbackURL: targetPath, 
-      // @ts-ignore
-      data: {
-        roleId: selectedRole,
-      },
-    });
-
-    // 3. LOGIKA 2FA: Cek apakah user butuh verifikasi kode
-    // Jika 2FA aktif, Better Auth biasanya akan melempar status 'two-factor-required'
-    if (
-      result &&
-      "data" in result &&
-      result.data &&
-      (result.data as { twoFactorRequired?: boolean }).twoFactorRequired
-    ) {
-      // Simpan targetPath sementara ke sessionStorage agar setelah 2FA 
-      // kita tahu harus redirect ke mana (admin/student/instructor)
-      sessionStorage.setItem("post_2fa_redirect", targetPath);
-      
-      // Lempar ke halaman verifikasi kode
-      router.push("/auth/verify-2fa");
-      return;
+  const handleGoogleLogin = async () => {
+    setError(null);
+    setIsGoogleLoading(true);
+    try {
+      const { data, error: googleError } = await authClient.signIn.social({
+        provider: "google",
+        // Langsung ke dashboard, biarkan handle redirect berdasarkan role
+        callbackURL: "/dashboard",
+      });
+      if (googleError) {
+        setError(googleError.message || "Gagal masuk dengan Google. Silakan coba lagi.");
+        setIsGoogleLoading(false);
+      }
+    } catch {
+      setError("Gagal masuk dengan Google. Silakan coba lagi.");
+      setIsGoogleLoading(false);
     }
 
-  } catch (err: any) {
-    // Cek error spesifik 2FA jika tidak tertangkap di result
-    if (err.code === "TWO_FACTOR_REQUIRED") {
-      let targetPath = selectedRole === 1 ? "/dashboard/admin" : 
-                       selectedRole === 3 ? "/dashboard/instructor" : "/dashboard/student";
-      sessionStorage.setItem("post_2fa_redirect", targetPath);
-      router.push("/auth/verify-2fa");
-      return;
-    }
-
-    setError("Gagal masuk dengan Google.");
-    setIsGoogleLoading(false);
-  }
-};
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setUserNotFound(false);
 
-    // Validasi Zod di client
+
     const result = loginSchema.safeParse({ email, password });
     if (!result.success) {
       setError(result.error.issues[0].message);
@@ -84,22 +55,28 @@ const handleGoogleLogin = async () => {
 
     setIsLoading(true);
     try {
+      // twoFactorClient akan otomatis redirect ke /auth/two-factor
+      // jika user punya 2FA aktif. Langsung ke /dashboard tanpa callbackURL
+      // karena dashboard akan redirect berdasarkan role
       const { error: authError } = await authClient.signIn.email({
         email,
         password,
         rememberMe,
-        callbackURL: "/dashboard",
+        fetchOptions: {
+          onSuccess: () => {
+            // Redirect ke dashboard, biarkan dashboard yang handle redirect berdasarkan role
+            router.push("/dashboard");
+          },
+        },
       });
 
       if (authError) {
-        setError("Email atau password salah. Silakan coba lagi.");
-        return;
+        // Jika error, kita munculkan banner saran registrasi
+        setUserNotFound(true);
+        setError("Email atau password tidak valid.");
       }
-
-      router.push("/dashboard");
-      router.refresh();
     } catch {
-      setError("Terjadi kesalahan. Silakan coba lagi.");
+      setError("Terjadi kesalahan koneksi. Silakan coba lagi.");
     } finally {
       setIsLoading(false);
     }
@@ -185,8 +162,40 @@ const handleGoogleLogin = async () => {
             <div className="h-[1px] bg-slate-100 flex-1" />
           </div>
 
-          {/* Error Message */}
-          {error && (
+          {/* User Not Found / Suggest Register Banner */}
+          {userNotFound && (
+            <div className="mb-6 bg-orange-50 border border-orange-100 rounded-2xl p-4 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <AlertCircle className="w-5 h-5 text-[#FF6B4A]" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-slate-800 text-sm">Belum punya akun?</p>
+                  <p className="text-slate-500 text-xs mt-0.5 leading-relaxed">
+                    Sepertinya email <span className="font-bold text-[#FF6B4A]">{email}</span> belum terdaftar atau password Anda salah.
+                  </p>
+                  <div className="flex items-center gap-2 mt-3">
+                    <Link
+                      href={`/auth/register?email=${encodeURIComponent(email)}`}
+                      className="h-8 px-4 bg-[#FF6B4A] text-white text-xs font-bold rounded-lg hover:bg-[#fa5a35] transition-colors flex items-center gap-1.5 shadow-sm shadow-orange-100"
+                    >
+                      Daftar Sekarang <ChevronRight className="w-3 h-3" />
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setUserNotFound(false)}
+                      className="h-8 px-3 text-slate-400 text-xs font-bold hover:text-slate-600 transition-colors"
+                    >
+                      Coba lagi
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Error Message (General) */}
+          {error && !userNotFound && (
             <div className="mb-4 flex items-center gap-3 bg-red-50 border border-red-100 text-red-600 rounded-xl px-4 py-3 text-sm font-medium">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               {error}
@@ -217,7 +226,7 @@ const handleGoogleLogin = async () => {
                 <label className="text-xs font-bold text-slate-700 group-focus-within:text-[#FF6B4A]">
                   Kata Sandi
                 </label>
-                <Link href="#" className="text-[11px] font-bold text-[#FF6B4A] hover:underline">
+                <Link href="/auth/forgot-password" className="text-[11px] font-bold text-[#FF6B4A] hover:underline">
                   Lupa Password?
                 </Link>
               </div>

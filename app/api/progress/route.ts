@@ -101,7 +101,7 @@ export async function POST(request: Request) {
         enrollmentStatus: "completed",
         completedAt: new Date(),
         lastUpdatedBy: session.user.id,
-        lastUpdatedDate: new Date(),
+        updatedAt: new Date(),
       },
     });
   }

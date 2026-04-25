@@ -15,6 +15,7 @@ import {
   MoreVertical,
   MessageSquare,
   FileText,
+  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -27,6 +28,7 @@ interface PendingGrading {
 
 interface ManagedCourse {
   id: number;
+  slug?: string;
   title: string;
   students: number;
   rating: number;
@@ -38,19 +40,24 @@ interface InstructorDashboardProps {
   userName: string;
   userEmail: string;
   userRole: string;
+  courses?: ManagedCourse[];
+  totalRevenue?: number;
+  twoFactorEnabled?: boolean;
 }
 
 export default function InstructorDashboard({
   userName,
   userEmail,
   userRole,
+  courses = [],
+  totalRevenue = 0,
+  twoFactorEnabled = false,
 }: InstructorDashboardProps) {
   const router = useRouter();
 
   const handleLogout = async () => {
     await authClient.signOut();
     router.push("/");
-    router.refresh();
   };
 
   const [gradings] = useState<PendingGrading[]>([
@@ -74,76 +81,8 @@ export default function InstructorDashboard({
     },
   ]);
 
-  const [managedCourses] = useState<ManagedCourse[]>([
-    {
-      id: 1,
-      title: "Mastering React for Beginners",
-      students: 1250,
-      rating: 4.8,
-      revenue: "Rp 12.500.000",
-      active: true,
-    },
-    {
-      id: 2,
-      title: "Advanced UI/UX Design System",
-      students: 850,
-      rating: 4.9,
-      revenue: "Rp 8.200.000",
-      active: false,
-    },
-  ]);
-
   return (
-    <div className="flex min-h-screen bg-[#F8F9FB] font-sans text-[#1E1E1E]">
-      {/* --- SIDEBAR --- */}
-      <aside className="w-[260px] bg-white border-r border-slate-100 hidden xl:flex flex-col sticky top-0 h-screen">
-        <div className="p-8 flex items-center gap-3">
-          <div className="w-8 h-8 bg-[#FF6B4A] rounded-lg flex items-center justify-center shadow-lg shadow-orange-200">
-            <div className="w-3 h-3 bg-white rounded-sm rotate-45" />
-          </div>
-          <span className="text-xl font-black tracking-tighter text-slate-800">
-            Learnify.{" "}
-            <span className="text-[10px] bg-orange-50 text-[#FF6B4A] px-2 py-0.5 rounded-full ml-1 font-bold">
-              PRO
-            </span>
-          </span>
-        </div>
-
-        <nav className="flex-1 px-4 space-y-1">
-          {[
-            { name: "Dashboard", icon: LayoutDashboard },
-            { name: "My Courses", icon: BookOpenCheck },
-            { name: "Students", icon: Users },
-            { name: "Assignments", icon: FileText },
-            { name: "Earnings", icon: TrendingUp },
-            { name: "Live Sessions", icon: Video },
-            { name: "Messages", icon: MessageSquare },
-            { name: "Settings", icon: Settings },
-          ].map((item, idx) => (
-            <button
-              key={item.name}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-[14px] transition-all duration-200 ${
-                idx === 0
-                  ? "bg-[#FF6B4A] text-white shadow-lg shadow-orange-100"
-                  : "text-slate-400 hover:bg-orange-50 hover:text-[#FF6B4A]"
-              }`}
-            >
-              <item.icon size={18} />
-              {item.name}
-            </button>
-          ))}
-        </nav>
-
-        <div className="p-6 border-t border-slate-50">
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3 w-full text-slate-400 font-bold text-[14px] hover:text-red-500 transition-colors"
-          >
-            <LogOut size={18} /> Logout
-          </button>
-        </div>
-      </aside>
-
+    <>
       {/* --- MAIN CONTENT --- */}
       <main className="flex-1 p-6 md:p-10 max-w-[1600px] mx-auto w-full">
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
@@ -176,6 +115,33 @@ export default function InstructorDashboard({
           </div>
         </header>
 
+        {/* --- 2FA ALERT BANNER --- */}
+        {!twoFactorEnabled && (
+          <div className="mb-8 bg-gradient-to-r from-orange-500 to-[#FF6B4A] p-6 rounded-[2rem] text-white shadow-xl shadow-orange-200/40 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden group">
+            <div className="flex items-center gap-5 z-10">
+              <div className="w-14 h-14 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-extrabold tracking-tight">Amankan Akun Kamu! 🛡️</h2>
+                <p className="text-white/80 text-sm max-w-md mt-0.5 font-medium leading-relaxed">
+                  Aktifkan Autentikasi Dua Faktor (2FA) sekarang untuk melindungi data belajar dan akses akunmu dari peretasan.
+                </p>
+              </div>
+            </div>
+            <Button 
+              onClick={() => router.push("/dashboard/settings/security")}
+              className="bg-white text-[#FF6B4A] hover:bg-slate-50 font-black px-8 py-6 rounded-2xl text-sm transition-all active:scale-[0.98] shadow-lg shadow-black/5 shrink-0 z-10"
+            >
+              Aktifkan Sekarang →
+            </Button>
+            
+            {/* Dekorasi Background */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-[80px] -mr-32 -mt-32 transition-all duration-1000 group-hover:bg-white/20" />
+            <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-black/10 rounded-full blur-[60px] opacity-50" />
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -203,7 +169,7 @@ export default function InstructorDashboard({
                   ))}
                 </div>
                 <p className="mt-6 text-2xl font-black text-slate-800 tracking-tighter">
-                  Rp 24.850.000
+                  {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(totalRevenue)}
                 </p>
               </div>
 
@@ -259,7 +225,11 @@ export default function InstructorDashboard({
                 Active Courses Performance
               </h3>
               <div className="space-y-3">
-                {managedCourses.map((course) => (
+                {courses.length === 0 ? (
+                  <div className="p-8 text-center text-slate-400 bg-white rounded-2xl border border-slate-100">
+                    Belum ada kelas yang dibuat.
+                  </div>
+                ) : courses.map((course) => (
                   <div
                     key={course.id}
                     className="p-5 bg-white rounded-3xl flex flex-col md:flex-row md:items-center justify-between gap-6 border border-slate-100 hover:shadow-xl hover:shadow-slate-100 transition-all duration-300"
@@ -289,6 +259,7 @@ export default function InstructorDashboard({
                       </p>
                     </div>
                     <Button
+                      onClick={() => router.push(`/dashboard/instructor/courses/${course.id}/edit`)}
                       variant="outline"
                       className="rounded-xl h-10 px-6 font-black text-xs border-slate-200 text-slate-600 hover:bg-[#FF6B4A] hover:text-white hover:border-[#FF6B4A] transition-all"
                     >
@@ -358,6 +329,6 @@ export default function InstructorDashboard({
           </div>
         </div>
       </main>
-    </div>
+    </>
   );
 }

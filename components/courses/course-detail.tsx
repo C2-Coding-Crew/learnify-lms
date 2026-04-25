@@ -126,9 +126,13 @@ export default function CourseDetailClient({ course }: { course: CourseDetail })
       return;
     }
 
-    // 2. Sudah enroll → langsung ke halaman belajar
+    // 2. Sudah enroll → tampilkan notif & arahkan ke halaman belajar
     if (enrollmentStatus.isEnrolled) {
-      router.push(`/courses/${course.slug}/learn`);
+      toast.info("Kamu sudah terdaftar di kursus ini! Mengarahkan ke halaman belajar...", {
+        description: "Klik \"Lanjut Belajar\" untuk melanjutkan progresmu.",
+        duration: 3000,
+      });
+      setTimeout(() => router.push(`/courses/${course.slug}/learn`), 1500);
       return;
     }
 
@@ -144,10 +148,14 @@ export default function CourseDetailClient({ course }: { course: CourseDetail })
       const data = await res.json();
 
       if (!res.ok) {
-        // 409 = sudah enroll (race condition)
+        // 409 = sudah enroll (race condition / request ganda)
         if (res.status === 409) {
           setEnrollmentStatus({ isEnrolled: true, enrollment: data.enrollment });
-          router.push(`/courses/${course.slug}/learn`);
+          toast.info("Kamu sudah terdaftar di kursus ini!", {
+            description: "Mengarahkan ke halaman belajar...",
+            duration: 3000,
+          });
+          setTimeout(() => router.push(`/courses/${course.slug}/learn`), 1500);
           return;
         }
         throw new Error(data.error ?? "Gagal mendaftar kursus");

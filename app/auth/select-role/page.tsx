@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { User, GraduationCap, ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
+import { User, GraduationCap, ArrowRight, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 import { authClient } from "@/lib/auth-client"; // Pastikan import ini ada
 
 export default function SelectRolePage() {
@@ -49,10 +49,14 @@ const handleAction = async () => {
       });
 
       if (!error) {
-        // Arahkan sesuai role yang kamu tentukan (3 untuk Instructor)
-        const targetPath = selectedRole === 3 ? "/dashboard/instructor" : "/dashboard/student";
+        // Redirect berdasarkan role: 1=Admin, 2=Student, 3=Instructor
+        let targetPath = "/dashboard/student";
+        if (selectedRole === 1) {
+          targetPath = "/dashboard/admin";
+        } else if (selectedRole === 3) {
+          targetPath = "/dashboard/instructor";
+        }
         router.push(targetPath);
-        router.refresh();
         return;
       }
     }

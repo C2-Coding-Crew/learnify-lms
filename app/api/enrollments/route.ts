@@ -125,9 +125,9 @@ export async function POST(request: Request) {
         status: 1,
         isDeleted: 0,
         createdBy: session.user.id,
-        createdDate: new Date(),
+        createdAt: new Date(),
         lastUpdatedBy: session.user.id,
-        lastUpdatedDate: new Date(),
+        updatedAt: new Date(),
       },
     });
 
