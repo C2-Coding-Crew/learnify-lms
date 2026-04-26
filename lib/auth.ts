@@ -16,11 +16,24 @@ export const auth = betterAuth({
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 hari
     updateAge: 60 * 60 * 24,      // refresh setiap 1 hari
+    fields: {
+      createdAt: "createdDate",
+      updatedAt: "lastUpdatedDate",
+    },
   },
   user: {
-    // ── Map Better Auth field names → nama field di schema kita ───────────────
-    // Better Auth default: createdAt, updatedAt
-    // Schema tim kita    : createdDate, lastUpdatedDate
+    fields: {
+      createdAt: "createdDate",
+      updatedAt: "lastUpdatedDate",
+    },
+  },
+  account: {
+    fields: {
+      createdAt: "createdDate",
+      updatedAt: "lastUpdatedDate",
+    },
+  },
+  verification: {
     fields: {
       createdAt: "createdDate",
       updatedAt: "lastUpdatedDate",

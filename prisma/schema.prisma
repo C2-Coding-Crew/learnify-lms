@@ -35,10 +35,6 @@ model user {
   createdBy     String?   @default("SYSTEM")
   lastUpdatedBy String?   @default("SYSTEM")
 
-  twoFactorEnabled     Boolean? @default(false)
-  twoFactorSecret      String?
-  twoFactorBackupCodes String?
-
   // -- Relations --
   role          Role?            @relation(fields: [roleId], references: [id])
   sessions      session[]
