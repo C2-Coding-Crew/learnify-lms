@@ -14,7 +14,7 @@ export const auth = betterAuth({
     user: {
       created: async (data: any) => {
         const adminEmail = process.env.ADMIN_EMAIL;
-        const roleId = adminEmail && data.user.email === adminEmail ? 1 : 2;
+        const roleId = adminEmail && data.user.email === adminEmail ? 1 : 3;
         
         await db.user.update({
           where: { id: data.user.id },
