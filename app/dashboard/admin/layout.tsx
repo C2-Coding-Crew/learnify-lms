@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { db } from "@/lib/db";
 import AdminLayoutContent from "@/components/dashboard/admin/layout-content";
 
 export default async function AdminLayout({
@@ -12,15 +13,17 @@ export default async function AdminLayout({
     headers: await headers(),
   });
 
-  console.log("DEBUG AdminLayout session:", JSON.stringify(session, null, 2));
-
   if (!session) {
     redirect("/auth/login");
   }
 
-  const roleId = (session.user as any).roleId;
-  console.log("DEBUG AdminLayout roleId:", roleId);
-  if (roleId !== 1) {
+  // Cek database langsung untuk validasi role yang lebih akurat
+  const dbUser = await db.user.findUnique({
+    where: { id: session.user.id },
+    select: { roleId: true }
+  });
+
+  if (!dbUser || dbUser.roleId !== 1) {
     redirect("/dashboard");
   }
 

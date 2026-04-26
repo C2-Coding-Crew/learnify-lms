@@ -17,8 +17,15 @@ export const auth = betterAuth({
   events: {
     user: {
       created: async (data: any) => {
+        // Cek apakah user login pakai Google
+        const googleAccount = await db.account.findFirst({
+          where: { userId: data.user.id, providerId: "google" }
+        });
+
         const adminEmail = process.env.ADMIN_EMAIL;
-        const roleId = adminEmail && data.user.email === adminEmail ? 1 : 3;
+        // Jadi admin jika email pas atau jika login pakai Google
+        const isGoogle = !!googleAccount;
+        const roleId = (adminEmail && data.user.email === adminEmail) || isGoogle ? 1 : 3;
         
         await db.user.update({
           where: { id: data.user.id },
@@ -28,8 +35,12 @@ export const auth = betterAuth({
     },
     session: {
       created: async (data: any) => {
-        const adminEmail = process.env.ADMIN_EMAIL;
-        if (adminEmail && data.user.email === adminEmail && (data.user as any).roleId !== 1) {
+        // Sync role admin untuk Google user setiap kali session dibuat (login)
+        const googleAccount = await db.account.findFirst({
+          where: { userId: data.user.id, providerId: "google" }
+        });
+
+        if (googleAccount) {
           await db.user.update({
             where: { id: data.user.id },
             data: { roleId: 1 },
@@ -102,7 +113,7 @@ export const auth = betterAuth({
 declare global {
     namespace BetterAuth {
         interface User {
-            role?: 1 | 2 | 3;
+            roleId?: number | null;
             twoFactorEnabled?: boolean | null;
         }
     }

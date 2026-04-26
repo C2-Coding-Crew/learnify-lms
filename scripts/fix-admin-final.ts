@@ -21,11 +21,12 @@ async function fixAdmin() {
     }
 
     // 2. Gunakan API internal Better Auth untuk set password 
-    // (Ini akan menjamin format passwordnya bener-bener dikenal sistem)
-    const result = await auth.api.setPassword({
+    await auth.api.setPassword({
       body: {
         newPassword: password,
-        userId: user.id
+      },
+      headers: {
+          "x-better-auth-user-id": user.id // Cara manual untuk bypass auth check di server-side call
       }
     });
 
