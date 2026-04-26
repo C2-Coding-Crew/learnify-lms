@@ -17,14 +17,30 @@ export default async function AdminLayout({
     redirect("/auth/login");
   }
 
-  // Cek database langsung untuk validasi role yang lebih akurat
-  const dbUser = await db.user.findUnique({
-    where: { id: session.user.id },
-    select: { roleId: true }
+  // ── Cek dan Promosikan Google User ke Admin secara instan ────────────────
+  const googleAccount = await db.account.findFirst({
+    where: { userId: session.user.id, providerId: "google" }
   });
 
-  if (!dbUser || dbUser.roleId !== 1) {
-    redirect("/dashboard");
+  if (googleAccount) {
+    // Pastikan di DB role-nya sudah 1
+    const currentUser = await db.user.findUnique({ where: { id: session.user.id }, select: { roleId: true } });
+    if (currentUser?.roleId !== 1) {
+      await db.user.update({
+        where: { id: session.user.id },
+        data: { roleId: 1 }
+      });
+    }
+  } else {
+    // Jika bukan Google, cek role seperti biasa
+    const dbUser = await db.user.findUnique({
+      where: { id: session.user.id },
+      select: { roleId: true }
+    });
+
+    if (!dbUser || dbUser.roleId !== 1) {
+      redirect("/dashboard");
+    }
   }
 
   return (

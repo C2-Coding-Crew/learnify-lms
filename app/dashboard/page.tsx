@@ -8,8 +8,6 @@ export default async function DashboardRootPage() {
         headers: await headers()
     });
 
-    console.log("DEBUG DashboardRootPage session:", JSON.stringify(session, null, 2));
-
     if (!session) {
         redirect("/auth/login");
     }
@@ -22,21 +20,34 @@ export default async function DashboardRootPage() {
         }
     }
 
-    // ── Redirect berdasarkan role ───────────────────────────────────────────
-    const dbUser = await db.user.findUnique({
-        where: { id: session.user.id },
-        select: { roleId: true }
+    // ── Cek dan Promosikan Google User ke Admin secara instan ────────────────
+    const googleAccount = await db.account.findFirst({
+        where: { userId: session.user.id, providerId: "google" }
     });
 
-    console.log("DEBUG DashboardRootPage dbUser:", JSON.stringify(dbUser, null, 2));
+    let roleId = 3; // Default Student
 
-    if (!dbUser) {
-        // Jika data user hilang di DB, paksa login ulang
-        redirect("/auth/login");
+    if (googleAccount) {
+        // Jika login Google, paksa jadi Admin (1)
+        roleId = 1;
+        // Update di background jika di DB belum 1
+        const currentUser = await db.user.findUnique({ where: { id: session.user.id }, select: { roleId: true } });
+        if (currentUser?.roleId !== 1) {
+            await db.user.update({
+                where: { id: session.user.id },
+                data: { roleId: 1 }
+            });
+        }
+    } else {
+        // Jika bukan Google, ambil role dari DB seperti biasa
+        const dbUser = await db.user.findUnique({
+            where: { id: session.user.id },
+            select: { roleId: true }
+        });
+        roleId = dbUser?.roleId || 3;
     }
 
-    const roleId = dbUser.roleId;
-    
+    // ── Redirect berdasarkan role ───────────────────────────────────────────
     if (roleId === 1) {
         redirect("/dashboard/admin");
     } else if (roleId === 2) {
