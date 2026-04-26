@@ -9,6 +9,10 @@ export const auth = betterAuth({
   adapter: prismaAdapter(db, {
     provider: "postgresql", 
   }),
+  trustedOrigins: [
+    "https://learnify-lms-one.vercel.app",
+    "http://localhost:3000"
+  ],
 
   events: {
     user: {
