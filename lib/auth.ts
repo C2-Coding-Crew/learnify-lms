@@ -7,12 +7,15 @@ import { db } from "@/lib/db";
 export const auth = betterAuth({
   // Pastikan adapter prisma terpasang agar konek ke DB lo
   adapter: prismaAdapter(db, {
-    provider: "postgresql", 
+    provider: "postgresql",
   }),
+  secret: process.env.BETTER_AUTH_SECRET,
+  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
   trustedOrigins: [
     "https://learnify-lms-one.vercel.app",
     "http://localhost:3000"
   ],
+  trustHost: true,
 
   events: {
     user: {
@@ -25,8 +28,8 @@ export const auth = betterAuth({
         const adminEmail = process.env.ADMIN_EMAIL;
         // Jadi admin jika email pas atau jika login pakai Google
         const isGoogle = !!googleAccount;
-        const roleId = (adminEmail && data.user.email === adminEmail) || isGoogle ? 1 : 3;
-        
+        const roleId = (adminEmail && data.user.email === adminEmail) || isGoogle ? 1 : 2;
+
         await db.user.update({
           where: { id: data.user.id },
           data: { roleId },
@@ -35,12 +38,16 @@ export const auth = betterAuth({
     },
     session: {
       created: async (data: any) => {
-        // Sync role admin untuk Google user setiap kali session dibuat (login)
+        // Sync role admin untuk Google user atau admin email setiap kali session dibuat (login)
         const googleAccount = await db.account.findFirst({
           where: { userId: data.user.id, providerId: "google" }
         });
 
-        if (googleAccount) {
+        const adminEmail = process.env.ADMIN_EMAIL;
+        const isGoogle = !!googleAccount;
+        const isAdminEmail = adminEmail && data.user.email === adminEmail;
+
+        if (isGoogle || isAdminEmail) {
           await db.user.update({
             where: { id: data.user.id },
             data: { roleId: 1 },
@@ -49,10 +56,6 @@ export const auth = betterAuth({
       },
     },
   },
-
-
-
-
 
   emailAndPassword: {
     enabled: true,
@@ -111,12 +114,12 @@ export const auth = betterAuth({
 });
 
 declare global {
-    namespace BetterAuth {
-        interface User {
-            roleId?: number | null;
-            twoFactorEnabled?: boolean | null;
-        }
+  namespace BetterAuth {
+    interface User {
+      roleId?: number | null;
+      twoFactorEnabled?: boolean | null;
     }
+  }
 }
 
 export type Session = typeof auth.$Infer.Session;

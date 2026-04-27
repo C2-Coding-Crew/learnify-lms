@@ -17,12 +17,10 @@ export default async function AdminLayout({
     redirect("/auth/login");
   }
 
-  // ── Cek dan Promosikan Google User ke Admin secara instan ────────────────
-  const googleAccount = await db.account.findFirst({
-    where: { userId: session.user.id, providerId: "google" }
-  });
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const isAdminEmail = adminEmail && session.user.email === adminEmail;
 
-  if (googleAccount) {
+  if (googleAccount || isAdminEmail) {
     // Pastikan di DB role-nya sudah 1
     const currentUser = await db.user.findUnique({ where: { id: session.user.id }, select: { roleId: true } });
     if (currentUser?.roleId !== 1) {
@@ -32,7 +30,7 @@ export default async function AdminLayout({
       });
     }
   } else {
-    // Jika bukan Google, cek role seperti biasa
+    // Jika bukan Admin, cek role seperti biasa
     const dbUser = await db.user.findUnique({
       where: { id: session.user.id },
       select: { roleId: true }

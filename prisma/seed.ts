@@ -9,7 +9,7 @@ async function main() {
 
   // ─── 1. Seed Roles ────────────────────────────────────────────────────────
   console.log("1️⃣  Seeding Roles...");
-  const roleNames = ["admin", "instructor", "student"];
+  const roleNames = ["admin", "student", "instructor"];
   for (const name of roleNames) {
     const existing = await prisma.role.findFirst({ where: { name, companyCode: COMPANY } });
     if (!existing) {

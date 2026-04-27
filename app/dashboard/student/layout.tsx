@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import StudentSidebar from "@/components/dashboard/student/sidebar";
+import { db } from "@/lib/db";
 
 export default async function StudentLayout({
   children,
@@ -16,7 +17,13 @@ export default async function StudentLayout({
     redirect("/auth/login");
   }
 
-  const roleId = (session.user as any).roleId;
+  const dbUser = await db.user.findUnique({
+    where: { id: session.user.id },
+    select: { roleId: true }
+  });
+
+  const roleId = dbUser?.roleId;
+  
   if (roleId !== 2) {
     redirect("/dashboard");
   }

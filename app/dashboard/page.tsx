@@ -25,12 +25,15 @@ export default async function DashboardRootPage() {
         where: { userId: session.user.id, providerId: "google" }
     });
 
-    let roleId = 3; // Default Student
+    let roleId = 2; // Default Student
 
-    if (googleAccount) {
-        // Jika login Google, paksa jadi Admin (1)
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const isAdminEmail = adminEmail && session.user.email === adminEmail;
+
+    if (googleAccount || isAdminEmail) {
+        // Jika login Google atau email terdaftar sebagai admin, paksa jadi Admin (1)
         roleId = 1;
-        // Update di background jika di DB belum 1
+        // Update di DB jika belum 1
         const currentUser = await db.user.findUnique({ where: { id: session.user.id }, select: { roleId: true } });
         if (currentUser?.roleId !== 1) {
             await db.user.update({
@@ -39,18 +42,18 @@ export default async function DashboardRootPage() {
             });
         }
     } else {
-        // Jika bukan Google, ambil role dari DB seperti biasa
+        // Jika bukan Admin, ambil role dari DB seperti biasa
         const dbUser = await db.user.findUnique({
             where: { id: session.user.id },
             select: { roleId: true }
         });
-        roleId = dbUser?.roleId || 3;
+        roleId = dbUser?.roleId || 2;
     }
 
     // ── Redirect berdasarkan role ───────────────────────────────────────────
     if (roleId === 1) {
         redirect("/dashboard/admin");
-    } else if (roleId === 2) {
+    } else if (roleId === 3) {
         redirect("/dashboard/instructor");
     } else {
         redirect("/dashboard/student");
