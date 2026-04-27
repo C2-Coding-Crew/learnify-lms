@@ -39,6 +39,26 @@ model user {
   taughtCourses Course[]         @relation("InstructorCourses")
   progress      LessonProgress[]
   twoFactor     twoFactor?
+  todos         Todo[]
+  submissions   Submission[]
+}
+
+// ── Personal Tasks (Todo) ──────────────────────────────────────────────────
+model Todo {
+  id              Int      @id @default(autoincrement())
+  userId          String
+  task            String
+  isCompleted     Boolean  @default(false)
+  dueDate         DateTime?
+  companyCode     String   @default("LEARNIFY")
+  status          Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  user user @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // ── 2FA (TOTP) ────────────────────────────────────────────────────────────────
@@ -155,6 +175,9 @@ model Course {
   lessons     Lesson[]
   enrollments Enrollment[]
   tags        CourseTag[]
+  assignments Assignment[]
+  resources   Resource[]
+  schedules   Schedule[]
 }
 
 model Lesson {
@@ -290,4 +313,98 @@ model Certificate {
   updatedAt         DateTime @updatedAt
 
   enrollment Enrollment @relation(fields: [enrollmentId], references: [id])
+}
+
+// ── Assignments & Submissions ──────────────────────────────────────────────
+model Assignment {
+  id              Int      @id @default(autoincrement())
+  courseId        Int
+  title           String
+  description     String?
+  dueDate         DateTime?
+  companyCode     String   @default("LEARNIFY")
+  status          Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  submissions Submission[]
+}
+
+model Submission {
+  id              Int      @id @default(autoincrement())
+  assignmentId    Int
+  userId          String
+  content         String?  // Link atau text
+  fileUrl         String?
+  grade           String?
+  feedback        String?
+  status          String   @default("submitted") // "submitted", "graded"
+  companyCode     String   @default("LEARNIFY")
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  user       user       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([assignmentId, userId])
+}
+
+// ── Resources ───────────────────────────────────────────────────────────────
+model Resource {
+  id              Int      @id @default(autoincrement())
+  courseId        Int?
+  title           String
+  type            String   // "pdf", "link", "video", "zip"
+  url             String
+  companyCode     String   @default("LEARNIFY")
+  status          Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  course Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
+}
+
+// ── Schedule ───────────────────────────────────────────────────────────────
+model Schedule {
+  id              Int      @id @default(autoincrement())
+  courseId        Int?
+  title           String
+  type            String   // "Live Class", "Self Study", "Live Q&A", "Deadline"
+  startTime       DateTime
+  endTime         DateTime?
+  companyCode     String   @default("LEARNIFY")
+  status          Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  course Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
+}
+
+// ── Sidebar Menus ──────────────────────────────────────────────────────────
+model SidebarMenu {
+  id              Int      @id @default(autoincrement())
+  roleId          Int?     // Menu khusus role tertentu (1=admin, 2=student, 3=instructor)
+  name            String
+  href            String
+  icon            String   // Nama icon lucide
+  order           Int      @default(0)
+  status          Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
 }

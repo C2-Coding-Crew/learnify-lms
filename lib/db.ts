@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient } from "@prisma/client";
 
 // Singleton pattern — best practice untuk Next.js
 // Mencegah pembuatan koneksi baru saat hot-reload di development

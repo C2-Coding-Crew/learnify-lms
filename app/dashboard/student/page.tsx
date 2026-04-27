@@ -30,6 +30,18 @@ export default async function Page() {
     where: { userId: session.user.id, isDeleted: 0 }
   });
 
+  const todos = await db.todo.findMany({
+    where: { userId: session.user.id, isDeleted: 0 },
+    orderBy: { createdDate: "desc" }
+  });
+
+  const formattedTodos = todos.map((t: any) => ({
+    id: t.id,
+    task: t.task,
+    date: t.createdDate.toLocaleDateString("id-ID", { day: "numeric", month: "long" }),
+    done: t.isCompleted
+  }));
+
   const formattedCourses = enrollments.map((enr: any) => {
     const totalLessons = enr.course.lessons.length;
     const completedLessons = progress.filter((p: any) => p.isCompleted && enr.course.lessons.some((l: any) => l.id === p.lessonId)).length;
@@ -58,6 +70,7 @@ export default async function Page() {
       userRole="Student"
       twoFactorEnabled={session.user.twoFactorEnabled ?? false}
       enrolledCourses={formattedCourses}
+      todos={formattedTodos}
     />
   );
 }

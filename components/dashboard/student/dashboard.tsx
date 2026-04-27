@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import {
@@ -20,8 +20,12 @@ import {
   MoreVertical,
   Plus,
   ShieldCheck,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+import { toast } from "sonner";
+import { addTodo, toggleTodo, deleteTodo } from "@/lib/actions/todo-actions";
 
 // Tipe data
 interface Todo {
@@ -47,9 +51,18 @@ interface StudentDashboardProps {
   userRole: string | number;
   twoFactorEnabled?: boolean;
   enrolledCourses?: Course[];
+  todos?: Todo[];
 }
 
-export default function StudentDashboard({ userName, userEmail, userRole, twoFactorEnabled, enrolledCourses = [] }: StudentDashboardProps) {  const router = useRouter();
+export default function StudentDashboard({ 
+  userName, 
+  userEmail, 
+  userRole, 
+  twoFactorEnabled, 
+  enrolledCourses = [],
+  todos: initialTodos = [] 
+}: StudentDashboardProps) {  
+  const router = useRouter();
 
   const handleLogout = async () => {
     try {
@@ -65,60 +78,61 @@ export default function StudentDashboard({ userName, userEmail, userRole, twoFac
       router.push("/");
     }
   };
-  // --- STATE MANAGEMENT ---
-  const [todos, setTodos] = useState<Todo[]>([
-    {
-      id: 1,
-      task: "Human Interaction Designs",
-      date: "Tuesday, 30 June 2024",
-      done: false,
-    },
-    {
-      id: 2,
-      task: "Design system Basics",
-      date: "Monday, 24 June 2024",
-      done: false,
-    },
-    {
-      id: 3,
-      task: "Introduction to UI",
-      date: "Friday, 10 June 2024",
-      done: true,
-    },
-    {
-      id: 4,
-      task: "Basics of Figma",
-      date: "Friday, 05 June 2024",
-      done: true,
-    },
-  ]);
 
+  // --- STATE MANAGEMENT ---
+  const [todos, setTodos] = useState<Todo[]>(initialTodos);
   const [newTask, setNewTask] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Sync with props if they change
+  useEffect(() => {
+    setTodos(initialTodos);
+  }, [initialTodos]);
 
   // Fungsi Toggle Status Todo
-  const toggleTodo = (id: number) => {
-    setTodos(todos.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
+  const handleToggleTodo = async (id: number, currentStatus: boolean) => {
+    try {
+      // Optimistic update
+      setTodos(prev => prev.map(t => t.id === id ? { ...t, done: !currentStatus } : t));
+      
+      await toggleTodo(id, !currentStatus);
+      toast.success("Task updated!");
+    } catch (err) {
+      toast.error("Failed to update task");
+      // Rollback
+      setTodos(prev => prev.map(t => t.id === id ? { ...t, done: currentStatus } : t));
+    }
   };
 
   // Fungsi Tambah Todo
-  const addTodo = (e: React.FormEvent) => {
+  const handleAddTodo = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTask.trim()) return;
+    if (!newTask.trim() || isSubmitting) return;
 
-    const newEntry: Todo = {
-      id: Date.now(),
-      task: newTask,
-      date:
-        "Today, " +
-        new Date().toLocaleDateString("id-ID", {
-          day: "numeric",
-          month: "long",
-        }),
-      done: false,
-    };
+    setIsSubmitting(true);
+    try {
+      await addTodo(newTask);
+      setNewTask("");
+      toast.success("Task added successfully!");
+    } catch (err) {
+      toast.error("Failed to add task");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-    setTodos([newEntry, ...todos]);
-    setNewTask("");
+  // Fungsi Hapus Todo
+  const handleDeleteTodo = async (id: number) => {
+    try {
+      // Optimistic
+      setTodos(prev => prev.filter(t => t.id !== id));
+      await deleteTodo(id);
+      toast.success("Task deleted");
+    } catch (err) {
+      toast.error("Failed to delete task");
+      // Rollback
+      setTodos(initialTodos);
+    }
   };
 
   return (
@@ -389,44 +403,59 @@ export default function StudentDashboard({ userName, userEmail, userRole, twoFac
               <h3 className="text-sm font-bold text-slate-800 mb-6">
                 To do List
               </h3>
-              <form onSubmit={addTodo} className="mb-6 flex gap-2">
+              <form onSubmit={handleAddTodo} className="mb-6 flex gap-2">
                 <input
+                  disabled={isSubmitting}
                   value={newTask}
                   onChange={(e) => setNewTask(e.target.value)}
                   type="text"
                   placeholder="Add new task..."
-                  className="flex-1 bg-[#F8F9FB] border-none rounded-xl px-4 py-2 text-xs outline-none focus:ring-1 focus:ring-orange-200 transition-all"
+                  className="flex-1 bg-[#F8F9FB] border-none rounded-xl px-4 py-2 text-xs outline-none focus:ring-1 focus:ring-orange-200 transition-all disabled:opacity-50"
                 />
                 <button
+                  disabled={isSubmitting}
                   type="submit"
-                  className="p-2 bg-[#FF6B4A] text-white rounded-xl hover:bg-[#fa5a36] transition-colors"
+                  className="p-2 bg-[#FF6B4A] text-white rounded-xl hover:bg-[#fa5a36] transition-colors disabled:opacity-50"
                 >
                   <Plus size={16} />
                 </button>
               </form>
               <div className="space-y-4 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
-                {todos.map((item) => (
+                {todos.length === 0 ? (
+                  <p className="text-center text-slate-300 text-xs py-4">No tasks yet.</p>
+                ) : todos.map((item) => (
                   <div
                     key={item.id}
-                    onClick={() => toggleTodo(item.id)}
-                    className="flex gap-4 group cursor-pointer"
+                    className="flex items-start gap-4 group"
                   >
                     <div
-                      className={`flex-shrink-0 w-5 h-5 rounded-md border-2 mt-0.5 flex items-center justify-center transition-all ${item.done ? "bg-[#FF6B4A] border-[#FF6B4A]" : "border-slate-200 group-hover:border-orange-300"}`}
+                      onClick={() => handleToggleTodo(item.id, item.done)}
+                      className={`flex-shrink-0 w-5 h-5 rounded-md border-2 mt-0.5 flex items-center justify-center transition-all cursor-pointer ${item.done ? "bg-[#FF6B4A] border-[#FF6B4A]" : "border-slate-200 hover:border-orange-300"}`}
                     >
                       {item.done && (
                         <div className="w-2.5 h-1.5 border-l-2 border-b-2 border-white -rotate-45 mb-1" />
                       )}
                     </div>
                     <div className="flex-1 border-b border-slate-50 pb-3 group-last:border-none">
-                      <p
-                        className={`text-[13px] font-bold transition-all ${item.done ? "text-slate-300 line-through" : "text-slate-700"}`}
-                      >
-                        {item.task}
-                      </p>
-                      <p className="text-[10px] text-slate-400 mt-1 font-medium">
-                        {item.date}
-                      </p>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p
+                            onClick={() => handleToggleTodo(item.id, item.done)}
+                            className={`text-[13px] font-bold transition-all cursor-pointer ${item.done ? "text-slate-300 line-through" : "text-slate-700"}`}
+                          >
+                            {item.task}
+                          </p>
+                          <p className="text-[10px] text-slate-400 mt-1 font-medium">
+                            {item.date}
+                          </p>
+                        </div>
+                        <button 
+                          onClick={() => handleDeleteTodo(item.id)}
+                          className="text-slate-200 hover:text-red-500 transition-colors p-1"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}

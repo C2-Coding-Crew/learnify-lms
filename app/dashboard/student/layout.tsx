@@ -28,9 +28,12 @@ export default async function StudentLayout({
     redirect("/dashboard");
   }
 
+  const { getSidebarMenus } = await import("@/lib/actions/sidebar-actions");
+  const menus = await getSidebarMenus(2);
+
   return (
     <div className="flex min-h-screen bg-[#F8F9FB] font-sans text-[#1E1E1E]">
-      <StudentSidebar userName={session.user.name} />
+      <StudentSidebar userName={session.user.name} menus={menus} />
       <div className="flex-1 flex flex-col min-h-screen overflow-x-hidden">
         {children}
       </div>

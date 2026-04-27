@@ -1,12 +1,8 @@
 import { Video, Play, Clock, Calendar } from "lucide-react";
+import { getStudentRecordings } from "@/lib/actions/resource-actions";
 
 export default async function StudentRecordingsPage() {
-  const recordings = [
-    { id: 1, title: "UI/UX Fundamentals — Session 3", course: "UI/UX Fundamentals", duration: "1h 24m", date: "21 Jun 2024", thumbnail: null },
-    { id: 2, title: "Figma Component System Deep Dive", course: "Figma Pro", duration: "58m", date: "18 Jun 2024", thumbnail: null },
-    { id: 3, title: "React Hooks Masterclass", course: "React Masterclass", duration: "2h 10m", date: "15 Jun 2024", thumbnail: null },
-    { id: 4, title: "Introduction to Design Thinking", course: "UI/UX Fundamentals", duration: "45m", date: "10 Jun 2024", thumbnail: null },
-  ];
+  const recordings = await getStudentRecordings();
 
   return (
     <main className="flex-1 p-6 md:p-10 max-w-[1600px] w-full">
@@ -16,7 +12,7 @@ export default async function StudentRecordingsPage() {
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {recordings.map((rec) => (
+          {recordings.map((rec: any) => (
             <div key={rec.id} className="bg-white border border-slate-100 rounded-3xl overflow-hidden hover:shadow-xl hover:shadow-slate-100 transition-all duration-300 group">
               {/* Thumbnail */}
               <div className="relative h-44 bg-gradient-to-br from-[#100E2E] to-indigo-800 flex items-center justify-center">
