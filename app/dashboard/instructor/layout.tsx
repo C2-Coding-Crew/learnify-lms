@@ -24,13 +24,16 @@ export default async function InstructorLayout({
 
   const roleId = dbUser?.roleId;
 
-  if (roleId !== 3) {
+  if (roleId !== 2) {
     redirect("/dashboard");
   }
 
+  const { getSidebarMenus } = await import("@/lib/actions/sidebar-actions");
+  const menus = await getSidebarMenus(2);
+
   return (
     <div className="flex min-h-screen bg-[#F8F9FB] font-sans text-[#1E1E1E]">
-      <InstructorSidebar />
+      <InstructorSidebar menus={menus} />
       {children}
     </div>
   );

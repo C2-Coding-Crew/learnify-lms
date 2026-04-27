@@ -17,9 +17,21 @@ interface AdminDashboardProps {
   userEmail: string;
   userRole: string;
   twoFactorEnabled?: boolean;
+  stats?: {
+    studentCount: number;
+    instructorCount: number;
+    courseCount: number;
+    totalRevenue: number;
+  };
 }
 
-export default function AdminDashboard({ userName, userEmail, userRole, twoFactorEnabled = false }: AdminDashboardProps) {
+export default function AdminDashboard({ 
+  userName, 
+  userEmail, 
+  userRole, 
+  twoFactorEnabled = false,
+  stats = { studentCount: 0, instructorCount: 0, courseCount: 0, totalRevenue: 0 } 
+}: AdminDashboardProps) {
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
 
@@ -80,10 +92,10 @@ export default function AdminDashboard({ userName, userEmail, userRole, twoFacto
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        <AdminStat label="Total Students" value={formatNumber(12540)} icon={<GraduationCap />} color="bg-orange-50 text-orange-600" trend="+12% bln ini" />
-        <AdminStat label="Total Instructors" value={formatNumber(842)} icon={<UserCheck />} color="bg-amber-50 text-amber-600" trend="+5 hari ini" />
-        <AdminStat label="Total Revenue" value={formatIDR(124500000)} icon={<DollarSign />} color="bg-green-50 text-green-600" trend="+24% target" />
-        <AdminStat label="Active Courses" value={formatNumber(432)} icon={<TrendingUp />} color="bg-red-50 text-red-600" trend="12 butuh review" />
+        <AdminStat label="Total Students" value={formatNumber(stats.studentCount)} icon={<GraduationCap />} color="bg-orange-50 text-orange-600" trend="+12% bln ini" />
+        <AdminStat label="Total Instructors" value={formatNumber(stats.instructorCount)} icon={<UserCheck />} color="bg-amber-50 text-amber-600" trend="+5 hari ini" />
+        <AdminStat label="Total Revenue" value={formatIDR(stats.totalRevenue)} icon={<DollarSign />} color="bg-green-50 text-green-600" trend="+24% target" />
+        <AdminStat label="Active Courses" value={formatNumber(stats.courseCount)} icon={<TrendingUp />} color="bg-red-50 text-red-600" trend="12 butuh review" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

@@ -13,23 +13,22 @@ export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
   trustedOrigins: [
     "https://learnify-lms-one.vercel.app",
-    "http://localhost:3000"
+    "http://localhost:3000",
+    "learnify-lms-one.vercel.app"
   ],
   trustHost: true,
+  advanced: {
+    useSecureCookies: process.env.NODE_ENV === "production",
+  },
+
 
   events: {
     user: {
       created: async (data: any) => {
-        // Cek apakah user login pakai Google
-        const googleAccount = await db.account.findFirst({
-          where: { userId: data.user.id, providerId: "google" }
-        });
-
+        // Set role default to Student (3) unless admin email
         const adminEmail = process.env.ADMIN_EMAIL;
-        // Jadi admin jika email pas atau jika login pakai Google
-        const isGoogle = !!googleAccount;
-        const roleId = (adminEmail && data.user.email === adminEmail) || isGoogle ? 1 : 2;
-
+        const isAdminEmail = adminEmail && data.user.email === adminEmail;
+        const roleId = isAdminEmail ? 1 : 3;
         await db.user.update({
           where: { id: data.user.id },
           data: { roleId },
@@ -38,16 +37,10 @@ export const auth = betterAuth({
     },
     session: {
       created: async (data: any) => {
-        // Sync role admin untuk Google user atau admin email setiap kali session dibuat (login)
-        const googleAccount = await db.account.findFirst({
-          where: { userId: data.user.id, providerId: "google" }
-        });
-
         const adminEmail = process.env.ADMIN_EMAIL;
-        const isGoogle = !!googleAccount;
         const isAdminEmail = adminEmail && data.user.email === adminEmail;
 
-        if (isGoogle || isAdminEmail) {
+        if (isAdminEmail) {
           await db.user.update({
             where: { id: data.user.id },
             data: { roleId: 1 },
@@ -72,6 +65,10 @@ export const auth = betterAuth({
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 hari
     updateAge: 60 * 60 * 24,      // refresh setiap 1 hari
+    cookieCache: {
+      enabled: true,
+      maxAge: 60 * 5, // 5 minutes
+    },
     fields: {
       createdAt: "createdDate",
       updatedAt: "lastUpdatedDate",

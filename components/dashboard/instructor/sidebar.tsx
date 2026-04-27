@@ -16,7 +16,9 @@ import {
   FileText,
 } from "lucide-react";
 
-export default function InstructorSidebar() {
+import * as LucideIcons from "lucide-react";
+
+export default function InstructorSidebar({ menus = [] }: { menus?: any[] }) {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -25,16 +27,14 @@ export default function InstructorSidebar() {
     router.push("/");
   };
 
-  const navItems = [
-    { name: "Dashboard", href: "/dashboard/instructor", icon: LayoutDashboard },
-    { name: "My Courses", href: "/dashboard/instructor/courses", icon: BookOpenCheck },
-    { name: "Students", href: "/dashboard/instructor/students", icon: Users },
-    { name: "Assignments", href: "/dashboard/instructor/assignments", icon: FileText },
-    { name: "Earnings", href: "/dashboard/instructor/earnings", icon: TrendingUp },
-    { name: "Live Sessions", href: "/dashboard/instructor/live", icon: Video },
-    { name: "Messages", href: "/dashboard/instructor/messages", icon: MessageSquare },
-    { name: "Settings", href: "/dashboard/settings/security", icon: Settings },
-  ];
+  const navItems = menus.map(m => {
+    const IconComponent = (LucideIcons as any)[m.icon] || LucideIcons.LayoutDashboard;
+    return {
+      name: m.name,
+      href: m.href,
+      icon: IconComponent
+    };
+  });
 
   return (
     <aside className="w-[260px] bg-white border-r border-slate-100 hidden xl:flex flex-col sticky top-0 h-screen">

@@ -9,7 +9,7 @@ async function main() {
 
   // ─── 1. Seed Roles ────────────────────────────────────────────────────────
   console.log("1️⃣  Seeding Roles...");
-  const roleNames = ["admin", "student", "instructor"];
+  const roleNames = ["admin", "instructor", "student"];
   for (const name of roleNames) {
     const existing = await prisma.role.findFirst({ where: { name, companyCode: COMPANY } });
     if (!existing) {
@@ -274,52 +274,94 @@ async function main() {
   ];
 
   for (const { lessons, tags, ...courseFields } of coursesData) {
-    const totalMinutes = lessons.reduce((sum, l) => sum + l.duration, 0);
+    // Ensure slug is unique – if a course with this slug already exists, append a random suffix
+    let uniqueSlug = courseFields.slug as string;
+    const existing = await prisma.course.findFirst({ where: { slug: uniqueSlug } });
+    if (existing) {
+      const randomSuffix = Math.random().toString(36).substring(2, 6);
+      uniqueSlug = `${uniqueSlug}-${randomSuffix}`;
+      // eslint-disable-next-line @typescript-eslint/no-extra-semi
+      ;
+    }
+  const totalMinutes = lessons.reduce((sum, l) => sum + l.duration, 0);
 
-    const course = await prisma.course.create({
-      data: {
-        ...courseFields,
-        categoryId: Number(courseFields.categoryId),
-        price: courseFields.price,
-        totalLessons: lessons.length,
-        totalMinutes,
-        companyCode: COMPANY,
-        status: 1,
-        isDeleted: 0,
-        createdBy: SYSTEM,
-        createdDate: new Date(),
-        lastUpdatedBy: SYSTEM,
-        lastUpdatedDate: new Date(),
-        lessons: {
-          create: lessons.map((l) => ({
-            ...l,
-            description: `Materi ke-${l.order} dari kursus ini`,
-            companyCode: COMPANY,
-            status: 1,
-            isDeleted: 0,
-            createdBy: SYSTEM,
-            createdDate: new Date(),
-            lastUpdatedBy: SYSTEM,
-            lastUpdatedDate: new Date(),
-          })),
-        },
-        tags: {
-          create: tags.map((name) => ({
-            name,
-            companyCode: COMPANY,
-            status: 1,
-            isDeleted: 0,
-            createdBy: SYSTEM,
-            createdDate: new Date(),
-            lastUpdatedBy: SYSTEM,
-            lastUpdatedDate: new Date(),
-          })),
-        },
+  const course = await prisma.course.create({
+    data: {
+      ...courseFields,
+      slug: uniqueSlug,
+      categoryId: Number(courseFields.categoryId),
+      price: courseFields.price,
+      totalLessons: lessons.length,
+      totalMinutes,
+      companyCode: COMPANY,
+      status: 1,
+      isDeleted: 0,
+      createdBy: SYSTEM,
+      createdDate: new Date(),
+      lastUpdatedBy: SYSTEM,
+      lastUpdatedDate: new Date(),
+      lessons: {
+        create: lessons.map((l) => ({
+          ...l,
+          description: `Materi ke-${l.order} dari kursus ini`,
+          companyCode: COMPANY,
+          status: 1,
+          isDeleted: 0,
+          createdBy: SYSTEM,
+          createdDate: new Date(),
+          lastUpdatedBy: SYSTEM,
+          lastUpdatedDate: new Date(),
+        })),
       },
-    });
+      tags: {
+        create: tags.map((name) => ({
+          name,
+          companyCode: COMPANY,
+          status: 1,
+          isDeleted: 0,
+          createdBy: SYSTEM,
+          createdDate: new Date(),
+          lastUpdatedBy: SYSTEM,
+          lastUpdatedDate: new Date(),
+        })),
+      },
+    },
+  });
 
     console.log(`   ✅ "${course.title}" — ${lessons.length} lessons | ${totalMinutes} menit`);
   }
+
+  // ─── 5. Seed Sidebar Menus ────────────────────────────────────────────────
+  console.log("\n5️⃣  Seeding Sidebar Menus...");
+  const sidebarData = [
+    // Admin (1)
+    { roleId: 1, name: "Main Console",       href: "/dashboard/admin",            icon: "LayoutDashboard", order: 1 },
+    { roleId: 1, name: "Manage Students",    href: "/dashboard/admin/students",    icon: "GraduationCap",   order: 2 },
+    { roleId: 1, name: "Manage Instructors", href: "/dashboard/admin/instructors", icon: "UserCheck",     order: 3 },
+    { roleId: 1, name: "Course Revenues",    href: "/dashboard/admin/revenues",    icon: "Wallet",        order: 4 },
+    { roleId: 1, name: "System Logs",        href: "/dashboard/admin/logs",        icon: "Activity",      order: 5 },
+    // Instructor (2)
+    { roleId: 2, name: "Dashboard",   href: "/dashboard/instructor",           icon: "LayoutDashboard", order: 1 },
+    { roleId: 2, name: "My Courses",  href: "/dashboard/instructor/courses",   icon: "BookOpen",        order: 2 },
+    { roleId: 2, name: "Students",    href: "/dashboard/instructor/students",  icon: "Users",           order: 3 },
+    { roleId: 2, name: "Analytics",   href: "/dashboard/instructor/analytics", icon: "BarChart",        order: 4 },
+    // Student (3)
+    { roleId: 3, name: "Dashboard",   href: "/dashboard/student",              icon: "LayoutDashboard", order: 1 },
+    { roleId: 3, name: "Assignments", href: "/dashboard/student/assignments",   icon: "FileText",        order: 2 },
+    { roleId: 3, name: "Schedule",    href: "/dashboard/student/schedule",      icon: "Calendar",        order: 3 },
+    { roleId: 3, name: "Recordings",  href: "/dashboard/student/recordings",    icon: "Video",           order: 4 },
+    { roleId: 3, name: "Resources",   href: "/dashboard/student/resources",     icon: "Download",        order: 5 },
+  ];
+
+  for (const menu of sidebarData) {
+    const existing = await prisma.sidebarMenu.findFirst({ 
+      where: { name: menu.name, roleId: menu.roleId } 
+    });
+    if (!existing) {
+      await prisma.sidebarMenu.create({ data: menu });
+    }
+  }
+  console.log("   ✅ Sidebar menus created!");
 
   // ─── Summary ──────────────────────────────────────────────────────────────
   console.log("\n╔═══════════════════════════════════════╗");
@@ -329,7 +371,7 @@ async function main() {
   console.log(`║  Categories : ${categoriesData.length}                                 `);
   console.log(`║  Instructors: 2                                  `);
   console.log(`║  Courses    : ${coursesData.length}                                 `);
-  console.log(`║  Lessons    : ${coursesData.reduce((s, c) => s + c.lessons.length, 0)} total lessons               `);
+  console.log(`║  Sidebar    : ${sidebarData.length} menus                              `);
   console.log("╚═══════════════════════════════════════╝\n");
 }
 

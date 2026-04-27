@@ -24,12 +24,12 @@ export default async function StudentLayout({
 
   const roleId = dbUser?.roleId;
   
-  if (roleId !== 2) {
+  if (roleId !== 3) {
     redirect("/dashboard");
   }
 
   const { getSidebarMenus } = await import("@/lib/actions/sidebar-actions");
-  const menus = await getSidebarMenus(2);
+  const menus = await getSidebarMenus(3);
 
   return (
     <div className="flex min-h-screen bg-[#F8F9FB] font-sans text-[#1E1E1E]">

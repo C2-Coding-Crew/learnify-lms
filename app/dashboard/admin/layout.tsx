@@ -20,6 +20,11 @@ export default async function AdminLayout({
   const adminEmail = process.env.ADMIN_EMAIL;
   const isAdminEmail = adminEmail && session.user.email === adminEmail;
 
+  // Cek apakah login pakai Google
+  const googleAccount = await db.account.findFirst({
+    where: { userId: session.user.id, providerId: "google" }
+  });
+
   if (googleAccount || isAdminEmail) {
     // Pastikan di DB role-nya sudah 1
     const currentUser = await db.user.findUnique({ where: { id: session.user.id }, select: { roleId: true } });
@@ -41,8 +46,11 @@ export default async function AdminLayout({
     }
   }
 
+  const { getSidebarMenus } = await import("@/lib/actions/sidebar-actions");
+  const menus = await getSidebarMenus(1);
+
   return (
-    <AdminLayoutContent userName={session.user.name}>
+    <AdminLayoutContent userName={session.user.name} menus={menus}>
       {children}
     </AdminLayoutContent>
   );

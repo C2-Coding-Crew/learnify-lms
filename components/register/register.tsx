@@ -22,8 +22,8 @@ const RegisterPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Ambil roleId dari URL (misal: ?roleId=3), default ke 2 (Siswa)
-  const roleIdFromUrl = Number(searchParams.get("roleId")) || 2;
+  // Ambil roleId dari URL (misal: ?roleId=3), default ke 3 (Student)
+  const roleIdFromUrl = Number(searchParams.get("roleId")) || 3;
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState(searchParams.get("email") || "");
@@ -79,9 +79,14 @@ const RegisterPage = () => {
         email,
         password,
         fetchOptions: {
-          onSuccess: () => {
+          onSuccess: async () => {
+            // Set role after successful signup
+            await authClient.updateUser({
+              // @ts-ignore
+              roleId: roleIdFromUrl,
+            });
             router.push("/dashboard");
-            router.refresh(); // Tambahkan refresh untuk memastikan session terbaca
+            router.refresh();
           },
         },
       });

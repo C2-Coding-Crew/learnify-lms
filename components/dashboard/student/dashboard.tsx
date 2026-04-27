@@ -52,6 +52,9 @@ interface StudentDashboardProps {
   twoFactorEnabled?: boolean;
   enrolledCourses?: Course[];
   todos?: Todo[];
+  performanceGrade?: string;
+  nextLesson?: { title: string; time: string; date: string } | null;
+  calendar?: { month: string; year: number; today: number; daysInMonth: number };
 }
 
 export default function StudentDashboard({ 
@@ -60,7 +63,10 @@ export default function StudentDashboard({
   userRole, 
   twoFactorEnabled, 
   enrolledCourses = [],
-  todos: initialTodos = [] 
+  todos: initialTodos = [],
+  performanceGrade = "0.000",
+  nextLesson = null,
+  calendar = { month: "June", year: 2024, today: 10, daysInMonth: 30 }
 }: StudentDashboardProps) {  
   const router = useRouter();
 
@@ -280,13 +286,13 @@ export default function StudentDashboard({
                       strokeWidth="10"
                       fill="transparent"
                       strokeDasharray="339.29"
-                      strokeDashoffset="80"
+                      strokeDashoffset={339.29 - (Number(performanceGrade) / 10 * 339.29)}
                       className="text-[#FF6B4A] transition-all duration-1000"
                     />
                   </svg>
                   <div className="absolute flex flex-col items-center">
                     <span className="text-2xl font-black text-slate-800">
-                      8.966
+                      {performanceGrade}
                     </span>
                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
                       Grade
@@ -372,7 +378,7 @@ export default function StudentDashboard({
             <div className="bg-white p-6 rounded-[1.5rem] shadow-sm border border-slate-50">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">
-                  June 2024
+                  {calendar.month} {calendar.year}
                 </h3>
                 <div className="flex gap-1 text-slate-300">
                   <ChevronRight
@@ -388,10 +394,10 @@ export default function StudentDashboard({
                 ))}
               </div>
               <div className="grid grid-cols-7 gap-1 text-center">
-                {[...Array(30)].map((_, i) => (
+                {[...Array(calendar.daysInMonth)].map((_, i) => (
                   <span
                     key={i}
-                    className={`text-[11px] font-bold py-2 rounded-xl transition-all cursor-pointer ${i + 1 === 10 ? "bg-[#FF6B4A] text-white shadow-md shadow-orange-100" : "text-slate-500 hover:bg-slate-50"}`}
+                    className={`text-[11px] font-bold py-2 rounded-xl transition-all cursor-pointer ${i + 1 === calendar.today ? "bg-[#FF6B4A] text-white shadow-md shadow-orange-100" : "text-slate-500 hover:bg-slate-50"}`}
                   >
                     {i + 1}
                   </span>
@@ -470,9 +476,9 @@ export default function StudentDashboard({
                 <h4 className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">
                   Upcoming Lesson
                 </h4>
-                <p className="text-[15px] font-bold">UX Design Fundamentals</p>
+                <p className="text-[15px] font-bold">{nextLesson?.title || "No Upcoming Class"}</p>
                 <p className="text-[10px] text-white/30 mb-6 font-medium">
-                  Today, 5:30pm
+                  {nextLesson ? `${nextLesson.date}, ${nextLesson.time}` : "Check schedule for updates"}
                 </p>
                 <Button className="w-full bg-[#FF6B4A] hover:bg-[#fa5a36] text-white rounded-xl font-bold h-11 text-xs shadow-lg shadow-orange-900/20">
                   Join Class
