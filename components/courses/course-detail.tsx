@@ -21,6 +21,8 @@ import {
   Heart,
   Loader2,
   GraduationCap,
+  MessageSquare,
+  Send,
 } from "lucide-react";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
@@ -404,6 +406,14 @@ export default function CourseDetailClient({ course }: { course: CourseDetail })
               </section>
             )}
 
+            {/* Reviews */}
+            <ReviewSection
+              courseSlug={course.slug}
+              isEnrolled={enrollmentStatus.isEnrolled}
+              averageRating={course.rating}
+              reviewCount={course.reviewCount}
+            />
+
             {/* Instructor */}
             <section className="bg-gradient-to-br from-slate-50 to-orange-50/30 rounded-3xl p-6">
               <h2 className="text-xl font-black text-slate-900 mb-5 flex items-center gap-2">
@@ -665,4 +675,205 @@ function LessonRow({
     );
   }
   return content;
+}
+
+// ─── Review Section ────────────────────────────────────────────────────────────
+function ReviewSection({
+  courseSlug,
+  isEnrolled,
+  averageRating,
+  reviewCount,
+}: {
+  courseSlug: string;
+  isEnrolled: boolean;
+  averageRating: number;
+  reviewCount: number;
+}) {
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [distribution, setDistribution] = useState<Record<number, number>>({ 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 });
+  const [loading, setLoading] = useState(true);
+  const [submitRating, setSubmitRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/courses/${courseSlug}/reviews?limit=5`)
+      .then((r) => r.json())
+      .then((data) => {
+        setReviews(data.reviews ?? []);
+        setDistribution(data.meta?.distribution ?? { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 });
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [courseSlug]);
+
+  const handleSubmitReview = async () => {
+    if (submitRating < 1) {
+      toast.error("Pilih rating terlebih dahulu (1-5 bintang)");
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`/api/courses/${courseSlug}/reviews`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rating: submitRating, comment }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Gagal mengirim ulasan");
+      toast.success("✅ Ulasan berhasil dikirim! Terima kasih.");
+      setSubmitted(true);
+      // Refresh reviews
+      const reviewsRes = await fetch(`/api/courses/${courseSlug}/reviews?limit=5`);
+      const reviewsData = await reviewsRes.json();
+      setReviews(reviewsData.reviews ?? []);
+      setDistribution(reviewsData.meta?.distribution ?? distribution);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Terjadi kesalahan");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const totalForBar = Math.max(1, ...Object.values(distribution));
+
+  return (
+    <section>
+      <h2 className="text-xl font-black text-slate-900 mb-5 flex items-center gap-2">
+        <MessageSquare size={20} className="text-[#FF6B4A]" /> Ulasan Siswa
+      </h2>
+
+      {/* Rating Summary */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-8 bg-slate-50 rounded-2xl p-6 mb-6">
+        <div className="text-center">
+          <p className="text-6xl font-black text-[#2D2D2D]">{averageRating.toFixed(1)}</p>
+          <div className="flex items-center gap-0.5 justify-center my-2">
+            {[1, 2, 3, 4, 5].map((s) => (
+              <Star
+                key={s}
+                size={16}
+                className={s <= Math.round(averageRating) ? "text-yellow-400" : "text-slate-200"}
+                fill={s <= Math.round(averageRating) ? "currentColor" : "none"}
+              />
+            ))}
+          </div>
+          <p className="text-xs text-slate-400 font-bold">{reviewCount} ulasan</p>
+        </div>
+        <div className="flex-1 space-y-2 w-full">
+          {[5, 4, 3, 2, 1].map((star) => (
+            <div key={star} className="flex items-center gap-3">
+              <span className="text-[11px] font-bold text-slate-500 w-3">{star}</span>
+              <Star size={10} className="text-yellow-400" fill="currentColor" />
+              <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-yellow-400 rounded-full transition-all"
+                  style={{ width: `${((distribution[star] ?? 0) / totalForBar) * 100}%` }}
+                />
+              </div>
+              <span className="text-[11px] font-bold text-slate-400 w-4 text-right">{distribution[star] ?? 0}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Submit Review Form (hanya untuk yang sudah enroll) */}
+      {isEnrolled && !submitted && (
+        <div className="bg-orange-50 border border-orange-100 rounded-2xl p-5 mb-6">
+          <p className="font-black text-slate-800 mb-3">Berikan Ulasanmu 🌟</p>
+          <div className="flex items-center gap-2 mb-4">
+            {[1, 2, 3, 4, 5].map((s) => (
+              <button
+                key={s}
+                onMouseEnter={() => setHoverRating(s)}
+                onMouseLeave={() => setHoverRating(0)}
+                onClick={() => setSubmitRating(s)}
+                className="transition-transform hover:scale-110"
+              >
+                <Star
+                  size={28}
+                  className={(hoverRating || submitRating) >= s ? "text-yellow-400" : "text-slate-200"}
+                  fill={(hoverRating || submitRating) >= s ? "currentColor" : "none"}
+                />
+              </button>
+            ))}
+            {submitRating > 0 && (
+              <span className="text-sm font-bold text-slate-500 ml-2">
+                {["😡 Buruk", "😕 Kurang", "😐 Cukup", "😊 Bagus", "🤩 Sangat Bagus!"][submitRating - 1]}
+              </span>
+            )}
+          </div>
+          <textarea
+            placeholder="Ceritakan pengalamanmu belajar di kursus ini... (opsional)"
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            rows={3}
+            className="w-full bg-white border border-orange-100 rounded-xl p-3 text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none"
+          />
+          <button
+            onClick={handleSubmitReview}
+            disabled={isSubmitting || submitRating < 1}
+            className="mt-3 px-6 py-2.5 bg-[#FF6B4A] text-white font-black rounded-xl text-sm hover:bg-[#fa5a35] transition-all disabled:opacity-50 flex items-center gap-2"
+          >
+            {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+            Kirim Ulasan
+          </button>
+        </div>
+      )}
+
+      {submitted && (
+        <div className="bg-green-50 border border-green-200 rounded-2xl p-4 mb-6 flex items-center gap-3">
+          <CheckCircle size={20} className="text-green-500" />
+          <p className="text-sm font-bold text-green-700">Ulasanmu sudah terkirim. Terima kasih! 🎉</p>
+        </div>
+      )}
+
+      {/* Review List */}
+      {loading ? (
+        <div className="flex items-center justify-center py-10">
+          <Loader2 size={24} className="animate-spin text-slate-300" />
+        </div>
+      ) : reviews.length === 0 ? (
+        <div className="text-center py-10 text-slate-400">
+          <MessageSquare size={32} className="mx-auto mb-3 opacity-30" />
+          <p className="font-bold text-sm">Belum ada ulasan untuk kursus ini</p>
+          {isEnrolled && <p className="text-xs mt-1">Jadilah yang pertama memberikan ulasan!</p>}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {reviews.map((review: any) => (
+            <div key={review.id} className="flex gap-4 p-4 bg-slate-50/60 rounded-2xl">
+              <img
+                src={review.user.image ?? `https://api.dicebear.com/7.x/avataaars/svg?seed=${review.user.name}`}
+                alt={review.user.name}
+                className="w-10 h-10 rounded-xl bg-slate-200 flex-shrink-0"
+              />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="font-black text-slate-800 text-sm">{review.user.name}</p>
+                  <div className="flex items-center gap-0.5">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <Star
+                        key={s}
+                        size={10}
+                        className={s <= review.rating ? "text-yellow-400" : "text-slate-200"}
+                        fill={s <= review.rating ? "currentColor" : "none"}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-medium">
+                    {new Date(review.createdDate).toLocaleDateString("id-ID", { year: "numeric", month: "short", day: "numeric" })}
+                  </span>
+                </div>
+                {review.comment && (
+                  <p className="text-sm text-slate-600 leading-relaxed">{review.comment}</p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
 }

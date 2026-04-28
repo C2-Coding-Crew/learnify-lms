@@ -1,8 +1,30 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 const COMPANY = "LEARNIFY";
 const SYSTEM = "SYSTEM";
+
+// ─── Helper: Create account dengan password ──────────────────────────────────
+async function createAccountWithPassword(userId: string, email: string, plainPassword: string) {
+  const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
+  const existing = await prisma.account.findFirst({
+    where: {userId }
+  });
+
+  if (!existing) {
+    await prisma.account.create({
+      data: {
+        id: `acc_${Date.now()}_${Math.random()}`,
+        userId,
+        accountId: email,
+        providerId: "credential",
+        password: hashedPassword
+      }
+    });
+  }
+}
 
 async function main() {
   console.log("🌱 Seeding database dengan team standard schema...\n");
@@ -20,26 +42,26 @@ async function main() {
           status: 1,
           isDeleted: 0,
           createdBy: SYSTEM,
-          createdDate: new Date(),
+          createdAt: new Date(),
           lastUpdatedBy: SYSTEM,
           lastUpdatedDate: new Date(),
         },
       });
     }
   }
-  const roleAdmin      = await prisma.role.findFirst({ where: { name: "admin",      companyCode: COMPANY } });
+  const roleAdmin = await prisma.role.findFirst({ where: { name: "admin", companyCode: COMPANY } });
   const roleInstructor = await prisma.role.findFirst({ where: { name: "instructor", companyCode: COMPANY } });
-  const roleStudent    = await prisma.role.findFirst({ where: { name: "student",    companyCode: COMPANY } });
+  const roleStudent = await prisma.role.findFirst({ where: { name: "student", companyCode: COMPANY } });
   console.log(`   ✅ admin | instructor | student`);
 
   // ─── 2. Seed Categories ──────────────────────────────────────────────────
   console.log("\n2️⃣  Seeding Categories...");
   const categoriesData = [
-    { name: "Design",       slug: "design" },
-    { name: "Development",  slug: "development" },
-    { name: "Branding",     slug: "branding" },
+    { name: "Design", slug: "design" },
+    { name: "Development", slug: "development" },
+    { name: "Branding", slug: "branding" },
     { name: "Data Science", slug: "data-science" },
-    { name: "Marketing",    slug: "marketing" },
+    { name: "Marketing", slug: "marketing" },
   ];
   for (const cat of categoriesData) {
     const existing = await prisma.category.findUnique({ where: { slug: cat.slug } });
@@ -51,7 +73,7 @@ async function main() {
           status: 1,
           isDeleted: 0,
           createdBy: SYSTEM,
-          createdDate: new Date(),
+          createdAt: new Date(),
           lastUpdatedBy: SYSTEM,
           lastUpdatedDate: new Date(),
         },
@@ -60,9 +82,9 @@ async function main() {
     console.log(`   ✅ Category: ${cat.name}`);
   }
   // Ambil IDs setelah insert
-  const catDesign      = await prisma.category.findUnique({ where: { slug: "design" } });
-  const catDev         = await prisma.category.findUnique({ where: { slug: "development" } });
-  const catBranding    = await prisma.category.findUnique({ where: { slug: "branding" } });
+  const catDesign = await prisma.category.findUnique({ where: { slug: "design" } });
+  const catDev = await prisma.category.findUnique({ where: { slug: "development" } });
+  const catBranding = await prisma.category.findUnique({ where: { slug: "branding" } });
   const catDataScience = await prisma.category.findUnique({ where: { slug: "data-science" } });
 
   // ─── 3. Seed Instructor Users ─────────────────────────────────────────────
@@ -81,7 +103,7 @@ async function main() {
       status: 1,
       isDeleted: 0,
       createdBy: SYSTEM,
-      createdDate: new Date(),
+      createdAt: new Date(),
       lastUpdatedBy: SYSTEM,
       lastUpdatedDate: new Date(),
     },
@@ -100,11 +122,16 @@ async function main() {
       status: 1,
       isDeleted: 0,
       createdBy: SYSTEM,
-      createdDate: new Date(),
+      createdAt: new Date(),
       lastUpdatedBy: SYSTEM,
       lastUpdatedDate: new Date(),
     },
   });
+
+  // ─── 3.1 Set password untuk instructors ────────────────────────────────────
+  await createAccountWithPassword(instructor1.id, instructor1.email, "Instructor2026!");
+  await createAccountWithPassword(instructor2.id, instructor2.email, "Instructor2026!");
+
   console.log(`   ✅ ${instructor1.name} | ${instructor2.name}`);
 
   // ─── 4. Seed Courses ──────────────────────────────────────────────────────
@@ -276,18 +303,26 @@ async function main() {
   for (const { lessons, tags, ...courseFields } of coursesData) {
     const totalMinutes = lessons.reduce((sum, l) => sum + l.duration, 0);
 
-    const course = await prisma.course.create({
-      data: {
+    const course = await prisma.course.upsert({
+      where: { slug: courseFields.slug },
+      update: {
         ...courseFields,
         categoryId: Number(courseFields.categoryId),
-        price: courseFields.price,
+        price: String(courseFields.price),
+        totalLessons: lessons.length,
+        totalMinutes,
+      },
+      create: {
+        ...courseFields,
+        categoryId: Number(courseFields.categoryId),
+        price: String(courseFields.price), // Convert to string untuk Decimal
         totalLessons: lessons.length,
         totalMinutes,
         companyCode: COMPANY,
         status: 1,
         isDeleted: 0,
         createdBy: SYSTEM,
-        createdDate: new Date(),
+        createdAt: new Date(),
         lastUpdatedBy: SYSTEM,
         lastUpdatedDate: new Date(),
         lessons: {
@@ -298,7 +333,7 @@ async function main() {
             status: 1,
             isDeleted: 0,
             createdBy: SYSTEM,
-            createdDate: new Date(),
+            createdAt: new Date(),
             lastUpdatedBy: SYSTEM,
             lastUpdatedDate: new Date(),
           })),
@@ -310,7 +345,7 @@ async function main() {
             status: 1,
             isDeleted: 0,
             createdBy: SYSTEM,
-            createdDate: new Date(),
+            createdAt: new Date(),
             lastUpdatedBy: SYSTEM,
             lastUpdatedDate: new Date(),
           })),

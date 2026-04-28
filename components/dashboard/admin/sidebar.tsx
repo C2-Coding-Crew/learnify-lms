@@ -24,9 +24,8 @@ export default function AdminSidebar({ userName, onEnable2FA }: AdminSidebarProp
   const router = useRouter();
   const pathname = usePathname();
 
-  const handleLogout = async () => {
-    await authClient.signOut();
-    router.push("/");
+  const handleLogout = () => {
+    window.location.href = "/api/auth/sign-out";
   };
 
   const navItems = [

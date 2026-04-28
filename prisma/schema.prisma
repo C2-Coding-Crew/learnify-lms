@@ -12,8 +12,8 @@ datasource db {
 //  AUTH MODELS — String ID (Better Auth compatibility)
 // ═════════════════════════════════════════════════════════════════════════════
 
-model user {
-  id            String    @id
+model User {
+  id            String    @id @default(cuid())
   name          String
   email         String    @unique
   emailVerified Boolean   @default(false)
@@ -26,9 +26,9 @@ model user {
   status          Int      @default(1)    // 1=aktif, 0=nonaktif
   isDeleted       Int      @default(0)    // 0=ada, 1=terhapus (soft delete)
   createdBy       String?  @default("SYSTEM")
-  createdDate     DateTime @default(now())
+  createdAt       DateTime @default(now()) @map("createdDate")
   lastUpdatedBy   String?  @default("SYSTEM")
-  lastUpdatedDate DateTime @default(now()) @updatedAt
+  updatedAt       DateTime @default(now()) @updatedAt @map("lastUpdatedDate")
 
   // ── Relations ─────────────────────────────────────────────────────────────
   role          Role?            @relation(fields: [roleId], references: [id])
@@ -39,6 +39,9 @@ model user {
   taughtCourses Course[]         @relation("InstructorCourses")
   progress      LessonProgress[]
   twoFactor     twoFactor?
+  reviews       Review[]
+
+  @@map("user")
 }
 
 // ── 2FA (TOTP) ────────────────────────────────────────────────────────────────
@@ -50,19 +53,21 @@ model twoFactor {
   secret      String
   backupCodes String
   userId      String @unique
-  user        user   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now()) @map("createdDate")
+  updatedAt   DateTime @default(now()) @updatedAt @map("lastUpdatedDate")
 }
 
 model session {
   id        String   @id
   expiresAt DateTime
   token     String   @unique
-  createdDate DateTime @default(now())
-  lastUpdatedDate DateTime @default(now()) @updatedAt
+  createdAt DateTime @default(now()) @map("createdDate")
+  updatedAt DateTime @default(now()) @updatedAt @map("lastUpdatedDate")
   ipAddress String?
   userAgent String?
   userId    String
-  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   twoFactorVerified Boolean? @default(false) 
 }
@@ -72,7 +77,7 @@ model account {
   accountId             String
   providerId            String
   userId                String
-  user                  user      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   accessToken           String?
   refreshToken          String?
   idToken               String?
@@ -80,8 +85,8 @@ model account {
   refreshTokenExpiresAt DateTime?
   scope                 String?
   password              String?
-  createdDate             DateTime  @default(now())
-  lastUpdatedDate         DateTime  @default(now()) @updatedAt
+  createdAt             DateTime  @default(now()) @map("createdDate")
+  updatedAt             DateTime  @default(now()) @updatedAt @map("lastUpdatedDate")
 }
 
 model verification {
@@ -89,8 +94,8 @@ model verification {
   identifier String
   value      String
   expiresAt  DateTime
-  createdDate      DateTime  @default(now())
-  lastUpdatedDate  DateTime  @default(now()) @updatedAt
+  createdAt  DateTime  @default(now()) @map("createdDate")
+  updatedAt  DateTime  @default(now()) @updatedAt @map("lastUpdatedDate")
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -108,7 +113,7 @@ model Role {
   lastUpdatedBy   String   @default("SYSTEM")
   lastUpdatedDate DateTime @updatedAt
 
-  users user[]
+  users User[]
 }
 
 model Category {
@@ -150,11 +155,12 @@ model Course {
   lastUpdatedBy   String   @default("SYSTEM")
   lastUpdatedDate DateTime @updatedAt
 
-  instructor  user      @relation("InstructorCourses", fields: [instructorId], references: [id])
+  instructor  User      @relation("InstructorCourses", fields: [instructorId], references: [id])
   category    Category  @relation(fields: [categoryId], references: [id])
   lessons     Lesson[]
   enrollments Enrollment[]
   tags        CourseTag[]
+  reviews     Review[]
 }
 
 model Lesson {
@@ -193,7 +199,7 @@ model LessonProgress {
   lastUpdatedBy   String    @default("SYSTEM")
   lastUpdatedDate DateTime  @updatedAt
 
-  user   user   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@unique([userId, lessonId])
@@ -225,11 +231,11 @@ model Enrollment {
   status           Int       @default(1)
   isDeleted        Int       @default(0)
   createdBy        String    @default("SYSTEM")
-  createdAt        DateTime  @default(now())
+  createdDate      DateTime  @default(now())
   lastUpdatedBy    String    @default("SYSTEM")
-  updatedAt        DateTime  @updatedAt
+  lastUpdatedDate  DateTime  @updatedAt
 
-  user        user         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
   certificate Certificate?
 
@@ -251,7 +257,7 @@ model Invoice {
   lastUpdatedBy   String   @default("SYSTEM")
   lastUpdatedDate DateTime @updatedAt
 
-  user         user          @relation(fields: [userId], references: [id])
+  user         User          @relation(fields: [userId], references: [id])
   transactions Transaction[]
 }
 
@@ -268,9 +274,9 @@ model Transaction {
   status            Int      @default(1)
   isDeleted         Int      @default(0)
   createdBy         String   @default("SYSTEM")
-  createdAt         DateTime @default(now())
+  createdDate       DateTime @default(now())
   lastUpdatedBy     String   @default("SYSTEM")
-  updatedAt         DateTime @updatedAt
+  lastUpdatedDate   DateTime @updatedAt
 
   invoice Invoice @relation(fields: [invoiceId], references: [id])
 }
@@ -285,9 +291,33 @@ model Certificate {
   status            Int      @default(1)
   isDeleted         Int      @default(0)
   createdBy         String   @default("SYSTEM")
-  createdAt         DateTime @default(now())
+  createdDate       DateTime @default(now())
   lastUpdatedBy     String   @default("SYSTEM")
-  updatedAt         DateTime @updatedAt
+  lastUpdatedDate   DateTime @updatedAt
 
   enrollment Enrollment @relation(fields: [enrollmentId], references: [id])
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  REVIEW & RATING
+// ═════════════════════════════════════════════════════════════════════════════
+
+model Review {
+  id              Int      @id @default(autoincrement())
+  userId          String
+  courseId        Int
+  rating          Int      // 1-5 bintang
+  comment         String?
+  companyCode     String   @default("LEARNIFY")
+  status          Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
 }

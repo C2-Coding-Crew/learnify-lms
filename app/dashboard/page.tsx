@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth"; 
+import { auth } from "@/lib/auth";
 import { headers, cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
@@ -8,7 +8,8 @@ export default async function DashboardRootPage() {
         headers: await headers()
     });
 
-    console.log("DEBUG DashboardRootPage session:", JSON.stringify(session, null, 2));
+    // DEBUG
+    console.log("[dashboard] Session:", session ? `User: ${session.user.id} (${session.user.email})` : "NO SESSION");
 
     if (!session) {
         redirect("/auth/login");
@@ -23,20 +24,24 @@ export default async function DashboardRootPage() {
     }
 
     // ── Redirect berdasarkan role ───────────────────────────────────────────
+    console.log("[dashboard] Finding user in DB:", session.user.id);
     const dbUser = await db.user.findUnique({
         where: { id: session.user.id },
-        select: { roleId: true }
+        select: { roleId: true, email: true, name: true }
     });
 
-    console.log("DEBUG DashboardRootPage dbUser:", JSON.stringify(dbUser, null, 2));
+    // DEBUG
+    console.log("[dashboard] DB query result:", dbUser ? `Found: ${dbUser.name} (role: ${dbUser.roleId})` : "USER NOT FOUND IN DB!");
 
     if (!dbUser) {
-        // Jika data user hilang di DB, paksa login ulang
-        redirect("/auth/login");
+        console.warn("[dashboard] Invalid session → forcing logout");
+
+        // hapus session manual (Better Auth) via route khusus
+        redirect("/api/auth/force-logout");
     }
 
     const roleId = dbUser.roleId;
-    
+
     if (roleId === 1) {
         redirect("/dashboard/admin");
     } else if (roleId === 3) {

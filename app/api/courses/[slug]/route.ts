@@ -1,7 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
-
-const prisma = new PrismaClient();
 
 export async function GET(
   _request: Request,
@@ -9,7 +7,7 @@ export async function GET(
 ) {
   const { slug } = await params;
 
-  const course = await prisma.course.findUnique({
+  const course = await db.course.findUnique({
     where: {
       slug,
       isDeleted: 0, // soft delete filter

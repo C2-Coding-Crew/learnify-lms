@@ -10,7 +10,20 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  
+  // DEBUG: Log semua POST requests ke /api/auth
+  console.log(`[auth endpoint] POST ${pathname}`);
+  
   const response = await handler.POST(request);
+  
+  // DEBUG: Log response status dan cookies
+  console.log(`[auth endpoint] Response status: ${response.status}`);
+  if (pathname.includes("/sign-in")) {
+    const setCookieHeader = response.headers.get("set-cookie");
+    console.log(`[auth endpoint] Set-Cookie header present: ${!!setCookieHeader}`);
+  }
+  
   return handleAuthInterceptor(request, response);
 }
 

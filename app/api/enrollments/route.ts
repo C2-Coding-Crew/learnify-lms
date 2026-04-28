@@ -125,9 +125,9 @@ export async function POST(request: Request) {
         status: 1,
         isDeleted: 0,
         createdBy: session.user.id,
-        createdAt: new Date(),
+        createdDate: new Date(),
         lastUpdatedBy: session.user.id,
-        updatedAt: new Date(),
+        lastUpdatedDate: new Date(),
       },
     });
 
@@ -142,26 +142,45 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } else {
-    // ── PAID: Buat Invoice → (Midtrans di tahap berikutnya) ─────────────
+    // ── PAID: Buat Invoice + Enrollment pending_payment ──────────────
     const invoiceNumber = generateInvoiceNumber();
     const dueDate = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 jam
 
-    const invoice = await db.invoice.create({
-      data: {
-        userId: session.user.id,
-        invoiceNumber,
-        totalAmount: course.price,
-        invoiceStatus: "pending",
-        dueDate,
-        companyCode: COMPANY,
-        status: 1,
-        isDeleted: 0,
-        createdBy: session.user.id,
-        createdDate: new Date(),
-        lastUpdatedBy: session.user.id,
-        lastUpdatedDate: new Date(),
-      },
-    });
+    const [invoice] = await Promise.all([
+      db.invoice.create({
+        data: {
+          userId: session.user.id,
+          invoiceNumber,
+          totalAmount: course.price,
+          invoiceStatus: "pending",
+          dueDate,
+          companyCode: COMPANY,
+          status: 1,
+          isDeleted: 0,
+          createdBy: session.user.id,
+          createdDate: new Date(),
+          lastUpdatedBy: session.user.id,
+          lastUpdatedDate: new Date(),
+        },
+      }),
+      // Buat enrollment dengan status pending_payment
+      // Akan diupdate ke "active" oleh webhook Midtrans setelah pembayaran berhasil
+      db.enrollment.create({
+        data: {
+          userId: session.user.id,
+          courseId,
+          enrollmentStatus: "pending_payment",
+          enrolledAt: new Date(),
+          companyCode: COMPANY,
+          status: 1,
+          isDeleted: 0,
+          createdBy: session.user.id,
+          createdDate: new Date(),
+          lastUpdatedBy: session.user.id,
+          lastUpdatedDate: new Date(),
+        },
+      }),
+    ]);
 
     return NextResponse.json(
       {
