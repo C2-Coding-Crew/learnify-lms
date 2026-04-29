@@ -1,12 +1,10 @@
-import { PrismaClient } from "@prisma/client";
+import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import InstructorHeader from "@/components/dashboard/instructor/header";
 import { Clock, BookOpen, Users, Plus, Edit, Eye, MoreVertical } from "lucide-react";
-
-const prisma = new PrismaClient();
 
 export default async function InstructorCoursesPage() {
   const session = await auth.api.getSession({
@@ -24,7 +22,7 @@ export default async function InstructorCoursesPage() {
 
   const instructorId = session.user.id;
 
-  const courses = await prisma.course.findMany({
+  const courses = await db.course.findMany({
     where: {
       instructorId,
       isDeleted: 0,

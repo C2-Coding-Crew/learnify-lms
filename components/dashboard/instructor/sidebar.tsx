@@ -20,9 +20,8 @@ export default function InstructorSidebar() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const handleLogout = async () => {
-    await authClient.signOut();
-    router.push("/");
+  const handleLogout = () => {
+    window.location.href = "/api/auth/sign-out";
   };
 
   const navItems = [
