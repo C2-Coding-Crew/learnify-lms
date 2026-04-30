@@ -27,9 +27,8 @@ export default function StudentSidebar({ userName, activePath, menus = [] }: Stu
   const pathname = usePathname();
   const active = activePath ?? pathname;
 
-  const handleLogout = async () => {
-    await authClient.signOut();
-    router.push("/");
+  const handleLogout = () => {
+    window.location.href = "/api/auth/sign-out";
   };
 
   const navItems = menus.map(m => {

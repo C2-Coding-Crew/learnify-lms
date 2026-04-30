@@ -57,9 +57,8 @@ export default function InstructorDashboard({
 }: InstructorDashboardProps) {
   const router = useRouter();
 
-  const handleLogout = async () => {
-    await authClient.signOut();
-    router.push("/");
+  const handleLogout = () => {
+    window.location.href = "/api/auth/sign-out";
   };
 
   const [gradings] = useState<PendingGrading[]>(initialGradings);

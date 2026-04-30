@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Mail, Lock, Chrome, ChevronRight, X, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
@@ -10,6 +10,7 @@ import { loginSchema } from "@/lib/validations/auth";
 
 const LoginPage = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -20,32 +21,35 @@ const LoginPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [userNotFound, setUserNotFound] = useState(false);
 
+  // Parse error dari query parameter saat komponen mount
+  useEffect(() => {
+    const errorParam = searchParams.get("error");
+    if (errorParam === "session_invalid") {
+      setError("Sesi Anda tidak valid. Silakan login kembali.");
+    }
+  }, [searchParams]);
+
 
   const handleGoogleLogin = async () => {
     setError(null);
     setIsGoogleLoading(true);
     try {
-      const { data, error: googleError } = await authClient.signIn.social({
+      await authClient.signIn.social({
         provider: "google",
-        // Langsung ke dashboard, biarkan handle redirect berdasarkan role
         callbackURL: "/dashboard",
       });
-      if (googleError) {
-        setError(googleError.message || "Gagal masuk dengan Google. Silakan coba lagi.");
-        setIsGoogleLoading(false);
-      }
+      // Better Auth akan redirect otomatis via OAuth flow
+      // tidak perlu handle di sini
     } catch {
       setError("Gagal masuk dengan Google. Silakan coba lagi.");
       setIsGoogleLoading(false);
     }
-
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setUserNotFound(false);
-
 
     const result = loginSchema.safeParse({ email, password });
     if (!result.success) {
@@ -55,29 +59,30 @@ const LoginPage = () => {
 
     setIsLoading(true);
     try {
-      // twoFactorClient akan otomatis redirect ke /auth/two-factor
-      // jika user punya 2FA aktif. Langsung ke /dashboard tanpa callbackURL
-      // karena dashboard akan redirect berdasarkan role
-      const { error: authError } = await authClient.signIn.email({
+      const { data, error: authError } = await authClient.signIn.email({
         email,
         password,
         rememberMe,
-        fetchOptions: {
-          onSuccess: () => {
-            // Redirect ke dashboard, biarkan dashboard yang handle redirect berdasarkan role
-            router.push("/dashboard");
-          },
-        },
+        // Gunakan callbackURL agar redirect konsisten dengan Google login
+        callbackURL: "/dashboard",
       });
 
       if (authError) {
-        // Jika error, kita munculkan banner saran registrasi
         setUserNotFound(true);
         setError("Email atau password tidak valid.");
+        setIsLoading(false);
+        return;
+      }
+
+      // Jika tidak ada error dan tidak ada redirect otomatis (non-2FA)
+      // Lakukan redirect manual
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        router.push("/dashboard");
       }
     } catch {
       setError("Terjadi kesalahan koneksi. Silakan coba lagi.");
-    } finally {
       setIsLoading(false);
     }
   };

@@ -1,7 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
-
-const prisma = new PrismaClient();
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -9,7 +7,7 @@ export async function GET(request: Request) {
   const search = searchParams.get("search");
   const isDeleted = 0; // soft delete filter — selalu exclude data terhapus
 
-  const courses = await prisma.course.findMany({
+  const courses = await db.course.findMany({
     where: {
       isPublished: true,
       isDeleted,

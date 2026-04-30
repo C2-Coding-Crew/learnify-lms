@@ -5,8 +5,7 @@ import { twoFactor } from "better-auth/plugins";
 import { db } from "@/lib/db";
 
 export const auth = betterAuth({
-  // Pastikan adapter prisma terpasang agar konek ke DB lo
-  adapter: prismaAdapter(db, {
+  database: prismaAdapter(db, {
     provider: "postgresql",
   }),
   secret: process.env.BETTER_AUTH_SECRET,
@@ -22,29 +21,44 @@ export const auth = betterAuth({
   },
 
 
-  events: {
+  // ── Database Hooks ──────────────────────────────────────────────────────────
+  // Inject roleId saat user dibuat pertama kali.
+  // PENTING: Gunakan `before` hook (bukan `after`) — karena `after` hook
+  // dipanggil via queueAfterTransactionHook yang async, dan pada saat itu
+  // INSERT sudah committed. Menggunakan `before` jauh lebih aman.
+  databaseHooks: {
     user: {
-      created: async (data: any) => {
-        // Set role default to Student (3) unless admin email
-        const adminEmail = process.env.ADMIN_EMAIL;
-        const isAdminEmail = adminEmail && data.user.email === adminEmail;
-        const roleId = isAdminEmail ? 1 : 3;
-        await db.user.update({
-          where: { id: data.user.id },
-          data: { roleId },
-        });
+      create: {
+        before: async (userData) => {
+          const adminEmail = process.env.ADMIN_EMAIL;
+          const roleId = adminEmail && userData.email === adminEmail ? 1 : 2;
+          console.log("[auth] user.create.before → assigning roleId:", roleId, "to", userData.email);
+          return {
+            data: {
+              ...userData,
+              roleId,
+            },
+          };
+        },
       },
     },
+  },
+
+  events: {
     session: {
       created: async (data: any) => {
-        const adminEmail = process.env.ADMIN_EMAIL;
-        const isAdminEmail = adminEmail && data.user.email === adminEmail;
-
-        if (isAdminEmail) {
-          await db.user.update({
-            where: { id: data.user.id },
-            data: { roleId: 1 },
-          });
+        try {
+          // Fix roleId admin jika login Google (user sudah ada) tapi roleId belum 1
+          const adminEmail = process.env.ADMIN_EMAIL;
+          if (adminEmail && data.user.email === adminEmail && (data.user as any).roleId !== 1) {
+            await db.user.update({
+              where: { id: data.user.id },
+              data: { roleId: 1 },
+            });
+            console.log("[auth] Admin roleId fixed for:", data.user.email);
+          }
+        } catch (err) {
+          console.error("[auth] session.created event error:", err);
         }
       },
     },
@@ -55,34 +69,35 @@ export const auth = betterAuth({
     requireEmailVerification: false,
   },
 
-  // Tambahkan plugin twoFactor di sini biar fiturnya aktif
   plugins: [
     twoFactor({
-      allowPasswordless: true, // Izinkan user Google (tanpa credential) aktifkan 2FA tanpa password
+      allowPasswordless: true,
+      otpOptions: {
+        async sendOTP({ user, otp }) {
+          // Import utility email di dalam fungsi atau di bagian atas file
+          const { sendEmail, twoFactorOtpEmailTemplate } = await import("@/lib/email");
+          const html = twoFactorOtpEmailTemplate(otp, user.name || "Pengguna");
+          await sendEmail({
+            to: user.email,
+            subject: "Kode Verifikasi Login Learnify",
+            html: html,
+          });
+        },
+      },
     }),
   ],
 
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 hari
     updateAge: 60 * 60 * 24,      // refresh setiap 1 hari
-    cookieCache: {
-      enabled: true,
-      maxAge: 60 * 5, // 5 minutes
-    },
-    fields: {
-      createdAt: "createdDate",
-      updatedAt: "lastUpdatedDate",
-    },
+    // Tidak perlu fields mapping karena sudah pakai @map di schema.prisma
   },
 
   account: {
     accountLinking: {
       enabled: true,
     },
-    fields: {
-      createdAt: "createdDate",
-      updatedAt: "lastUpdatedDate",
-    },
+    // Tidak perlu fields mapping karena sudah pakai @map di schema.prisma
   },
 
   user: {
@@ -91,15 +106,24 @@ export const auth = betterAuth({
         type: "number",
         required: false,
       },
-      twoFactorEnabled: {
-        type: "boolean",
+      companyCode: {
+        type: "string",
+        required: false,
+      },
+      status: {
+        type: "number",
+        required: false,
+      },
+      isDeleted: {
+        type: "number",
+        required: false,
+      },
+      createdBy: {
+        type: "string",
         required: false,
       },
     },
-    fields: {
-      createdAt: "createdDate",
-      updatedAt: "lastUpdatedDate",
-    },
+    // Tidak perlu fields mapping karena sudah pakai @map di schema.prisma
   },
 
   socialProviders: {
@@ -113,7 +137,7 @@ export const auth = betterAuth({
 declare global {
   namespace BetterAuth {
     interface User {
-      roleId?: number | null;
+      role?: 1 | 2 | 3;
       twoFactorEnabled?: boolean | null;
     }
   }

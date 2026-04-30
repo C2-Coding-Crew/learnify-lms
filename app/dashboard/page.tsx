@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth"; 
+import { auth } from "@/lib/auth";
 import { headers, cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
@@ -7,6 +7,9 @@ export default async function DashboardRootPage() {
     const session = await auth.api.getSession({
         headers: await headers()
     });
+
+    // DEBUG
+    console.log("[dashboard] Session:", session ? `User: ${session.user.id} (${session.user.email})` : "NO SESSION");
 
     if (!session) {
         redirect("/auth/login");
@@ -20,42 +23,25 @@ export default async function DashboardRootPage() {
         }
     }
 
-    const adminEmail = process.env.ADMIN_EMAIL;
-    const isAdminEmail = adminEmail && session.user.email === adminEmail;
+    // ── Redirect berdasarkan role ───────────────────────────────────────────
+    console.log("[dashboard] Finding user in DB:", session.user.id);
+    const dbUser = await db.user.findUnique({
+        where: { id: session.user.id },
+        select: { roleId: true, email: true, name: true }
+    });
 
-    let roleId: number | undefined;
+    // DEBUG
+    console.log("[dashboard] DB query result:", dbUser ? `Found: ${dbUser.name} (role: ${dbUser.roleId})` : "USER NOT FOUND IN DB!");
 
-    if (isAdminEmail) {
-        // Jika email terdaftar sebagai admin, paksa jadi Admin (1)
-        roleId = 1;
-        // Update di DB jika belum 1
-        const currentUser = await db.user.findUnique({ where: { id: session.user.id }, select: { roleId: true } });
-        if (currentUser?.roleId !== 1) {
-            await db.user.update({
-                where: { id: session.user.id },
-                data: { roleId: 1 }
-            });
-        }
-    } else {
-        // Ambil role dari DB
-        const dbUser = await db.user.findUnique({
-            where: { id: session.user.id },
-            select: { roleId: true }
-        });
-        
-        roleId = dbUser?.roleId ?? undefined;
+    if (!dbUser) {
+        console.warn("[dashboard] Invalid session → forcing logout");
 
-        // CRITICAL FIX: Jika roleId di DB kosong, paksa jadi Student (3) dan simpan ke DB
-        if (!roleId) {
-            roleId = 3;
-            await db.user.update({
-                where: { id: session.user.id },
-                data: { roleId: 3 }
-            });
-        }
+        // hapus session manual (Better Auth) via route khusus
+        redirect("/api/auth/force-logout");
     }
 
-    // ── Redirect berdasarkan role ───────────────────────────────────────────
+    const roleId = dbUser.roleId;
+
     if (roleId === 1) {
         redirect("/dashboard/admin");
     } else if (roleId === 2) {

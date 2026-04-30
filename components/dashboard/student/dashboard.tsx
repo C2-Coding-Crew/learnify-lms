@@ -70,19 +70,8 @@ export default function StudentDashboard({
 }: StudentDashboardProps) {  
   const router = useRouter();
 
-  const handleLogout = async () => {
-    try {
-      await authClient.signOut({
-        fetchOptions: {
-          onSuccess: () => {
-            router.push("/");
-          },
-        },
-      });
-    } catch (error) {
-      console.error("Logout error:", error);
-      router.push("/");
-    }
+  const handleLogout = () => {
+    window.location.href = "/api/auth/sign-out";
   };
 
   // --- STATE MANAGEMENT ---
