@@ -1,9 +1,9 @@
-// app/dashboard/admin/page.tsx
 import AdminDashboard from "@/components/dashboard/admin/admin";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { db } from "@/lib/db";
 
 async function getAdminStats() {
   // Stats

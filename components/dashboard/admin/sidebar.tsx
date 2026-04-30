@@ -14,13 +14,15 @@ import {
   ShieldCheck,
   LogOut,
 } from "lucide-react";
+import * as LucideIcons from "lucide-react";
 
 interface AdminSidebarProps {
   userName: string;
   onEnable2FA?: () => void;
+  menus?: any[];
 }
 
-export default function AdminSidebar({ userName, onEnable2FA }: AdminSidebarProps) {
+export default function AdminSidebar({ userName, onEnable2FA, menus = [] }: AdminSidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -28,13 +30,14 @@ export default function AdminSidebar({ userName, onEnable2FA }: AdminSidebarProp
     window.location.href = "/api/auth/sign-out";
   };
 
-  const navItems = [
-    { name: "Main Console",        href: "/dashboard/admin",                   icon: LayoutDashboard },
-    { name: "Manage Students",     href: "/dashboard/admin/students",           icon: GraduationCap },
-    { name: "Manage Instructors",  href: "/dashboard/admin/instructors",        icon: UserCheck },
-    { name: "Course Revenues",     href: "/dashboard/admin/revenues",           icon: Wallet },
-    { name: "System Logs",         href: "/dashboard/admin/logs",               icon: Activity },
-  ];
+  const navItems = menus.map(m => {
+    const IconComponent = (LucideIcons as any)[m.icon] || LucideIcons.LayoutDashboard;
+    return {
+      name: m.name,
+      href: m.href,
+      icon: IconComponent
+    };
+  });
 
   return (
     <aside className="w-[280px] bg-white hidden xl:flex flex-col sticky top-0 h-screen border-r border-orange-50">
