@@ -46,7 +46,9 @@ export default async function DashboardRootPage() {
         redirect("/dashboard/admin");
     } else if (roleId === 2) {
         redirect("/dashboard/instructor");
-    } else {
+    } else if (roleId === 3) {
         redirect("/dashboard/student");
+    } else {
+        redirect("/auth/select-role");
     }
 }

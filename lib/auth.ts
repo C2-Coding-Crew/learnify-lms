@@ -27,7 +27,7 @@ export const auth = betterAuth({
       create: {
         before: async (userData) => {
           const adminEmail = process.env.ADMIN_EMAIL;
-          const roleId = adminEmail && userData.email === adminEmail ? 1 : 2;
+          const roleId = adminEmail && userData.email === adminEmail ? 1 : null;
           console.log("[auth] user.create.before → assigning roleId:", roleId, "to", userData.email);
           return {
             data: {

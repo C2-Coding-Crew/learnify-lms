@@ -42,8 +42,8 @@ const RegisterPage = () => {
     try {
       const { data, error: googleError } = await authClient.signIn.social({
         provider: "google",
-        // Kirim roleId ke callbackURL agar ditangkap oleh databaseHooks di server
-        callbackURL: `/auth/select-role?roleId=${roleIdFromUrl}`,
+        // Arahkan ke callback yang akan logout dan redirect ke login
+        callbackURL: `${window.location.origin}/api/auth/google-register-callback`,
       });
       if (googleError) {
         setError(googleError.message || "Gagal mendaftar dengan Google. Silakan coba lagi.");
@@ -85,7 +85,11 @@ const RegisterPage = () => {
               // @ts-ignore
               roleId: roleIdFromUrl,
             });
-            router.push("/dashboard");
+            
+            // Sign out the user so they are required to login manually
+            await authClient.signOut();
+            
+            router.push("/auth/login");
             router.refresh();
           },
         },
