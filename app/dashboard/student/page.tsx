@@ -26,25 +26,6 @@ export default async function Page() {
     orderBy: { enrolledAt: "desc" }
   });
 
-  // Fetch Upcoming Schedule (Next 24 hours)
-  const upcomingLessons = await db.schedule.findMany({
-    where: {
-      course: {
-        enrollments: { some: { userId: session.user.id } }
-      },
-      startTime: { gte: new Date() },
-      isDeleted: 0
-    },
-    take: 1,
-    orderBy: { startTime: "asc" }
-  });
-
-  const nextLesson = upcomingLessons[0] ? {
-    title: upcomingLessons[0].title,
-    time: upcomingLessons[0].startTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }),
-    date: upcomingLessons[0].startTime.toLocaleDateString("id-ID", { weekday: "long" })
-  } : null;
-
   const progress = await db.lessonProgress.findMany({
     where: { userId: session.user.id, isCompleted: true, isDeleted: 0 }
   });
@@ -56,18 +37,6 @@ export default async function Page() {
   const performanceGrade = totalLessonsInAllCourses > 0 
     ? ((totalCompleted / totalLessonsInAllCourses) * 10).toFixed(3) 
     : "0.000";
-
-  const todos = await db.todo.findMany({
-    where: { userId: session.user.id, isDeleted: 0 },
-    orderBy: { createdDate: "desc" }
-  });
-
-  const formattedTodos = todos.map((t: any) => ({
-    id: t.id,
-    task: t.task,
-    date: t.createdDate.toLocaleDateString("id-ID", { day: "numeric", month: "long" }),
-    done: t.isCompleted
-  }));
 
   const formattedCourses = enrollments.map((enr: any) => {
     const courseLessons = enr.course.lessons;
@@ -102,9 +71,7 @@ export default async function Page() {
       userRole="Student"
       twoFactorEnabled={session.user.twoFactorEnabled ?? false}
       enrolledCourses={formattedCourses}
-      todos={formattedTodos}
       performanceGrade={performanceGrade}
-      nextLesson={nextLesson}
       calendar={{
         month: currentMonth,
         year: currentYear,

@@ -22,23 +22,6 @@ export default async function Page() {
     orderBy: { createdDate: "desc" }
   });
 
-  // Fetch Pending Submissions
-  const pendingSubmissions = await db.submission.findMany({
-    where: {
-      assignment: {
-        course: { instructorId: session.user.id }
-      },
-      grade: null,
-      isDeleted: 0
-    },
-    include: {
-      user: { select: { name: true } },
-      assignment: { select: { title: true } }
-    },
-    take: 5,
-    orderBy: { createdDate: "desc" }
-  });
-
   let totalRevenue = 0;
 
   const formattedCourses = instructorCourses.map((course: any) => {
@@ -55,13 +38,6 @@ export default async function Page() {
     };
   });
 
-  const formattedGradings = pendingSubmissions.map((s: any) => ({
-    id: s.id,
-    studentName: s.user.name,
-    assignment: s.assignment.title,
-    dueDate: new Date(s.createdDate).toLocaleDateString("id-ID")
-  }));
-
   return (
     <InstructorDashboardContent 
       userName={session.user.name} 
@@ -70,7 +46,6 @@ export default async function Page() {
       courses={formattedCourses}
       totalRevenue={totalRevenue}
       twoFactorEnabled={session.user.twoFactorEnabled ?? false}
-      initialGradings={formattedGradings}
     />
   );
 }

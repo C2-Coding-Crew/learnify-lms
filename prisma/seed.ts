@@ -42,7 +42,7 @@ async function main() {
           status: 1,
           isDeleted: 0,
           createdBy: SYSTEM,
-          createdAt: new Date(),
+          createdDate: new Date(),
           lastUpdatedBy: SYSTEM,
           lastUpdatedDate: new Date(),
         },
@@ -73,7 +73,7 @@ async function main() {
           status: 1,
           isDeleted: 0,
           createdBy: SYSTEM,
-          createdAt: new Date(),
+          createdDate: new Date(),
           lastUpdatedBy: SYSTEM,
           lastUpdatedDate: new Date(),
         },
@@ -105,7 +105,7 @@ async function main() {
       createdBy: SYSTEM,
       createdAt: new Date(),
       lastUpdatedBy: SYSTEM,
-      lastUpdatedDate: new Date(),
+      updatedAt: new Date(),
     },
   });
   const instructor2 = await prisma.user.upsert({
@@ -124,7 +124,7 @@ async function main() {
       createdBy: SYSTEM,
       createdAt: new Date(),
       lastUpdatedBy: SYSTEM,
-      lastUpdatedDate: new Date(),
+      updatedAt: new Date(),
     },
   });
 
@@ -331,7 +331,7 @@ async function main() {
         status: 1,
         isDeleted: 0,
         createdBy: SYSTEM,
-        createdAt: new Date(),
+        createdDate: new Date(),
         lastUpdatedBy: SYSTEM,
         lastUpdatedDate: new Date(),
         lessons: {
@@ -342,7 +342,7 @@ async function main() {
             status: 1,
             isDeleted: 0,
             createdBy: SYSTEM,
-            createdAt: new Date(),
+            createdDate: new Date(),
             lastUpdatedBy: SYSTEM,
             lastUpdatedDate: new Date(),
           })),
@@ -354,61 +354,16 @@ async function main() {
             status: 1,
             isDeleted: 0,
             createdBy: SYSTEM,
-            createdAt: new Date(),
+            createdDate: new Date(),
             lastUpdatedBy: SYSTEM,
             lastUpdatedDate: new Date(),
           })),
         },
       },
-      tags: {
-        create: tags.map((name) => ({
-          name,
-          companyCode: COMPANY,
-          status: 1,
-          isDeleted: 0,
-          createdBy: SYSTEM,
-          createdDate: new Date(),
-          lastUpdatedBy: SYSTEM,
-          lastUpdatedDate: new Date(),
-        })),
-      },
-    },
-  });
+    });
 
     console.log(`   ✅ "${course.title}" — ${lessons.length} lessons | ${totalMinutes} menit`);
   }
-
-  // ─── 5. Seed Sidebar Menus ────────────────────────────────────────────────
-  console.log("\n5️⃣  Seeding Sidebar Menus...");
-  const sidebarData = [
-    // Admin (1)
-    { roleId: 1, name: "Main Console",       href: "/dashboard/admin",            icon: "LayoutDashboard", order: 1 },
-    { roleId: 1, name: "Manage Students",    href: "/dashboard/admin/students",    icon: "GraduationCap",   order: 2 },
-    { roleId: 1, name: "Manage Instructors", href: "/dashboard/admin/instructors", icon: "UserCheck",     order: 3 },
-    { roleId: 1, name: "Course Revenues",    href: "/dashboard/admin/revenues",    icon: "Wallet",        order: 4 },
-    { roleId: 1, name: "System Logs",        href: "/dashboard/admin/logs",        icon: "Activity",      order: 5 },
-    // Instructor (2)
-    { roleId: 2, name: "Dashboard",   href: "/dashboard/instructor",           icon: "LayoutDashboard", order: 1 },
-    { roleId: 2, name: "My Courses",  href: "/dashboard/instructor/courses",   icon: "BookOpen",        order: 2 },
-    { roleId: 2, name: "Students",    href: "/dashboard/instructor/students",  icon: "Users",           order: 3 },
-    { roleId: 2, name: "Analytics",   href: "/dashboard/instructor/analytics", icon: "BarChart",        order: 4 },
-    // Student (3)
-    { roleId: 3, name: "Dashboard",   href: "/dashboard/student",              icon: "LayoutDashboard", order: 1 },
-    { roleId: 3, name: "Assignments", href: "/dashboard/student/assignments",   icon: "FileText",        order: 2 },
-    { roleId: 3, name: "Schedule",    href: "/dashboard/student/schedule",      icon: "Calendar",        order: 3 },
-    { roleId: 3, name: "Recordings",  href: "/dashboard/student/recordings",    icon: "Video",           order: 4 },
-    { roleId: 3, name: "Resources",   href: "/dashboard/student/resources",     icon: "Download",        order: 5 },
-  ];
-
-  for (const menu of sidebarData) {
-    const existing = await prisma.sidebarMenu.findFirst({ 
-      where: { name: menu.name, roleId: menu.roleId } 
-    });
-    if (!existing) {
-      await prisma.sidebarMenu.create({ data: menu });
-    }
-  }
-  console.log("   ✅ Sidebar menus created!");
 
   // ─── Summary ──────────────────────────────────────────────────────────────
   console.log("\n╔═══════════════════════════════════════╗");
@@ -418,7 +373,6 @@ async function main() {
   console.log(`║  Categories : ${categoriesData.length}                                 `);
   console.log(`║  Instructors: 2                                  `);
   console.log(`║  Courses    : ${coursesData.length}                                 `);
-  console.log(`║  Sidebar    : ${sidebarData.length} menus                              `);
   console.log("╚═══════════════════════════════════════╝\n");
 }
 
