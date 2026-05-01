@@ -9,11 +9,10 @@ export const auth = betterAuth({
     provider: "postgresql",
   }),
   secret: process.env.BETTER_AUTH_SECRET,
-  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
+  baseURL: process.env.BETTER_AUTH_URL!,
   trustedOrigins: [
     "https://learnify-lms-one.vercel.app",
-    "http://localhost:3000",
-    "learnify-lms-one.vercel.app"
+    "http://localhost:3000"
   ],
   trustHost: true,
 
