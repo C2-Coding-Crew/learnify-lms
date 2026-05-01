@@ -1,12 +1,11 @@
 import { Calendar, Clock, BookOpen, ChevronRight } from "lucide-react";
-import { getStudentSchedule } from "@/lib/actions/schedule-actions";
 
 export default async function StudentSchedulePage() {
-  const schedule = await getStudentSchedule();
-
-  const totalEvents = schedule.reduce((sum, day) => sum + day.events.length, 0);
-  const liveSessions = schedule.reduce((sum, day) => sum + day.events.filter((e: any) => e.type === 'Live Class').length, 0);
-  const activeCourses = new Set(schedule.flatMap(day => day.events.map((e: any) => e.course))).size;
+  const schedule = [
+    { id: 1, day: "Monday", date: "24 Jun 2024", events: [{ time: "09:00 AM", title: "UI/UX Fundamentals", type: "Live Class", course: "UI/UX Fundamentals" }, { time: "02:00 PM", title: "Figma Basics Review", type: "Self Study", course: "Figma Pro" }] },
+    { id: 2, day: "Wednesday", date: "26 Jun 2024", events: [{ time: "10:00 AM", title: "Q&A with Instructor", type: "Live Q&A", course: "React Masterclass" }] },
+    { id: 3, day: "Friday", date: "28 Jun 2024", events: [{ time: "03:00 PM", title: "Assignment Deadline", type: "Deadline", course: "UI/UX Fundamentals" }] },
+  ];
 
   const typeColors: Record<string, string> = {
     "Live Class": "bg-indigo-50 text-indigo-600 border-indigo-100",
@@ -24,9 +23,9 @@ export default async function StudentSchedulePage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {[
-            { label: "This Week", value: `${totalEvents} Events`, icon: Calendar },
-            { label: "Live Sessions", value: `${liveSessions}`, icon: Clock },
-            { label: "Courses Active", value: `${activeCourses}`, icon: BookOpen },
+            { label: "This Week", value: "6 Events", icon: Calendar },
+            { label: "Live Sessions", value: "2", icon: Clock },
+            { label: "Courses Active", value: "3", icon: BookOpen },
           ].map((s, i) => (
             <div key={i} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-4">
               <div className="w-14 h-14 rounded-2xl bg-orange-50 text-[#FF6B4A] flex items-center justify-center">
@@ -53,7 +52,7 @@ export default async function StudentSchedulePage() {
                 </span>
               </div>
               <div className="space-y-3">
-                {day.events.map((event: any, idx: number) => (
+                {day.events.map((event, idx) => (
                   <div key={idx} className={`flex items-center gap-5 p-4 rounded-2xl border ${typeColors[event.type] || "bg-slate-50 border-slate-100"}`}>
                     <div className="text-center min-w-[64px]">
                       <p className="text-[10px] font-black uppercase tracking-wider opacity-60">Time</p>

@@ -42,7 +42,7 @@ async function main() {
           status: 1,
           isDeleted: 0,
           createdBy: SYSTEM,
-          createdDate: new Date(),
+          createdAt: new Date(),
           lastUpdatedBy: SYSTEM,
           lastUpdatedDate: new Date(),
         },
@@ -73,7 +73,7 @@ async function main() {
           status: 1,
           isDeleted: 0,
           createdBy: SYSTEM,
-          createdDate: new Date(),
+          createdAt: new Date(),
           lastUpdatedBy: SYSTEM,
           lastUpdatedDate: new Date(),
         },
@@ -105,7 +105,7 @@ async function main() {
       createdBy: SYSTEM,
       createdAt: new Date(),
       lastUpdatedBy: SYSTEM,
-      updatedAt: new Date(),
+      lastUpdatedDate: new Date(),
     },
   });
   const instructor2 = await prisma.user.upsert({
@@ -124,7 +124,7 @@ async function main() {
       createdBy: SYSTEM,
       createdAt: new Date(),
       lastUpdatedBy: SYSTEM,
-      updatedAt: new Date(),
+      lastUpdatedDate: new Date(),
     },
   });
 
@@ -301,16 +301,7 @@ async function main() {
   ];
 
   for (const { lessons, tags, ...courseFields } of coursesData) {
-    // Ensure slug is unique – if a course with this slug already exists, append a random suffix
-    let uniqueSlug = courseFields.slug as string;
-    const existing = await prisma.course.findFirst({ where: { slug: uniqueSlug } });
-    if (existing) {
-      const randomSuffix = Math.random().toString(36).substring(2, 6);
-      uniqueSlug = `${uniqueSlug}-${randomSuffix}`;
-      // eslint-disable-next-line @typescript-eslint/no-extra-semi
-      ;
-    }
-  const totalMinutes = lessons.reduce((sum, l) => sum + l.duration, 0);
+    const totalMinutes = lessons.reduce((sum, l) => sum + l.duration, 0);
 
     const course = await prisma.course.upsert({
       where: { slug: courseFields.slug },
@@ -331,7 +322,7 @@ async function main() {
         status: 1,
         isDeleted: 0,
         createdBy: SYSTEM,
-        createdDate: new Date(),
+        createdAt: new Date(),
         lastUpdatedBy: SYSTEM,
         lastUpdatedDate: new Date(),
         lessons: {
@@ -342,7 +333,7 @@ async function main() {
             status: 1,
             isDeleted: 0,
             createdBy: SYSTEM,
-            createdDate: new Date(),
+            createdAt: new Date(),
             lastUpdatedBy: SYSTEM,
             lastUpdatedDate: new Date(),
           })),
@@ -354,7 +345,7 @@ async function main() {
             status: 1,
             isDeleted: 0,
             createdBy: SYSTEM,
-            createdDate: new Date(),
+            createdAt: new Date(),
             lastUpdatedBy: SYSTEM,
             lastUpdatedDate: new Date(),
           })),
@@ -373,6 +364,7 @@ async function main() {
   console.log(`║  Categories : ${categoriesData.length}                                 `);
   console.log(`║  Instructors: 2                                  `);
   console.log(`║  Courses    : ${coursesData.length}                                 `);
+  console.log(`║  Lessons    : ${coursesData.reduce((s, c) => s + c.lessons.length, 0)} total lessons               `);
   console.log("╚═══════════════════════════════════════╝\n");
 }
 

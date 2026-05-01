@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import {
@@ -20,12 +20,8 @@ import {
   MoreVertical,
   Plus,
   ShieldCheck,
-  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-import { toast } from "sonner";
-import { addTodo, toggleTodo, deleteTodo } from "@/lib/actions/todo-actions";
 
 // Tipe data
 interface Todo {
@@ -51,83 +47,67 @@ interface StudentDashboardProps {
   userRole: string | number;
   twoFactorEnabled?: boolean;
   enrolledCourses?: Course[];
-  todos?: Todo[];
-  performanceGrade?: string;
-  nextLesson?: { title: string; time: string; date: string } | null;
-  calendar?: { month: string; year: number; today: number; daysInMonth: number };
 }
 
-export default function StudentDashboard({ 
-  userName, 
-  userEmail, 
-  userRole, 
-  twoFactorEnabled, 
-  enrolledCourses = [],
-  todos: initialTodos = [],
-  performanceGrade = "0.000",
-  nextLesson = null,
-  calendar = { month: "June", year: 2024, today: 10, daysInMonth: 30 }
-}: StudentDashboardProps) {  
-  const router = useRouter();
+export default function StudentDashboard({ userName, userEmail, userRole, twoFactorEnabled, enrolledCourses = [] }: StudentDashboardProps) {  const router = useRouter();
 
   const handleLogout = () => {
     window.location.href = "/api/auth/sign-out";
   };
-
   // --- STATE MANAGEMENT ---
-  const [todos, setTodos] = useState<Todo[]>(initialTodos);
-  const [newTask, setNewTask] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [todos, setTodos] = useState<Todo[]>([
+    {
+      id: 1,
+      task: "Human Interaction Designs",
+      date: "Tuesday, 30 June 2024",
+      done: false,
+    },
+    {
+      id: 2,
+      task: "Design system Basics",
+      date: "Monday, 24 June 2024",
+      done: false,
+    },
+    {
+      id: 3,
+      task: "Introduction to UI",
+      date: "Friday, 10 June 2024",
+      done: true,
+    },
+    {
+      id: 4,
+      task: "Basics of Figma",
+      date: "Friday, 05 June 2024",
+      done: true,
+    },
+  ]);
 
-  // Sync with props if they change
-  useEffect(() => {
-    setTodos(initialTodos);
-  }, [initialTodos]);
+  const [newTask, setNewTask] = useState("");
 
   // Fungsi Toggle Status Todo
-  const handleToggleTodo = async (id: number, currentStatus: boolean) => {
-    try {
-      // Optimistic update
-      setTodos(prev => prev.map(t => t.id === id ? { ...t, done: !currentStatus } : t));
-      
-      await toggleTodo(id, !currentStatus);
-      toast.success("Task updated!");
-    } catch (err) {
-      toast.error("Failed to update task");
-      // Rollback
-      setTodos(prev => prev.map(t => t.id === id ? { ...t, done: currentStatus } : t));
-    }
+  const toggleTodo = (id: number) => {
+    setTodos(todos.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
   };
 
   // Fungsi Tambah Todo
-  const handleAddTodo = async (e: React.FormEvent) => {
+  const addTodo = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTask.trim() || isSubmitting) return;
+    if (!newTask.trim()) return;
 
-    setIsSubmitting(true);
-    try {
-      await addTodo(newTask);
-      setNewTask("");
-      toast.success("Task added successfully!");
-    } catch (err) {
-      toast.error("Failed to add task");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    const newEntry: Todo = {
+      id: Date.now(),
+      task: newTask,
+      date:
+        "Today, " +
+        new Date().toLocaleDateString("id-ID", {
+          day: "numeric",
+          month: "long",
+        }),
+      done: false,
+    };
 
-  // Fungsi Hapus Todo
-  const handleDeleteTodo = async (id: number) => {
-    try {
-      // Optimistic
-      setTodos(prev => prev.filter(t => t.id !== id));
-      await deleteTodo(id);
-      toast.success("Task deleted");
-    } catch (err) {
-      toast.error("Failed to delete task");
-      // Rollback
-      setTodos(initialTodos);
-    }
+    setTodos([newEntry, ...todos]);
+    setNewTask("");
   };
 
   return (
@@ -275,13 +255,13 @@ export default function StudentDashboard({
                       strokeWidth="10"
                       fill="transparent"
                       strokeDasharray="339.29"
-                      strokeDashoffset={339.29 - (Number(performanceGrade) / 10 * 339.29)}
+                      strokeDashoffset="80"
                       className="text-[#FF6B4A] transition-all duration-1000"
                     />
                   </svg>
                   <div className="absolute flex flex-col items-center">
                     <span className="text-2xl font-black text-slate-800">
-                      {performanceGrade}
+                      8.966
                     </span>
                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
                       Grade
@@ -367,7 +347,7 @@ export default function StudentDashboard({
             <div className="bg-white p-6 rounded-[1.5rem] shadow-sm border border-slate-50">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">
-                  {calendar.month} {calendar.year}
+                  June 2024
                 </h3>
                 <div className="flex gap-1 text-slate-300">
                   <ChevronRight
@@ -383,10 +363,10 @@ export default function StudentDashboard({
                 ))}
               </div>
               <div className="grid grid-cols-7 gap-1 text-center">
-                {[...Array(calendar.daysInMonth)].map((_, i) => (
+                {[...Array(30)].map((_, i) => (
                   <span
                     key={i}
-                    className={`text-[11px] font-bold py-2 rounded-xl transition-all cursor-pointer ${i + 1 === calendar.today ? "bg-[#FF6B4A] text-white shadow-md shadow-orange-100" : "text-slate-500 hover:bg-slate-50"}`}
+                    className={`text-[11px] font-bold py-2 rounded-xl transition-all cursor-pointer ${i + 1 === 10 ? "bg-[#FF6B4A] text-white shadow-md shadow-orange-100" : "text-slate-500 hover:bg-slate-50"}`}
                   >
                     {i + 1}
                   </span>
@@ -398,59 +378,44 @@ export default function StudentDashboard({
               <h3 className="text-sm font-bold text-slate-800 mb-6">
                 To do List
               </h3>
-              <form onSubmit={handleAddTodo} className="mb-6 flex gap-2">
+              <form onSubmit={addTodo} className="mb-6 flex gap-2">
                 <input
-                  disabled={isSubmitting}
                   value={newTask}
                   onChange={(e) => setNewTask(e.target.value)}
                   type="text"
                   placeholder="Add new task..."
-                  className="flex-1 bg-[#F8F9FB] border-none rounded-xl px-4 py-2 text-xs outline-none focus:ring-1 focus:ring-orange-200 transition-all disabled:opacity-50"
+                  className="flex-1 bg-[#F8F9FB] border-none rounded-xl px-4 py-2 text-xs outline-none focus:ring-1 focus:ring-orange-200 transition-all"
                 />
                 <button
-                  disabled={isSubmitting}
                   type="submit"
-                  className="p-2 bg-[#FF6B4A] text-white rounded-xl hover:bg-[#fa5a36] transition-colors disabled:opacity-50"
+                  className="p-2 bg-[#FF6B4A] text-white rounded-xl hover:bg-[#fa5a36] transition-colors"
                 >
                   <Plus size={16} />
                 </button>
               </form>
               <div className="space-y-4 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
-                {todos.length === 0 ? (
-                  <p className="text-center text-slate-300 text-xs py-4">No tasks yet.</p>
-                ) : todos.map((item) => (
+                {todos.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-start gap-4 group"
+                    onClick={() => toggleTodo(item.id)}
+                    className="flex gap-4 group cursor-pointer"
                   >
                     <div
-                      onClick={() => handleToggleTodo(item.id, item.done)}
-                      className={`flex-shrink-0 w-5 h-5 rounded-md border-2 mt-0.5 flex items-center justify-center transition-all cursor-pointer ${item.done ? "bg-[#FF6B4A] border-[#FF6B4A]" : "border-slate-200 hover:border-orange-300"}`}
+                      className={`flex-shrink-0 w-5 h-5 rounded-md border-2 mt-0.5 flex items-center justify-center transition-all ${item.done ? "bg-[#FF6B4A] border-[#FF6B4A]" : "border-slate-200 group-hover:border-orange-300"}`}
                     >
                       {item.done && (
                         <div className="w-2.5 h-1.5 border-l-2 border-b-2 border-white -rotate-45 mb-1" />
                       )}
                     </div>
                     <div className="flex-1 border-b border-slate-50 pb-3 group-last:border-none">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p
-                            onClick={() => handleToggleTodo(item.id, item.done)}
-                            className={`text-[13px] font-bold transition-all cursor-pointer ${item.done ? "text-slate-300 line-through" : "text-slate-700"}`}
-                          >
-                            {item.task}
-                          </p>
-                          <p className="text-[10px] text-slate-400 mt-1 font-medium">
-                            {item.date}
-                          </p>
-                        </div>
-                        <button 
-                          onClick={() => handleDeleteTodo(item.id)}
-                          className="text-slate-200 hover:text-red-500 transition-colors p-1"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
+                      <p
+                        className={`text-[13px] font-bold transition-all ${item.done ? "text-slate-300 line-through" : "text-slate-700"}`}
+                      >
+                        {item.task}
+                      </p>
+                      <p className="text-[10px] text-slate-400 mt-1 font-medium">
+                        {item.date}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -465,9 +430,9 @@ export default function StudentDashboard({
                 <h4 className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">
                   Upcoming Lesson
                 </h4>
-                <p className="text-[15px] font-bold">{nextLesson?.title || "No Upcoming Class"}</p>
+                <p className="text-[15px] font-bold">UX Design Fundamentals</p>
                 <p className="text-[10px] text-white/30 mb-6 font-medium">
-                  {nextLesson ? `${nextLesson.date}, ${nextLesson.time}` : "Check schedule for updates"}
+                  Today, 5:30pm
                 </p>
                 <Button className="w-full bg-[#FF6B4A] hover:bg-[#fa5a36] text-white rounded-xl font-bold h-11 text-xs shadow-lg shadow-orange-900/20">
                   Join Class

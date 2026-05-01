@@ -13,7 +13,7 @@ export default function SelectRolePage() {
 
   const roles = [
     {
-      id: 3, // Student
+      id: 2, // Student
       title: "Learning Enthusiast",
       label: "Siswa",
       desc: "Akses ribuan modul berkualitas dan tingkatkan karier Anda.",
@@ -23,7 +23,7 @@ export default function SelectRolePage() {
       border: "border-orange-200",
     },
     {
-      id: 2, // Mentor/Instructor
+      id: 3, // Mentor/Instructor
       title: "Expert Instructor",
       label: "Pengajar",
       desc: "Bangun komunitas belajar dan monetisasi keahlian Anda.",
@@ -49,11 +49,11 @@ const handleAction = async () => {
       });
 
       if (!error) {
-        // Redirect berdasarkan role: 1=Admin, 2=Instructor, 3=Student
+        // Redirect berdasarkan role: 1=Admin, 2=Student, 3=Instructor
         let targetPath = "/dashboard/student";
         if (selectedRole === 1) {
           targetPath = "/dashboard/admin";
-        } else if (selectedRole === 2) {
+        } else if (selectedRole === 3) {
           targetPath = "/dashboard/instructor";
         }
         router.push(targetPath);

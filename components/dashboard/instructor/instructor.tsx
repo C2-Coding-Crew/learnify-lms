@@ -43,7 +43,6 @@ interface InstructorDashboardProps {
   courses?: ManagedCourse[];
   totalRevenue?: number;
   twoFactorEnabled?: boolean;
-  initialGradings?: PendingGrading[];
 }
 
 export default function InstructorDashboard({
@@ -53,7 +52,6 @@ export default function InstructorDashboard({
   courses = [],
   totalRevenue = 0,
   twoFactorEnabled = false,
-  initialGradings = [],
 }: InstructorDashboardProps) {
   const router = useRouter();
 
@@ -61,7 +59,26 @@ export default function InstructorDashboard({
     window.location.href = "/api/auth/sign-out";
   };
 
-  const [gradings] = useState<PendingGrading[]>(initialGradings);
+  const [gradings] = useState<PendingGrading[]>([
+    {
+      id: 1,
+      studentName: "Aditya Pratama",
+      assignment: "UI Case Study",
+      dueDate: "Today",
+    },
+    {
+      id: 2,
+      studentName: "Siti Aminah",
+      assignment: "Figma Component Lab",
+      dueDate: "Yesterday",
+    },
+    {
+      id: 3,
+      studentName: "Budi Santoso",
+      assignment: "Wireframing Basics",
+      dueDate: "2 days ago",
+    },
+  ]);
 
   return (
     <>

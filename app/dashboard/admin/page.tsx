@@ -1,3 +1,4 @@
+// app/dashboard/admin/page.tsx
 import AdminDashboard from "@/components/dashboard/admin/admin";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";

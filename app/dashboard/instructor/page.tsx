@@ -32,7 +32,7 @@ export default async function Page() {
       id: course.id,
       title: course.title,
       students: course._count.enrollments,
-      rating: 4.8, // Placeholder for now
+      rating: 0, // Placeholder
       revenue: new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(revenue),
       active: course.isPublished,
     };

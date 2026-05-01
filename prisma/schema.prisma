@@ -59,7 +59,7 @@ model twoFactor {
 }
 
 model session {
-  id        String   @id @default(uuid())
+  id        String   @id
   expiresAt DateTime
   token     String   @unique
   createdAt DateTime @default(now()) @map("createdDate")
@@ -73,7 +73,7 @@ model session {
 }
 
 model account {
-  id                    String    @id @default(uuid())
+  id                    String    @id
   accountId             String
   providerId            String
   userId                String
@@ -90,7 +90,7 @@ model account {
 }
 
 model verification {
-  id         String    @id @default(uuid())
+  id         String    @id
   identifier String
   value      String
   expiresAt  DateTime

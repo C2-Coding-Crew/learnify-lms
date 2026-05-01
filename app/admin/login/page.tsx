@@ -49,6 +49,7 @@ export default function AdminLoginPage() {
         email,
         password,
         rememberMe,
+        callbackURL: "/dashboard/admin",
       });
 
       if (authError) {
