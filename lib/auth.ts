@@ -8,6 +8,18 @@ export const auth = betterAuth({
   database: prismaAdapter(db, {
     provider: "postgresql",
   }),
+  secret: process.env.BETTER_AUTH_SECRET,
+  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
+  trustedOrigins: [
+    "https://learnify-lms-one.vercel.app",
+    "http://localhost:3000",
+    "learnify-lms-one.vercel.app"
+  ],
+  trustHost: true,
+  advanced: {
+    useSecureCookies: process.env.NODE_ENV === "production",
+  },
+
 
   databaseHooks: {
     user: {

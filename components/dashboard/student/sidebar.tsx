@@ -14,12 +14,15 @@ import {
   LogOut,
 } from "lucide-react";
 
+import * as LucideIcons from "lucide-react";
+
 interface StudentSidebarProps {
   userName: string;
   activePath?: string;
+  menus?: any[];
 }
 
-export default function StudentSidebar({ userName, activePath }: StudentSidebarProps) {
+export default function StudentSidebar({ userName, activePath, menus = [] }: StudentSidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const active = activePath ?? pathname;
@@ -28,14 +31,14 @@ export default function StudentSidebar({ userName, activePath }: StudentSidebarP
     window.location.href = "/api/auth/sign-out";
   };
 
-  const navItems = [
-    { name: "Dashboard",   href: "/dashboard/student",              icon: LayoutDashboard },
-    { name: "Assignments", href: "/dashboard/student/assignments",   icon: FileText },
-    { name: "Schedule",    href: "/dashboard/student/schedule",      icon: Calendar },
-    { name: "Recordings",  href: "/dashboard/student/recordings",    icon: Video },
-    { name: "Resources",   href: "/dashboard/student/resources",     icon: Download },
-    { name: "Settings",    href: "/dashboard/settings/security",     icon: Settings },
-  ];
+  const navItems = menus.map(m => {
+    const IconComponent = (LucideIcons as any)[m.icon] || LucideIcons.HelpCircle;
+    return {
+      name: m.name,
+      href: m.href,
+      icon: IconComponent
+    };
+  });
 
   return (
     <aside className="w-[260px] bg-white border-r border-slate-100 hidden xl:flex flex-col sticky top-0 h-screen">
