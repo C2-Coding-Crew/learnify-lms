@@ -82,7 +82,8 @@ export default function StudentDashboard({
   // Sync with props if they change
   useEffect(() => {
     setTodos(initialTodos);
-  }, [initialTodos]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Fungsi Toggle Status Todo
   const handleToggleTodo = async (id: number, currentStatus: boolean) => {

@@ -49,11 +49,12 @@ model User {
 // secret      : TOTP secret key (terenkripsi di Better Auth)
 // backupCodes : JSON array backup codes untuk akses darurat
 model twoFactor {
-  id          String @id
+  id          String  @id
   secret      String
   backupCodes String
-  userId      String @unique
-  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String  @unique
+  verified    Boolean @default(false)
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now()) @map("createdDate")
   updatedAt   DateTime @default(now()) @updatedAt @map("lastUpdatedDate")
 }

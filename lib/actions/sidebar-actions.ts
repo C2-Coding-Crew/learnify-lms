@@ -20,6 +20,7 @@ export async function getSidebarMenus(roleId?: number) {
       { name: "My Courses",  href: "/dashboard/instructor/courses",    icon: "BookOpen" },
       { name: "Students",    href: "/dashboard/instructor/students",   icon: "Users" },
       { name: "Analytics",   href: "/dashboard/instructor/analytics",  icon: "BarChart" },
+      { name: "Settings",    href: "/dashboard/settings/security",     icon: "Settings" },
     ];
   }
   if (roleId === 3) { // Student
@@ -29,6 +30,7 @@ export async function getSidebarMenus(roleId?: number) {
       { name: "Schedule",    href: "/dashboard/student/schedule",      icon: "Calendar" },
       { name: "Recordings",  href: "/dashboard/student/recordings",    icon: "Video" },
       { name: "Resources",   href: "/dashboard/student/resources",     icon: "Download" },
+      { name: "Settings",    href: "/dashboard/settings/security",     icon: "Settings" },
     ];
   }
   
