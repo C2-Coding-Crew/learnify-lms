@@ -1,24 +1,24 @@
 ========================================================
   LEARNIFY LMS — PROJECT ANALYSIS REPORT
-  Update Terakhir  : 19 April 2026 — 2FA, Email OTP, Forgot Password, Middleware
+  Update Terakhir  : 29 April 2026 — RBAC, Middleware Guard, Multi-Admin, Hybrid Instructor
   Teknologi Stack  : Next.js 16, React 19, Tailwind CSS v4,
-                     shadcn/ui, Better Auth, Prisma v5 + SQLite,
+                     shadcn/ui, Better Auth, Prisma v5 + SQLite/PostgreSQL,
                      Recharts, TanStack Table, Zod, Lucide React,
                      Nodemailer (Gmail SMTP / Ethereal)
   Team DB Standard : BigInt→Int ID, companyCode, audit fields, soft delete
-  Git Branch       : 2faauth (local) → push ke dashboard @ github.com/C2-Coding-Crew/learnify-lms
+  Git Branch       : main (local) → push ke dashboard @ github.com/C2-Coding-Crew/learnify-lms
 ========================================================
 
 RINGKASAN STATISTIK (TERBARU)
 ------------------------------
-  Selesai & Bagus           : 15 fitur  (+6 dari sesi sebelumnya)
+  Selesai & Bagus           : 17 fitur  (+2 dari sesi sebelumnya)
   UI Bagus, Perlu Backend   :  0 fitur
-  Butuh Improvement         :  2 fitur
+  Butuh Improvement         :  1 fitur
   Sebagian Dikerjakan       :  2 fitur
   Belum Dikerjakan          :  2 fitur
-  TOTAL ITEM DIANALISIS     : 21 fitur
+  TOTAL ITEM DIANALISIS     : 22 fitur
 
-  KEMAJUAN: ~80% (naik dari 65%)
+  KEMAJUAN: ~85% (naik dari 80%)
 
 
 ========================================================
@@ -27,272 +27,169 @@ RINGKASAN STATISTIK (TERBARU)
 
 1. HOMEPAGE
    File    : components/homepage/homepage.tsx
-   Status  : ✅ SELESAI & BAGUS (tidak berubah)
+   Status  : ✅ SELESAI & BAGUS
    [OK] Landing page premium dengan hero section, features, stats
    [OK] Fully responsive, animasi smooth
 
 2. STUDENT DASHBOARD
-   File    : components/dashboard/dashboard.tsx · app/dashboard/page.tsx
+   File    : components/dashboard/dashboard.tsx · app/dashboard/student/page.tsx
    Status  : 🟠 SEBAGIAN DIKERJAKAN
    [OK] Nama user dari session nyata, logout berfungsi
-   [OK] Route protection via middleware (2FA-aware)
-   [!!] Data kursus & chart masih hardcoded
+   [OK] Data enrollment & progress di-fetch dari database
    [!!] Todo list tidak persisten ke database
 
-3. HALAMAN KURSUS
+3. ADMIN & INSTRUCTOR DASHBOARD (BARU! sesi ini)
+   File    : app/dashboard/admin/page.tsx · app/dashboard/instructor/page.tsx
+   Status  : ✅ SELESAI & BAGUS
+   [OK] Admin Dashboard menampilkan stats asli dari database (users, courses, revenue)
+   [OK] Instructor Dashboard menampilkan kursus milik pengajar beserta revenue & rating
+   [OK] Route protection 100% aman (Role-based)
+
+4. HALAMAN KURSUS
    File    : components/courses/courses.tsx
    Status  : ✅ SELESAI & BAGUS
    [OK] Fetch data dari database via /api/courses
-   [OK] Filter kategori via FK relation (category.slug)
-   [OK] Soft delete filter (isDeleted, status)
+   [OK] Filter kategori via FK relation, soft delete filter
    [OK] Grid/List view toggle berfungsi penuh
-   [OK] Loading state + empty state dengan reset filter
-   [OK] Setiap card link ke /courses/[slug]
 
-4. HALAMAN LOGIN
+5. HALAMAN LOGIN
    File    : components/login/login.tsx
    Status  : ✅ SELESAI & BAGUS
    [OK] Email + password form dengan validasi Zod
    [OK] Google OAuth (signIn.social)
-   [OK] Menggunakan fetchOptions.onSuccess untuk handle redirect
-   [OK] twoFactorClient otomatis redirect ke /auth/two-factor jika 2FA aktif
-   [OK] Error state dengan pesan jelas
-   [OK] Link ke lupa password
+   [OK] Redirect ke /dashboard (yang otomatis diarahkan ke role masing-masing)
 
-5. HALAMAN REGISTER
-   File    : components/register/register.tsx
-   Status  : ✅ SELESAI & BAGUS (diperbaiki sesi ini)
-   [OK] Register berhasil → redirect ke /dashboard
-   [OK] Pesan error dari server ditampilkan langsung (bukan generic)
-   [OK] fetchOptions.onSuccess untuk redirect yang konsisten
-   [BUG FIXED] Middleware lama memblokir redirect post-register
-   [BUG FIXED] Better Auth field mapping (createdAt→createdDate)
-
-6. HALAMAN LUPA PASSWORD (BARU! sesi sebelumnya)
-   File    : app/auth/forgot-password/page.tsx
+6. HALAMAN REGISTER & SELECT ROLE (Update sesi ini)
+   File    : components/register/register.tsx · app/auth/select-role/page.tsx
    Status  : ✅ SELESAI & BAGUS
-   [OK] Form kirim email reset password
-   [OK] Email HTML branded dikirim via Nodemailer (Gmail / Ethereal)
-   [OK] Link reset password berisi token aman (1 jam)
-   [OK] Halaman reset-password untuk input password baru
-   [OK] Validasi password baru & konfirmasi
+   [OK] Pilihan Role: Pengguna bebas mendaftar sebagai Siswa atau Instruktur (Udemy-style)
+   [OK] Pilihan Role otomatis dikirim ke payload `authClient.signUp.email`
+   [BUG FIXED] Bug di mana pilihan Instruktur (Role 3) tidak tersimpan sudah diperbaiki
 
-7. HALAMAN 2FA SETUP (BARU! sesi ini)
-   File    : components/settings/two-factor-settings.tsx
+7. HALAMAN UNAUTHORIZED (BARU! sesi ini)
+   File    : app/unauthorized/page.tsx
    Status  : ✅ SELESAI & BAGUS
-   [OK] Deteksi tipe akun: credential vs Google OAuth
-   [OK] Google OAuth: aktifkan 2FA tanpa password (allowPasswordless: true)
-   [OK] QR Code ditampilkan (qrcode library)
-   [OK] Backup codes ditampilkan sebelum setup selesai
-   [OK] Salin backup code individual atau semua sekaligus
-   [OK] Tombol "Selesai & Masuk Dashboard" setelah setup
-   [OK] Nonaktifkan 2FA juga tersedia
+   [OK] UI Cantik untuk halaman "Akses Ditolak" (403 Forbidden)
+   [OK] Tombol "Kembali ke Dashboard" & "Ganti Akun"
 
-8. HALAMAN VERIFIKASI 2FA (BARU! sesi ini)
-   File    : components/two-factor/two-factor-verify.tsx · app/auth/two-factor/page.tsx
+8. HALAMAN LUPA PASSWORD
    Status  : ✅ SELESAI & BAGUS
-   [OK] 3 mode verifikasi yang bisa dipilih user:
-        → Mode 1: Authenticator App (TOTP) — 6 kotak auto-submit, paste support
-        → Mode 2: Kode via Email — kirim OTP ke email terdaftar, cooldown 60 detik
-        → Mode 3: Backup Code — kode darurat jika kehilangan HP
-   [OK] Left panel visual menunjukkan mode aktif
-   [OK] Verifikasi berhasil → redirect /dashboard
-   [OK] Error handling per mode
 
-9. HALAMAN DETAIL KURSUS
-   File    : app/courses/[slug]/page.tsx · components/courses/course-detail.tsx
+9. HALAMAN 2FA SETUP & VERIFY
    Status  : ✅ SELESAI & BAGUS
-   [OK] Hero, silabus, purchase card sticky, instructor info
-   [OK] Tombol Enroll → "Lanjut Belajar" setelah enroll
-   [OK] Lock/unlock lesson berdasarkan progress
+   [OK] Terintegrasi dengan Next.js Middleware secara native!
 
-10. HALAMAN BELAJAR (/learn)
-    File    : app/courses/[slug]/learn/page.tsx · components/courses/learn-page.tsx
+10. HALAMAN DETAIL KURSUS & BELAJAR (/learn)
     Status  : ✅ SELESAI & BAGUS
-    [OK] Auth guard + Enrollment guard
-    [OK] Dark-mode video player layout
-    [OK] Sidebar silabus dengan progress (✓ / ○ / ▶)
-    [OK] Tombol "Tandai Selesai" → POST /api/progress
-    [OK] Progress bar keseluruhan kursus
-    [OK] Prev / Next lesson navigation
+    [OK] Lock/unlock lesson berdasarkan progress
     [!!] Video placeholder (iframe siap, belum ada URL video nyata)
-
-11. HALAMAN ABOUT & CONTACT
-    Status  : ✅ SELESAI & BAGUS (tidak berubah)
 
 
 ========================================================
   BAGIAN 2 — KOMPONEN & INFRASTRUKTUR
 ========================================================
 
-12. NAVBAR & FOOTER
-    Status  : ⚠️ BUTUH IMPROVEMENT
-    [!!] Belum ada active state di navbar
-    [!!] Mobile hamburger menu perlu perbaikan
-
-13. UI COMPONENT LIBRARY (shadcn/ui)
+11. MIDDLEWARE & RBAC (Major Update sesi ini)
+    File    : middleware.ts (Menggantikan proxy.ts lama)
     Status  : ✅ SELESAI & BAGUS
+    [OK] Route Guard di Edge Network menggunakan cookie-based auth
+    [OK] Smart Redirect: Akses `/dashboard` otomatis diarahkan ke `/admin`, `/instructor`, atau `/student` sesuai Role ID.
+    [OK] Role Guard (RBAC): Siswa/Instruktur yang iseng mengakses `/dashboard/admin` otomatis diblokir ke `/unauthorized`.
+    [OK] Integrasi Pengecekan 2FA secara global di middleware.
 
-14. APP SIDEBAR (Dashboard)
-    Status  : 🟠 SEBAGIAN DIKERJAKAN
-    [OK] UI sidebar tersedia
-    [!!] Navigasi belum fully dynamic
-
-15. MIDDLEWARE (BARU! sesi ini)
-    File    : middleware.ts
+12. LIBRARY & UTILITIES (Update sesi ini)
+    File    : lib/auth.ts
     Status  : ✅ SELESAI & BAGUS
-    [OK] Cookie-based auth check (tidak ada API call — reliabel di Edge runtime)
-    [OK] Proteksi /dashboard — redirect ke /auth/login jika belum login
-    [OK] Proteksi 2FA — redirect ke /auth/two-factor jika pending cookie ada
-    [OK] Auto-redirect ke /dashboard jika sudah login lalu akses /auth/login
-    [OK] Proteksi /auth/two-factor — hanya bisa akses jika ada pending cookie
-    [BUG FIXED] Middleware lama pakai betterFetch (fragile di Edge runtime)
-
-16. LIBRARY & UTILITIES
-    Status  : ✅ SELESAI & BAGUS
-    [OK] lib/db.ts — Prisma singleton
-    [OK] lib/auth.ts — Better Auth config:
-         · Field mapping, Google OAuth, 2FA plugin, sendResetPassword, sendOTP
-    [OK] lib/auth-client.ts — twoFactorClient dengan twoFactorPage
-    [OK] lib/email.ts — Nodemailer transporter + 3 template email:
-         · resetPasswordEmailTemplate — untuk lupa password
-         · twoFactorOtpEmailTemplate  — untuk kode OTP 2FA via email
-    [OK] lib/validations/auth.ts — Zod schema login/register
+    [OK] Multi-Admin Support: `ADMIN_EMAILS` di `.env` kini mendukung banyak email (koma-separated)
+    [OK] Security Guard `databaseHooks.user.create/update`: Mencegah *hacker* dari klien mengubah Role mereka menjadi Admin (1). Instruktur (3) dan Siswa (2) aman.
 
 
 ========================================================
   BAGIAN 3 — BACKEND & INTEGRASI
 ========================================================
 
-17. DATABASE & ORM
-    File    : prisma/schema.prisma · dev.db · seed.ts
+13. DATABASE & ORM
+    File    : prisma/schema.prisma
     Status  : ✅ SELESAI & BAGUS
-    [OK] Model auth: user, session, account, verification, twoFactor
-    [OK] Model bisnis: Role, Category, Course, Lesson, Enrollment,
-         LessonProgress, CourseTag, Invoice, Transaction, Certificate
-    [OK] Audit fields di semua model bisnis
-    [OK] Seed: 3 roles, 5 categories, 2 instructors, 6 courses, 64 lessons
-    [!!] Int ID (SQLite dev) → ganti BigInt saat migrate ke PostgreSQL
+    [OK] Model auth, model bisnis, audit fields, soft delete
+    [OK] Migrasi tipe timestamp ke createdDate & lastUpdatedDate
 
-18. SISTEM AUTENTIKASI (Major update sesi ini)
+14. SISTEM AUTENTIKASI & ROLE
     Status  : ✅ SELESAI & BAGUS
-    [OK] Email + password login & register
-    [OK] Google OAuth (signIn.social via Better Auth)
-    [OK] Forgot password — email token flow (1 jam)
-    [OK] 2FA TOTP — Google Authenticator / Authy
-    [OK] 2FA OTP via Email — sendOTP / verifyOtp
-    [OK] Backup codes — verifyBackupCode
-    [OK] allowPasswordless: true — support 2FA untuk akun Google OAuth
-    [OK] Session management 7 hari
-    [OK] Middleware proteksi semua route sensitif
+    [OK] Login, Register, Lupa Password, 2FA
+    [OK] Sistem Instruktur Hybrid (Udemy-style): Daftar otomatis jadi instruktur tanpa tunggu approval admin.
+    [OK] Keamanan terjaga dengan filter role di server.
 
-19. API ROUTES
+15. API ROUTES (Update sesi ini)
     Status  : ✅ SELESAI & BAGUS
-    [OK] GET  /api/courses — filter, search, soft-delete
-    [OK] GET  /api/courses/[slug] — detail lengkap
-    [OK] GET  /api/courses/[slug]/enrollment-status
-    [OK] POST /api/enrollments — enroll (free/paid)
-    [OK] GET  /api/enrollments — list + progress %
-    [OK] POST /api/progress — update lesson progress
-    [OK] /api/auth/[...all] — Better Auth handler (incl. 2FA endpoints)
-    [!!] Belum ada POST /api/courses (admin upload kursus)
-    [!!] Midtrans webhook belum ada
+    [OK] GET  /api/courses, /api/enrollments, POST /api/progress
+    [OK] POST /api/instructor/courses — API untuk instruktur membuat kursus
+    [OK] PUT  /api/instructor/courses/[id] — API untuk instruktur update kursus
+    [SECURITY FIX] Instruktur dilarang keras mengubah status `isPublished = true` secara mandiri. Memaksa mereka untuk menggunakan alur Review Admin (Hybrid Safety).
 
-20. ENROLLMENT SYSTEM
-    Status  : ✅ SELESAI & BAGUS
-    [OK] Free course → enrollment langsung
-    [OK] Paid course → buat Invoice pending
-    [OK] Auto-complete course saat 100% lesson selesai
-    [OK] Progress tracking per lesson
-
-21. UPLOAD MEDIA (CLOUDINARY)
-    Status  : ❌ BELUM DIKERJAKAN
-    Schema Lesson.videoUrl sudah ada, integrasi Cloudinary belum
-
-22. SISTEM PEMBAYARAN (Invoice + Midtrans)
+16. SISTEM PEMBAYARAN (Invoice + Midtrans)
     Status  : ❌ BELUM DIKERJAKAN
     Schema Invoice + Transaction sudah ada, integrasi Midtrans belum
 
 
 ========================================================
-  ROADMAP & REKOMENDASI PRIORITAS (Updated 19 April 2026)
+  ROADMAP & REKOMENDASI PRIORITAS (Updated 29 April 2026)
 ========================================================
 
-✅ SELESAI (Jangan diubah lagi):
-  ✅ Auth lengkap         → Login, Register, Google OAuth, Lupa Password
-  ✅ 2FA lengkap          → TOTP + Email OTP + Backup Code + Middleware
-  ✅ Database & Schema    → Full schema + seed data
-  ✅ Enrollment System    → Free/paid, progress tracking
-  ✅ Halaman Kursus       → List, Detail, Belajar
-  ✅ Email System         → Nodemailer + 2 template HTML
+✅ SELESAI (Major Milestones):
+  ✅ Auth & Security      → Login, Register, 2FA, Lupa Password
+  ✅ Middleware & RBAC    → Role Based Access Control & Edge Guards
+  ✅ Instructor Hybrid    → Sistem Instruktur *Self-Register* yang Aman
+  ✅ Course Catalog       → List, Detail, Belajar, Progress Tracker
+  ✅ Database & Schema    → Full schema PostgreSQL/SQLite + Seed data
 
 ─────────────────────────────────────────────────────
-🔴 PRIORITAS 1 — Dashboard Dinamis (BLOCKING UX)
+🔴 PRIORITAS 1 — Admin Approval System (Kursus)
 ─────────────────────────────────────────────────────
-  → Dashboard masih hardcoded — tidak mencerminkan aktivitas user nyata
-  → Data enrollment & progress sudah ada di DB, tinggal di-query
-  → Yang perlu dikerjakan:
-     · Query GET /api/enrollments di dashboard/page.tsx
-     · Tampilkan daftar kursus yang di-enroll dengan progress bar
-     · Ganti chart hardcoded dengan data aktivitas nyata
+  → Instruktur sudah bisa mendaftar dan membuat kursus, tapi statusnya `isPublished: false`.
+  → Perlu dibuat UI di Dashboard Admin untuk:
+     · Menampilkan daftar kursus berstatus Draft.
+     · Tombol untuk menyetujui (publish) atau menolak kursus.
+     · API Endpoint khusus Admin untuk mengubah `isPublished = true`.
 
 ─────────────────────────────────────────────────────
-🟡 PRIORITAS 2 — Video Player (YouTube/Cloudinary)
+🟡 PRIORITAS 2 — Sistem Pembayaran (Midtrans)
 ─────────────────────────────────────────────────────
-  → iframe video player sudah ada di /learn, tinggal isi videoUrl
-  → Tambahkan videoUrl ke seed data (YouTube embed URL)
-  → Opsional: upload via Cloudinary untuk video hosting
+  → Integrasikan Midtrans Snap UI untuk pendaftaran kursus premium.
+  → Siapkan webhook handler POST `/api/payment/midtrans/notification`.
 
 ─────────────────────────────────────────────────────
-🟡 PRIORITAS 3 — Sistem Pembayaran (Midtrans)
+🟡 PRIORITAS 3 — Video Player (YouTube/Cloudinary)
 ─────────────────────────────────────────────────────
-  → Invoice + Transaction schema SUDAH ADA
-  → Buat halaman /checkout/[invoiceNumber]
-  → Integrasi Midtrans Snap + webhook handler
+  → Isi `videoUrl` pada tabel Lesson dengan URL iframe nyata (YouTube/Vimeo).
+  → (Opsional) Build fitur upload video dari dashboard instructor ke Cloudinary.
 
 ─────────────────────────────────────────────────────
-🟢 PRIORITAS 4 — Polish & Deploy
+🟢 PRIORITAS 4 — Polish UI & Deploy
 ─────────────────────────────────────────────────────
   → Navbar active state
-  → Loading skeletons / suspense boundaries
-  → Email SMTP config (ganti placeholder di .env)
-  → Migrate ke PostgreSQL (Neon.tech) — ubah Int → BigInt
+  → Perbaiki Todo list dashboard agar persisten ke database
   → Deploy ke Vercel
 
 
 ========================================================
-  ESTIMASI COMPLETION (Updated 19 April 2026)
+  ESTIMASI COMPLETION (Updated 29 April 2026)
 ========================================================
-  UI Foundation    : ██████████ 95%
+  UI Foundation    : ██████████ 100% ✅
   Auth & Register  : ██████████ 100% ✅
   Lupa Password    : ██████████ 100% ✅
   2FA (TOTP+Email) : ██████████ 100% ✅
-  Middleware       : ██████████ 100% ✅
-  Kursus (List)    : ██████████ 100% ✅
-  Kursus (Detail)  : ██████████ 100% ✅
+  Middleware/RBAC  : ██████████ 100% ✅ (Selesai Sesi Ini!)
+  Kursus (List/Det) : ██████████ 100% ✅
   Enrollment       : █████████░  90% ✅ (paid butuh Midtrans)
   Halaman Belajar  : ████████░░  80% ✅ (video player kosong)
-  Dashboard        : █████░░░░░  50%  (session ada, data hardcoded)
-  Payment          : ████░░░░░░  40%  (schema ada, integrasi belum)
-  Video/Cloudinary : ██░░░░░░░░  20%  (placeholder ada, upload belum)
+  Dashboard Admin  : ██████████ 100% ✅ (Data Dynamic OK)
+  Dashboard Inst   : ██████████ 100% ✅ (Data Dynamic OK)
+  Dashboard Stud   : ████████░░  80%  (Progress OK, Todo blm persisten)
+  Payment Midtrans : ████░░░░░░  40%  (schema ada, integrasi belum)
   ─────────────────────────────────────────────────────
-  OVERALL          : ~80% completion  (naik dari 65%)
-
-  Next Step: Dashboard Dinamis (query real data dari DB)!
-
-  Git History Terbaru (Branch: dashboard @ remote):
-  49667d7  feat(2fa): add email OTP as alternative 2FA verification method
-  ce65b52  fix(register): fix registration flow and middleware blocking issue
-  6f0197d  feat(2fa): enforce 2FA on login for both email and Google OAuth
-  35712aa  fix(2fa): remove broken verifyTotp from setup
-  fe61258  fix(2fa): proper TOTP validation + redirect to dashboard on success
-  e072523  feat(auth): implement TOTP-based 2FA with Google Authenticator
-  0ee2d09  feat(auth): implement Google OAuth via Better Auth socialProviders
-  a0fb224  fix(auth): resolve 422 register error
-  7818750  feat(ui): course pages, enrollment UI, and learn page
-  fafc5dd  feat(auth): implement Better Auth + enrollment system API
-  753c00e  feat(db): merge enterprise schema with team standard pattern
+  OVERALL          : ~85% completion  (naik dari 80%)
 
 ========================================================
-  END OF REPORT (Updated 19 April 2026)
+  END OF REPORT
 ========================================================

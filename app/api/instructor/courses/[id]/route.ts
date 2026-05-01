@@ -72,6 +72,18 @@ export async function PUT(request: Request, context: any) {
     const body = await request.json();
     const { title, description, categoryId, price, level, thumbnail, isPublished } = body;
 
+    // SECURITY GUARD: Hanya Admin yang boleh mempublikasikan kursus (isPublished = true)
+    // Instruktur hanya boleh mengedit (Draft) atau membatalkan publikasi (isPublished = false)
+    let finalIsPublished = existingCourse.isPublished;
+    if (isPublished !== undefined) {
+      if (roleId === 1) {
+        finalIsPublished = isPublished; // Admin bebas
+      } else if (isPublished === false) {
+        finalIsPublished = false; // Instruktur boleh unpublish (menarik kursus)
+      }
+      // Jika instruktur mencoba isPublished = true, kita abaikan (tetap gunakan status sebelumnya)
+    }
+
     const updatedCourse = await prisma.course.update({
       where: { id: parseInt(id) },
       data: {
@@ -81,7 +93,7 @@ export async function PUT(request: Request, context: any) {
         price: price !== undefined ? parseFloat(price) : existingCourse.price,
         level: level !== undefined ? level : existingCourse.level,
         thumbnail: thumbnail !== undefined ? thumbnail : existingCourse.thumbnail,
-        isPublished: isPublished !== undefined ? isPublished : existingCourse.isPublished,
+        isPublished: finalIsPublished,
       }
     });
 

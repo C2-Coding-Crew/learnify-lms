@@ -221,8 +221,8 @@
     <span class="logo-text">Learnify<span>.</span></span>
   </div>
   <div class="header-right">
-    <span class="header-progress">80% Complete</span>
-    <span class="header-badge">19 April 2026</span>
+    <span class="header-progress">85% Complete</span>
+    <span class="header-badge">29 April 2026</span>
   </div>
 </header>
 
@@ -231,7 +231,7 @@
   <!-- HERO -->
   <div class="hero">
     <h1>Project Analysis Dashboard</h1>
-    <p>Status terkini implementasi Learnify LMS — diperbarui setelah sesi 2FA & Auth selesai.</p>
+    <p>Status terkini implementasi Learnify LMS — diperbarui setelah sesi RBAC, Middleware, Multi-Admin & Hybrid Instructor selesai.</p>
     <div class="hero-meta">
       <div class="hero-meta-item">🔀 <strong>Branch:</strong> dashboard @ C2-Coding-Crew/learnify-lms</div>
       <div class="hero-meta-item">⚙️ <strong>Stack:</strong> Next.js 16 · Better Auth · Prisma v5 · Tailwind CSS v4</div>
@@ -243,11 +243,11 @@
   <!-- SUMMARY CARDS -->
   <div class="summary-grid">
     <div class="summary-card">
-      <div class="num num-done">15</div>
+      <div class="num num-done">17</div>
       <div class="label">Selesai & Bagus</div>
     </div>
     <div class="summary-card">
-      <div class="num num-improve">2</div>
+      <div class="num num-improve">1</div>
       <div class="label">Butuh Improvement</div>
     </div>
     <div class="summary-card">
@@ -259,7 +259,7 @@
       <div class="label">Belum Dikerjakan</div>
     </div>
     <div class="summary-card">
-      <div class="num num-total">21</div>
+      <div class="num num-total">22</div>
       <div class="label">Total Fitur</div>
     </div>
   </div>
@@ -351,12 +351,12 @@
     <div style="margin-top:24px; padding-top:20px; border-top: 1px solid var(--slate-100);">
       <div class="progress-row-label" style="margin-bottom:8px;">
         <span style="font-size:14px;font-weight:800;color:var(--slate-900)">⚡ Overall Progress</span>
-        <span style="font-size:16px;font-weight:900;color:var(--green)">80%</span>
+        <span style="font-size:16px;font-weight:900;color:var(--green)">85%</span>
       </div>
       <div class="progress-bar-wrap" style="height:14px;">
-        <div class="pb-fill pb-overall" style="width:80%"></div>
+        <div class="pb-fill pb-overall" style="width:85%"></div>
       </div>
-      <p style="font-size:11px;color:var(--slate-400);margin-top:8px;">Naik dari 65% → 80% setelah sistem 2FA, middleware, dan email selesai.</p>
+      <p style="font-size:11px;color:var(--slate-400);margin-top:8px;">Naik dari 80% → 85% setelah sistem RBAC, Multi-Admin, dan Hybrid Instructor selesai.</p>
     </div>
   </div>
 
@@ -565,22 +565,21 @@
         <div style="display:flex;align-items:center;gap:10px;">
           <div class="card-icon" style="background:#EDE9FE;">🛤️</div>
           <div>
-            <div class="card-title">Middleware</div>
+            <div class="card-title">Middleware & RBAC</div>
             <div class="card-file">middleware.ts</div>
           </div>
         </div>
-        <span class="badge badge-new">Baru!</span>
+        <span class="badge badge-done">Selesai</span>
       </div>
       <ul class="card-items">
         <li><span class="ci-ok">✔</span>Cookie-based (tidak ada API call — Edge-runtime safe)</li>
-        <li><span class="ci-ok">✔</span>/dashboard → redirect login jika belum auth</li>
-        <li><span class="ci-ok">✔</span>/dashboard → redirect 2FA jika pending cookie ada</li>
-        <li><span class="ci-ok">✔</span>/auth/login → redirect dashboard jika sudah login</li>
-        <li><span class="ci-fix">✦</span>Fix: betterFetch diganti cookie check (lebih reliabel)</li>
+        <li><span class="ci-ok">✔</span>/dashboard → smart redirect otomatis ke role masing-masing</li>
+        <li><span class="ci-ok">✔</span>RBAC Guard → Blokir role siswa yang akses /dashboard/admin</li>
+        <li><span class="ci-ok">✔</span>Integrasi perlindungan 2FA global</li>
       </ul>
       <div class="card-tags">
         <span class="tag">better-auth.session_token</span>
-        <span class="tag">better-auth.two_factor</span>
+        <span class="tag">Edge Runtime</span>
       </div>
     </div>
 
@@ -755,13 +754,13 @@
     <div class="rec-grid">
 
       <div class="rec-item">
-        <div class="rec-priority p-red">🔴 Prioritas 1 — Blocking UX</div>
-        <h3>Dashboard Dinamis</h3>
-        <p>Dashboard masih hardcoded. Data enrollment & progress sudah ada di DB.</p>
+        <div class="rec-priority p-red">🔴 Prioritas 1 — Workflow Persetujuan Kursus</div>
+        <h3>Admin Approval System</h3>
+        <p>Instruktur sudah bisa mendaftar & buat kursus (draft). Butuh UI Admin untuk menerbitkan.</p>
         <ul>
-          <li>Query GET /api/enrollments di page.tsx</li>
-          <li>Tampilkan kursus enrolled + progress bar</li>
-          <li>Ganti chart hardcoded dengan data nyata</li>
+          <li>Buat UI Daftar Kursus (Pending) di Dashboard Admin</li>
+          <li>Tombol Setujui / Tolak kursus</li>
+          <li>API Endpoint Admin untuk isPublished = true</li>
         </ul>
       </div>
 

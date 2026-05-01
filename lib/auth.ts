@@ -9,26 +9,50 @@ export const auth = betterAuth({
     provider: "postgresql",
   }),
 
-  // ── Database Hooks ──────────────────────────────────────────────────────────
-  // Inject roleId saat user dibuat pertama kali.
-  // PENTING: Gunakan `before` hook (bukan `after`) — karena `after` hook
-  // dipanggil via queueAfterTransactionHook yang async, dan pada saat itu
-  // INSERT sudah committed. Menggunakan `before` jauh lebih aman.
   databaseHooks: {
     user: {
       create: {
         before: async (userData) => {
-          const adminEmail = process.env.ADMIN_EMAIL;
-          const roleId = adminEmail && userData.email === adminEmail ? 1 : 2;
-          console.log("[auth] user.create.before → assigning roleId:", roleId, "to", userData.email);
+          // 1. Dukung multiple admin email (pisahkan dengan koma di .env)
+          const adminEmailsStr = process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || "";
+          const adminEmails = adminEmailsStr.split(",").map(e => e.trim().toLowerCase());
+          
+          // 2. Ambil roleId dari payload (dari frontend saat register), default 2
+          let finalRoleId = userData.roleId === 3 ? 3 : 2; // Hanya izinkan 2 atau 3 dari client
+          
+          // 3. Jika email termasuk admin, paksa jadi Admin (1)
+          if (adminEmails.includes(userData.email.toLowerCase())) {
+            finalRoleId = 1;
+          }
+          
+          console.log("[auth] user.create.before → assigning roleId:", finalRoleId, "to", userData.email);
           return {
             data: {
               ...userData,
-              roleId,
+              roleId: finalRoleId,
             },
           };
         },
       },
+      update: {
+        before: async (userData, originalUser) => {
+          // Cegah celah keamanan jika user biasa memanggil updateUser({ roleId: 1 })
+          if (userData.roleId === 1 && originalUser.roleId !== 1) {
+             const adminEmailsStr = process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || "";
+             const adminEmails = adminEmailsStr.split(",").map(e => e.trim().toLowerCase());
+             if (!adminEmails.includes(originalUser.email.toLowerCase())) {
+                console.warn("[auth] SECURITY WARNING: Attempt to escalate role to Admin by", originalUser.email);
+                return {
+                  data: {
+                    ...userData,
+                    roleId: originalUser.roleId, // Kembalikan ke role asli
+                  }
+                };
+             }
+          }
+          return { data: userData };
+        }
+      }
     },
   },
 

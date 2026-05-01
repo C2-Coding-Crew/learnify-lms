@@ -30,6 +30,7 @@ export default function AdminSidebar({ userName, onEnable2FA }: AdminSidebarProp
 
   const navItems = [
     { name: "Main Console",        href: "/dashboard/admin",                   icon: LayoutDashboard },
+    { name: "Course Approvals",    href: "/dashboard/admin/courses/approvals", icon: ShieldCheck },
     { name: "Manage Students",     href: "/dashboard/admin/students",           icon: GraduationCap },
     { name: "Manage Instructors",  href: "/dashboard/admin/instructors",        icon: UserCheck },
     { name: "Course Revenues",     href: "/dashboard/admin/revenues",           icon: Wallet },

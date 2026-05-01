@@ -78,6 +78,7 @@ const RegisterPage = () => {
         name: fullName,
         email,
         password,
+        roleId: roleIdFromUrl, // <-- Kirim roleId yang dipilih ke server
         fetchOptions: {
           onSuccess: () => {
             router.push("/dashboard");
