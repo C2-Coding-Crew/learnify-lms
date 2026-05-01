@@ -16,9 +16,6 @@ export const auth = betterAuth({
     "learnify-lms-one.vercel.app"
   ],
   trustHost: true,
-  advanced: {
-    useSecureCookies: process.env.NODE_ENV === "production",
-  },
 
 
   // ── Database Hooks ──────────────────────────────────────────────────────────
