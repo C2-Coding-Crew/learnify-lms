@@ -5,12 +5,13 @@ const PROTECTED_PREFIXES = ["/dashboard", "/auth/setup-2fa", "/auth/select-role"
 
 // Better Auth session cookie
 const SESSION_COOKIE = "better-auth.session_token";
+const SECURE_SESSION_COOKIE = "__Secure-better-auth.session_token";
 
 // ─── Proxy (Next.js 16+ menggantikan middleware.ts) ───────────────────────────
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const sessionToken = request.cookies.get(SESSION_COOKIE)?.value;
+  const sessionToken = request.cookies.get(SESSION_COOKIE)?.value || request.cookies.get(SECURE_SESSION_COOKIE)?.value;
   const isAuthenticated = Boolean(sessionToken);
 
   // 1. Proteksi route yang butuh login ─────────────────────────────────────
