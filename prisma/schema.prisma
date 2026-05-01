@@ -2,75 +2,61 @@ generator client {
   provider = "prisma-client-js"
 }
 
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
-//  AUTH MODELS — String ID (Better Auth compatibility)
-// ═════════════════════════════════════════════════════════════════════════════
-
 model User {
-  id            String    @id @default(cuid())
-  name          String
-  email         String    @unique
-  emailVerified Boolean   @default(false)
-  image         String?
-  twoFactorEnabled Boolean? @default(false)
-
-  // ── Team Standard Fields ──────────────────────────────────────────────────
-  roleId          Int?
-  companyCode     String?  @default("LEARNIFY")
-  status          Int      @default(1)    // 1=aktif, 0=nonaktif
-  isDeleted       Int      @default(0)    // 0=ada, 1=terhapus (soft delete)
-  createdBy       String?  @default("SYSTEM")
-  createdAt       DateTime @default(now()) @map("createdDate")
-  lastUpdatedBy   String?  @default("SYSTEM")
-  updatedAt       DateTime @default(now()) @updatedAt @map("lastUpdatedDate")
-
-  // ── Relations ─────────────────────────────────────────────────────────────
-  role          Role?            @relation(fields: [roleId], references: [id])
-  sessions      session[]
-  accounts      account[]
-  enrollments   Enrollment[]
-  invoices      Invoice[]
-  taughtCourses Course[]         @relation("InstructorCourses")
-  progress      LessonProgress[]
-  twoFactor     twoFactor?
-  reviews       Review[]
+  id               String           @id @default(cuid())
+  name             String
+  email            String           @unique
+  emailVerified    Boolean          @default(false)
+  image            String?
+  twoFactorEnabled Boolean?         @default(false)
+  roleId           Int?
+  companyCode      String?          @default("LEARNIFY")
+  status           Int              @default(1)
+  isDeleted        Int              @default(0)
+  createdBy        String?          @default("SYSTEM")
+  createdAt        DateTime         @default(now()) @map("createdDate")
+  lastUpdatedBy    String?          @default("SYSTEM")
+  updatedAt        DateTime         @default(now()) @updatedAt @map("lastUpdatedDate")
+  taughtCourses    Course[]         @relation("InstructorCourses")
+  enrollments      Enrollment[]
+  invoices         Invoice[]
+  progress         LessonProgress[]
+  reviews          Review[]
+  accounts         account[]
+  sessions         session[]
+  twoFactor        twoFactor?
+  role             Role?            @relation(fields: [roleId], references: [id])
 
   @@map("user")
 }
 
-// ── 2FA (TOTP) ────────────────────────────────────────────────────────────────
-// Tabel ini dikelola oleh Better Auth twoFactor plugin
-// secret      : TOTP secret key (terenkripsi di Better Auth)
-// backupCodes : JSON array backup codes untuk akses darurat
 model twoFactor {
-  id          String  @id
+  id          String   @id
   secret      String
   backupCodes String
-  userId      String  @unique
-  verified    Boolean @default(false)
-  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String   @unique
   createdAt   DateTime @default(now()) @map("createdDate")
   updatedAt   DateTime @default(now()) @updatedAt @map("lastUpdatedDate")
+  verified    Boolean  @default(false)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model session {
-  id        String   @id @default(uuid())
-  expiresAt DateTime
-  token     String   @unique
-  createdAt DateTime @default(now()) @map("createdDate")
-  updatedAt DateTime @default(now()) @updatedAt @map("lastUpdatedDate")
-  ipAddress String?
-  userAgent String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  twoFactorVerified Boolean? @default(false) 
+  id                String   @id @default(uuid())
+  expiresAt         DateTime
+  token             String   @unique
+  createdAt         DateTime @default(now()) @map("createdDate")
+  updatedAt         DateTime @default(now()) @updatedAt @map("lastUpdatedDate")
+  ipAddress         String?
+  userAgent         String?
+  userId            String
+  twoFactorVerified Boolean? @default(false)
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model account {
@@ -78,7 +64,6 @@ model account {
   accountId             String
   providerId            String
   userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   accessToken           String?
   refreshToken          String?
   idToken               String?
@@ -88,24 +73,21 @@ model account {
   password              String?
   createdAt             DateTime  @default(now()) @map("createdDate")
   updatedAt             DateTime  @default(now()) @updatedAt @map("lastUpdatedDate")
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model verification {
-  id         String    @id @default(uuid())
+  id         String   @id @default(uuid())
   identifier String
   value      String
   expiresAt  DateTime
-  createdAt  DateTime  @default(now()) @map("createdDate")
-  updatedAt  DateTime  @default(now()) @updatedAt @map("lastUpdatedDate")
+  createdAt  DateTime @default(now()) @map("createdDate")
+  updatedAt  DateTime @default(now()) @updatedAt @map("lastUpdatedDate")
 }
-
-// ═════════════════════════════════════════════════════════════════════════════
-//  BUSINESS MODELS
-// ═════════════════════════════════════════════════════════════════════════════
 
 model Role {
   id              Int      @id @default(autoincrement())
-  name            String   // "admin" | "instructor" | "student"
+  name            String
   companyCode     String   @default("LEARNIFY")
   status          Int      @default(1)
   isDeleted       Int      @default(0)
@@ -113,8 +95,7 @@ model Role {
   createdDate     DateTime @default(now())
   lastUpdatedBy   String   @default("SYSTEM")
   lastUpdatedDate DateTime @updatedAt
-
-  users User[]
+  users           User[]
 }
 
 model Category {
@@ -128,61 +109,58 @@ model Category {
   createdDate     DateTime @default(now())
   lastUpdatedBy   String   @default("SYSTEM")
   lastUpdatedDate DateTime @updatedAt
-
-  courses Course[]
+  courses         Course[]
 }
 
 model Course {
-  id              Int      @id @default(autoincrement())
+  id              Int          @id @default(autoincrement())
   instructorId    String
   categoryId      Int
   title           String
-  slug            String   @unique
+  slug            String       @unique
   description     String
   thumbnail       String?
   price           Decimal
   level           String
-  isPublished     Boolean  @default(false)
-  isPopular       Boolean  @default(false)
-  totalLessons    Int      @default(0)
-  totalMinutes    Int      @default(0)
-  rating          Float    @default(0)
-  reviewCount     Int      @default(0)
-  companyCode     String   @default("LEARNIFY")
-  status          Int      @default(1)
-  isDeleted       Int      @default(0)
-  createdBy       String   @default("SYSTEM")
-  createdDate     DateTime @default(now())
-  lastUpdatedBy   String   @default("SYSTEM")
-  lastUpdatedDate DateTime @updatedAt
-
-  instructor  User      @relation("InstructorCourses", fields: [instructorId], references: [id])
-  category    Category  @relation(fields: [categoryId], references: [id])
-  lessons     Lesson[]
-  enrollments Enrollment[]
-  tags        CourseTag[]
-  reviews     Review[]
+  isPublished     Boolean      @default(false)
+  isPopular       Boolean      @default(false)
+  totalLessons    Int          @default(0)
+  totalMinutes    Int          @default(0)
+  rating          Float        @default(0)
+  reviewCount     Int          @default(0)
+  companyCode     String       @default("LEARNIFY")
+  status          Int          @default(1)
+  isDeleted       Int          @default(0)
+  createdBy       String       @default("SYSTEM")
+  createdDate     DateTime     @default(now())
+  lastUpdatedBy   String       @default("SYSTEM")
+  lastUpdatedDate DateTime     @updatedAt
+  category        Category     @relation(fields: [categoryId], references: [id])
+  instructor      User         @relation("InstructorCourses", fields: [instructorId], references: [id])
+  tags            CourseTag[]
+  enrollments     Enrollment[]
+  lessons         Lesson[]
+  reviews         Review[]
 }
 
 model Lesson {
-  id              Int      @id @default(autoincrement())
+  id              Int              @id @default(autoincrement())
   courseId        Int
   title           String
   description     String?
   videoUrl        String?
-  duration        Int      @default(0)
+  duration        Int              @default(0)
   order           Int
-  isFree          Boolean  @default(false)
-  companyCode     String   @default("LEARNIFY")
-  status          Int      @default(1)
-  isDeleted       Int      @default(0)
-  createdBy       String   @default("SYSTEM")
-  createdDate     DateTime @default(now())
-  lastUpdatedBy   String   @default("SYSTEM")
-  lastUpdatedDate DateTime @updatedAt
-
-  course   Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  progress LessonProgress[]
+  isFree          Boolean          @default(false)
+  companyCode     String           @default("LEARNIFY")
+  status          Int              @default(1)
+  isDeleted       Int              @default(0)
+  createdBy       String           @default("SYSTEM")
+  createdDate     DateTime         @default(now())
+  lastUpdatedBy   String           @default("SYSTEM")
+  lastUpdatedDate DateTime         @updatedAt
+  course          Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  progress        LessonProgress[]
 }
 
 model LessonProgress {
@@ -199,9 +177,8 @@ model LessonProgress {
   createdDate     DateTime  @default(now())
   lastUpdatedBy   String    @default("SYSTEM")
   lastUpdatedDate DateTime  @updatedAt
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lesson          Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, lessonId])
 }
@@ -217,49 +194,46 @@ model CourseTag {
   createdDate     DateTime @default(now())
   lastUpdatedBy   String   @default("SYSTEM")
   lastUpdatedDate DateTime @updatedAt
-
-  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course          Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
 }
 
 model Enrollment {
-  id               Int       @id @default(autoincrement())
+  id               Int          @id @default(autoincrement())
   userId           String
   courseId         Int
-  enrollmentStatus String    @default("active")
-  enrolledAt       DateTime  @default(now())
+  enrollmentStatus String       @default("active")
+  enrolledAt       DateTime     @default(now())
   completedAt      DateTime?
-  companyCode      String    @default("LEARNIFY")
-  status           Int       @default(1)
-  isDeleted        Int       @default(0)
-  createdBy        String    @default("SYSTEM")
-  createdDate      DateTime  @default(now())
-  lastUpdatedBy    String    @default("SYSTEM")
-  lastUpdatedDate  DateTime  @updatedAt
-
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  certificate Certificate?
+  companyCode      String       @default("LEARNIFY")
+  status           Int          @default(1)
+  isDeleted        Int          @default(0)
+  createdBy        String       @default("SYSTEM")
+  lastUpdatedBy    String       @default("SYSTEM")
+  createdDate      DateTime     @default(now())
+  lastUpdatedDate  DateTime     @updatedAt
+  certificate      Certificate?
+  course           Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, courseId])
 }
 
 model Invoice {
-  id              Int      @id @default(autoincrement())
+  id              Int           @id @default(autoincrement())
   userId          String
-  invoiceNumber   String   @unique
+  invoiceNumber   String        @unique
   totalAmount     Decimal
-  invoiceStatus   String   @default("pending")
+  invoiceStatus   String        @default("pending")
   dueDate         DateTime
-  companyCode     String   @default("LEARNIFY")
-  status          Int      @default(1)
-  isDeleted       Int      @default(0)
-  createdBy       String   @default("SYSTEM")
-  createdDate     DateTime @default(now())
-  lastUpdatedBy   String   @default("SYSTEM")
-  lastUpdatedDate DateTime @updatedAt
-
-  user         User          @relation(fields: [userId], references: [id])
-  transactions Transaction[]
+  companyCode     String        @default("LEARNIFY")
+  status          Int           @default(1)
+  isDeleted       Int           @default(0)
+  createdBy       String        @default("SYSTEM")
+  createdDate     DateTime      @default(now())
+  lastUpdatedBy   String        @default("SYSTEM")
+  lastUpdatedDate DateTime      @updatedAt
+  user            User          @relation(fields: [userId], references: [id])
+  transactions    Transaction[]
 }
 
 model Transaction {
@@ -275,39 +249,33 @@ model Transaction {
   status            Int      @default(1)
   isDeleted         Int      @default(0)
   createdBy         String   @default("SYSTEM")
-  createdDate       DateTime @default(now())
   lastUpdatedBy     String   @default("SYSTEM")
+  createdDate       DateTime @default(now())
   lastUpdatedDate   DateTime @updatedAt
-
-  invoice Invoice @relation(fields: [invoiceId], references: [id])
+  invoice           Invoice  @relation(fields: [invoiceId], references: [id])
 }
 
 model Certificate {
-  id                Int      @id @default(autoincrement())
-  enrollmentId      Int      @unique
-  certificateNumber String   @unique
+  id                Int        @id @default(autoincrement())
+  enrollmentId      Int        @unique
+  certificateNumber String     @unique
   filePath          String?
-  issuedDate        DateTime @default(now())
-  companyCode       String   @default("LEARNIFY")
-  status            Int      @default(1)
-  isDeleted         Int      @default(0)
-  createdBy         String   @default("SYSTEM")
-  createdDate       DateTime @default(now())
-  lastUpdatedBy     String   @default("SYSTEM")
-  lastUpdatedDate   DateTime @updatedAt
-
-  enrollment Enrollment @relation(fields: [enrollmentId], references: [id])
+  issuedDate        DateTime   @default(now())
+  companyCode       String     @default("LEARNIFY")
+  status            Int        @default(1)
+  isDeleted         Int        @default(0)
+  createdBy         String     @default("SYSTEM")
+  lastUpdatedBy     String     @default("SYSTEM")
+  createdDate       DateTime   @default(now())
+  lastUpdatedDate   DateTime   @updatedAt
+  enrollment        Enrollment @relation(fields: [enrollmentId], references: [id])
 }
-
-// ═════════════════════════════════════════════════════════════════════════════
-//  REVIEW & RATING
-// ═════════════════════════════════════════════════════════════════════════════
 
 model Review {
   id              Int      @id @default(autoincrement())
   userId          String
   courseId        Int
-  rating          Int      // 1-5 bintang
+  rating          Int
   comment         String?
   companyCode     String   @default("LEARNIFY")
   status          Int      @default(1)
@@ -316,9 +284,8 @@ model Review {
   createdDate     DateTime @default(now())
   lastUpdatedBy   String   @default("SYSTEM")
   lastUpdatedDate DateTime @updatedAt
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course          Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, courseId])
 }
