@@ -9,10 +9,12 @@ import QRCodeLib from 'qrcode';
 
 export default function AdminLayoutContent({ 
   children, 
-  userName 
+  userName,
+  pendingCount = 0,
 }: { 
   children: React.ReactNode; 
   userName: string;
+  pendingCount?: number;
 }) {
   const [show2FAModal, setShow2FAModal] = useState(false);
   const [qrCodeImage, setQrCodeImage] = useState("");
@@ -60,7 +62,7 @@ export default function AdminLayoutContent({
 
   return (
     <div className="flex min-h-screen bg-[#FFFBF9] font-sans text-[#2D2D2D]">
-      <AdminSidebar userName={userName} onEnable2FA={handleEnable2FA} />
+      <AdminSidebar userName={userName} pendingCount={pendingCount} onEnable2FA={handleEnable2FA} />
       
       <div className="flex-1 flex flex-col min-h-screen overflow-x-hidden">
         {children}

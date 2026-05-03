@@ -8,23 +8,19 @@ export default async function InstructorLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await auth.api.getSession({ headers: await headers() });
 
-  if (!session) {
-    redirect("/auth/login");
-  }
+  if (!session) redirect("/auth/login");
 
   const roleId = (session.user as any).roleId;
-  if (roleId !== 3) {
-    redirect("/dashboard");
-  }
+  if (roleId !== 3) redirect("/dashboard");
 
   return (
     <div className="flex min-h-screen bg-[#F8F9FB] font-sans text-[#1E1E1E]">
-      <InstructorSidebar />
-      {children}
+      <InstructorSidebar userName={session.user.name} />
+      <div className="flex-1 flex flex-col min-h-screen overflow-x-hidden">
+        {children}
+      </div>
     </div>
   );
 }

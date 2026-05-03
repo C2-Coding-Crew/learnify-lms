@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { db } from "@/lib/db";
 import AdminLayoutContent from "@/components/dashboard/admin/layout-content";
 
 export default async function AdminLayout({
@@ -12,20 +13,22 @@ export default async function AdminLayout({
     headers: await headers(),
   });
 
-  console.log("DEBUG AdminLayout session:", JSON.stringify(session, null, 2));
-
   if (!session) {
     redirect("/auth/login");
   }
 
   const roleId = (session.user as any).roleId;
-  console.log("DEBUG AdminLayout roleId:", roleId);
   if (roleId !== 1) {
     redirect("/dashboard");
   }
 
+  // Fetch pending course count for sidebar badge
+  const pendingCount = await db.course.count({
+    where: { isPublished: false, isDeleted: 0, status: 1 },
+  });
+
   return (
-    <AdminLayoutContent userName={session.user.name}>
+    <AdminLayoutContent userName={session.user.name} pendingCount={pendingCount}>
       {children}
     </AdminLayoutContent>
   );
