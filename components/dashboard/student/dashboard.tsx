@@ -13,6 +13,13 @@ import {
   Plus,
   ShieldCheck,
   Trash2,
+  Trophy,
+  Flame,
+  Award,
+  TrendingUp,
+  CreditCard,
+  Sparkles,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -48,6 +55,8 @@ interface StudentDashboardProps {
   avgProgress?: number;
   todos?: Todo[];
   pendingInvoices?: { id: number; dueDate: Date | string; invoiceNumber: string }[];
+  certificates?: { id: number; courseTitle: string; date: string }[];
+  userStats?: { points: number; streak: number; rank: number | string };
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -82,6 +91,8 @@ export default function StudentDashboard({
   avgProgress = 0,
   todos: initialTodos = [],
   pendingInvoices = [],
+  certificates = [],
+  userStats = { points: 0, streak: 0, rank: "-" },
 }: StudentDashboardProps) {
   const router = useRouter();
   const today = new Date();
@@ -202,20 +213,47 @@ export default function StudentDashboard({
             Let&apos;s learn something new today!
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="text-right hidden sm:block">
-            <p className="text-sm font-bold">{userName}</p>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-              {userRole}
-            </p>
+        <div className="flex items-center gap-6">
+          {/* Points & Streak Widgets */}
+          <div className="hidden md:flex items-center gap-4 bg-white px-5 py-2.5 rounded-2xl border border-slate-100 shadow-sm">
+            <div className="flex items-center gap-2 pr-4 border-r border-slate-100">
+              <div className="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center text-[#FF6B4A]">
+                <Flame size={18} fill="currentColor" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter leading-none">Streak</p>
+                <p className="text-sm font-black text-slate-800">{userStats.streak} Days</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-yellow-50 rounded-lg flex items-center justify-center text-yellow-500">
+                <Trophy size={18} fill="currentColor" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter leading-none">Points</p>
+                <p className="text-sm font-black text-slate-800">{userStats.points}</p>
+              </div>
+            </div>
           </div>
-          <div className="w-10 h-10 bg-slate-200 rounded-xl overflow-hidden shadow-sm ring-2 ring-white">
-            <img
-              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
-                userName
-              )}`}
-              alt="Profile avatar"
-            />
+
+          <div className="flex items-center gap-3">
+            <div className="text-right hidden sm:block">
+              <p className="text-sm font-bold">{userName}</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                Rank #{userStats.rank}
+              </p>
+            </div>
+            <div 
+              onClick={() => router.push("/dashboard/settings/security")}
+              className="w-10 h-10 bg-slate-200 rounded-xl overflow-hidden shadow-sm ring-2 ring-white cursor-pointer hover:ring-[#FF6B4A] transition-all"
+            >
+              <img
+                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
+                  userName
+                )}`}
+                alt="Profile avatar"
+              />
+            </div>
           </div>
         </div>
       </header>
@@ -341,6 +379,54 @@ export default function StudentDashboard({
             </div>
           </div>
 
+          {/* ── Gamification Widgets Row ── */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Leaderboard Small Card */}
+            <div 
+              onClick={() => router.push("/dashboard/student/leaderboard")}
+              className="bg-white p-5 rounded-[1.5rem] shadow-sm border border-slate-50 hover:shadow-md transition-all cursor-pointer group"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-500 group-hover:scale-110 transition-transform">
+                  <Trophy size={20} />
+                </div>
+                <ChevronRight size={16} className="text-slate-300 group-hover:text-indigo-500 transition-colors" />
+              </div>
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Global Rank</h4>
+              <p className="text-xl font-black text-slate-800 mt-1">Rank #{userStats.rank}</p>
+              <p className="text-[11px] text-slate-400 font-medium mt-1">Click to view leaderboard</p>
+            </div>
+
+            {/* Certificates Card */}
+            <div className="bg-white p-5 rounded-[1.5rem] shadow-sm border border-slate-50 group hover:shadow-md transition-all cursor-pointer">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center text-green-500 group-hover:scale-110 transition-transform">
+                  <Award size={20} />
+                </div>
+                <ChevronRight size={16} className="text-slate-300 group-hover:text-green-500 transition-colors" />
+              </div>
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Achievements</h4>
+              <p className="text-xl font-black text-slate-800 mt-1">{certificates.length} Certificates</p>
+              <p className="text-[11px] text-slate-400 font-medium mt-1">Latest: {certificates[0]?.courseTitle || "None yet"}</p>
+            </div>
+
+            {/* Billing/Invoice Card */}
+            <div 
+              onClick={() => router.push("/dashboard/student/billing")}
+              className="bg-white p-5 rounded-[1.5rem] shadow-sm border border-slate-50 group hover:shadow-md transition-all cursor-pointer"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
+                  <CreditCard size={20} />
+                </div>
+                <ChevronRight size={16} className="text-slate-300 group-hover:text-amber-500 transition-colors" />
+              </div>
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Invoices</h4>
+              <p className="text-xl font-black text-slate-800 mt-1">{pendingInvoices.length} Pending</p>
+              <p className="text-[11px] text-slate-400 font-medium mt-1">Manage billing & history</p>
+            </div>
+          </div>
+
           {/* ── Enrolled Courses ── */}
           <div className="space-y-4">
             <h3 className="font-bold text-slate-800 px-2">
@@ -348,8 +434,24 @@ export default function StudentDashboard({
             </h3>
             <div className="space-y-3">
               {enrolledCourses.length === 0 ? (
-                <div className="p-8 text-center text-slate-400 bg-white rounded-2xl border border-slate-100 text-sm">
-                  Belum ada kelas yang didaftarkan.
+                <div className="bg-white p-12 rounded-[2.5rem] border border-slate-50 shadow-sm text-center flex flex-col items-center group overflow-hidden relative">
+                  <div className="w-20 h-20 bg-orange-50 rounded-3xl flex items-center justify-center text-[#FF6B4A] mb-6 relative z-10 group-hover:scale-110 transition-transform duration-500">
+                    <Sparkles size={32} fill="currentColor" />
+                  </div>
+                  <h4 className="text-xl font-black text-slate-800 mb-2 relative z-10">Siap untuk mulai belajar? 🎓</h4>
+                  <p className="text-slate-400 text-sm max-w-xs mb-8 relative z-10 font-medium">
+                    Kamu belum terdaftar di kelas mana pun. Ayo temukan kursus yang sesuai dengan passion kamu!
+                  </p>
+                  <Button 
+                    onClick={() => router.push("/dashboard/student/explore")}
+                    className="bg-[#FF6B4A] hover:bg-[#fa5a36] text-white font-black px-10 py-7 rounded-2xl text-sm shadow-xl shadow-orange-100 relative z-10 active:scale-95 transition-all"
+                  >
+                    Cari Kursus Pertama Kamu →
+                  </Button>
+                  
+                  {/* Decorative Elements */}
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-orange-50 rounded-full blur-3xl -mr-16 -mt-16 opacity-50" />
+                  <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-50 rounded-full blur-3xl -ml-16 -mb-16 opacity-50" />
                 </div>
               ) : (
                 enrolledCourses.map((cls) => (
@@ -570,6 +672,98 @@ export default function StudentDashboard({
             )}
           </div>
 
+          {/* ── Learning Analytics ── */}
+          <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-50">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h3 className="font-black text-slate-800 text-lg">Learning Focus 🧠</h3>
+                <p className="text-sm text-slate-400 font-medium">Your study patterns and habits.</p>
+              </div>
+              <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-500">
+                <TrendingUp size={24} />
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4">
+                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-orange-500 shadow-sm">
+                  <Zap size={20} fill="currentColor" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Peak Focus</p>
+                  <p className="text-sm font-bold text-slate-700">Evening (8 PM - 10 PM)</p>
+                </div>
+                <span className="text-[10px] font-black bg-orange-100 text-orange-600 px-2 py-1 rounded-lg uppercase">Active</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-5 bg-indigo-50/50 rounded-2xl border border-indigo-100">
+                   <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">Retention</p>
+                   <p className="text-xl font-black text-indigo-700">92%</p>
+                </div>
+                <div className="p-5 bg-green-50/50 rounded-2xl border border-green-100">
+                   <p className="text-[10px] font-black text-green-400 uppercase tracking-widest mb-1">Completion</p>
+                   <p className="text-xl font-black text-green-700">{avgProgress}%</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Recommendations ── */}
+          <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-50 relative overflow-hidden group">
+            <div className="flex items-center justify-between mb-8 relative z-10">
+              <h3 className="font-black text-slate-800 text-lg tracking-tight">Rekomendasi Spesial ✨</h3>
+              <div className="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center text-[#FF6B4A]">
+                <Award size={18} />
+              </div>
+            </div>
+            
+            <div className="space-y-4 relative z-10">
+              <div 
+                onClick={() => router.push("/dashboard/student/explore/advanced-ui-animations")}
+                className="p-4 rounded-2xl bg-white border border-slate-100 hover:border-orange-200 hover:shadow-xl hover:shadow-orange-100/20 transition-all cursor-pointer group/item flex items-center gap-4"
+              >
+                <div className="w-14 h-14 bg-gradient-to-br from-orange-50 to-white rounded-xl flex items-center justify-center text-[#FF6B4A] shadow-inner group-hover/item:scale-105 transition-transform">
+                  <Sparkles size={24} fill="currentColor" className="opacity-80" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-black text-slate-800 line-clamp-1 group-hover/item:text-[#FF6B4A] transition-colors">Advanced UI Animations</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Trending in UI/UX</p>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover/item:bg-[#FF6B4A] group-hover/item:text-white transition-all">
+                  <ChevronRight size={14} />
+                </div>
+              </div>
+
+              <div 
+                onClick={() => router.push("/dashboard/student/explore/react-design-patterns")}
+                className="p-4 rounded-2xl bg-white border border-slate-100 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-100/20 transition-all cursor-pointer group/item flex items-center gap-4"
+              >
+                <div className="w-14 h-14 bg-gradient-to-br from-indigo-50 to-white rounded-xl flex items-center justify-center text-indigo-500 shadow-inner group-hover/item:scale-105 transition-transform">
+                  <BookOpen size={24} fill="currentColor" className="opacity-80" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-black text-slate-800 line-clamp-1 group-hover/item:text-indigo-600 transition-colors">React Design Patterns</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">New Curriculum</p>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover/item:bg-indigo-500 group-hover/item:text-white transition-all">
+                  <ChevronRight size={14} />
+                </div>
+              </div>
+            </div>
+
+            <Button 
+              onClick={() => router.push("/dashboard/student/explore")}
+              variant="outline" 
+              className="w-full mt-8 rounded-2xl border-slate-100 text-slate-500 font-black text-xs hover:bg-slate-50 py-6 relative z-10 transition-all active:scale-[0.98]"
+            >
+              Lihat Katalog Lengkap →
+            </Button>
+
+            {/* Decorative background blur */}
+            <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-orange-100 rounded-full blur-[60px] opacity-20" />
+          </div>
+
           {/* Upcoming Lesson */}
           <div className="bg-[#100E2E] p-6 rounded-[2rem] text-white relative overflow-hidden group">
             <div className="relative z-10">
@@ -605,7 +799,7 @@ export default function StudentDashboard({
                     Explore new courses to keep growing
                   </p>
                   <Button
-                    onClick={() => router.push("/courses")}
+                    onClick={() => router.push("/dashboard/student/explore")}
                     className="w-full bg-[#FF6B4A] hover:bg-[#fa5a36] text-white rounded-xl font-bold h-11 text-xs shadow-lg shadow-orange-900/20"
                   >
                     Browse Courses

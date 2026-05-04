@@ -29,6 +29,9 @@ model User {
   createdDate      DateTime @default(now())
   lastUpdatedBy   String?  @default("SYSTEM")
   lastUpdatedDate DateTime @default(now()) @updatedAt
+  points          Int      @default(0)
+  streak          Int      @default(0)
+  lastStudyDate   DateTime?
 
   // ── Relations ─────────────────────────────────────────────────────────────
   role          Role?            @relation(fields: [roleId], references: [id])
@@ -168,6 +171,7 @@ model Course {
   recordings  Recording[]
   resources   Resource[]
   schedules   Schedule[]
+  invoices    Invoice[]
 }
 
 model Lesson {
@@ -264,6 +268,8 @@ model Invoice {
   lastUpdatedBy   String   @default("SYSTEM")
   lastUpdatedDate DateTime @updatedAt
 
+  course       Course?       @relation(fields: [courseId], references: [id])
+  courseId     Int?
   user         User          @relation(fields: [userId], references: [id])
   transactions Transaction[]
 }

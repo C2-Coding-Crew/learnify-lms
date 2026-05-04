@@ -133,7 +133,7 @@ export default function LearnPageClient({
         {/* Sidebar Header */}
         <div className="p-5 border-b border-white/5">
           <Link
-            href={`/courses/${course.slug}`}
+            href={`/dashboard/student/explore/${course.slug}`}
             className="flex items-center gap-2 text-xs text-white/40 hover:text-white/60 transition-colors mb-4"
           >
             <ChevronLeft size={14} /> Kembali ke Detail

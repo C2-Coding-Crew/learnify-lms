@@ -164,6 +164,18 @@ export const auth = betterAuth({
         type: "boolean",
         required: false,
       },
+      points: {
+        type: "number",
+        required: false,
+      },
+      streak: {
+        type: "number",
+        required: false,
+      },
+      lastStudyDate: {
+        type: "date",
+        required: false,
+      },
     },
   },
   verification: {
@@ -189,6 +201,9 @@ declare global {
       companyCode?: string | null;
       status?: number | null;
       isDeleted?: number | null;
+      points?: number | null;
+      streak?: number | null;
+      lastStudyDate?: Date | null;
     }
   }
 }

@@ -12,6 +12,7 @@ import {
   Settings,
   LogOut,
   Search,
+  Sparkles,
 } from "lucide-react";
 
 interface StudentSidebarProps {
@@ -20,6 +21,7 @@ interface StudentSidebarProps {
 
 const NAV_ITEMS = [
   { name: "Dashboard",   href: "/dashboard/student",             icon: LayoutDashboard },
+  { name: "Cari Kursus", href: "/dashboard/student/explore",       icon: Sparkles },
   { name: "Assignments", href: "/dashboard/student/assignments",  icon: FileText },
   { name: "Schedule",    href: "/dashboard/student/schedule",     icon: Calendar },
   { name: "Recordings",  href: "/dashboard/student/recordings",   icon: Video },
@@ -41,7 +43,7 @@ export default function StudentSidebar({ userName }: StudentSidebarProps) {
     e.preventDefault();
     const query = searchQuery.trim();
     if (!query) return;
-    router.push(`/courses?q=${encodeURIComponent(query)}`);
+    router.push(`/dashboard/student/explore?q=${encodeURIComponent(query)}`);
     setSearchQuery("");
   };
 

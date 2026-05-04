@@ -35,7 +35,7 @@ async function getStudentDashboardData(userId: string) {
   fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 4);
   fiveDaysAgo.setHours(0, 0, 0, 0);
 
-  const [enrollments, allProgress, weeklyActivity, todos, invoices] = await Promise.all([
+  const [enrollments, allProgress, weeklyActivity, todos, invoices, certificates, userInfo, allUsersByPoints] = await Promise.all([
     db.enrollment.findMany({
       where: { userId, isDeleted: 0 },
       include: {
@@ -62,7 +62,30 @@ async function getStudentDashboardData(userId: string) {
       where: { userId, invoiceStatus: "pending", isDeleted: 0 },
       select: { id: true, invoiceNumber: true, dueDate: true, totalAmount: true },
     }),
+    db.certificate.findMany({
+      where: { enrollment: { userId }, isDeleted: 0 },
+      include: { enrollment: { include: { course: { select: { title: true } } } } },
+      orderBy: { createdDate: "desc" },
+    }),
+    db.user.findUnique({
+      where: { id: userId },
+      select: { points: true, streak: true },
+    }),
+    db.user.findMany({
+      where: { isDeleted: 0, points: { gt: 0 } },
+      orderBy: { points: "desc" },
+      select: { id: true },
+    }),
   ]);
+
+  const userIndex = allUsersByPoints.findIndex((u: { id: string }) => u.id === userId);
+  const rank = userIndex !== -1 ? userIndex + 1 : "-";
+
+  const userStats = {
+    points: userInfo?.points || 0,
+    streak: userInfo?.streak || 0,
+    rank,
+  };
 
   // ── Enrolled courses with real progress ───────────────────────────────────
   const enrolledCourses: FormattedCourse[] = enrollments.map((enr: any) => {
@@ -119,7 +142,19 @@ async function getStudentDashboardData(userId: string) {
         )
       : 0;
 
-  return { enrolledCourses, weeklyHours, avgProgress, todos, pendingInvoices: invoices.map(inv => ({ ...inv, totalAmount: inv.totalAmount.toString() })) };
+  return { 
+    enrolledCourses, 
+    weeklyHours, 
+    avgProgress, 
+    todos, 
+    pendingInvoices: invoices.map((inv: any) => ({ ...inv, totalAmount: inv.totalAmount.toString() })),
+    certificates: certificates.map((c: any) => ({
+      id: c.id,
+      courseTitle: c.enrollment.course.title,
+      date: c.createdDate.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
+    })),
+    userStats,
+  };
 }
 
 // ── Page Component ────────────────────────────────────────────────────────────
@@ -127,7 +162,7 @@ export default async function StudentPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/auth/login");
 
-  const { enrolledCourses, weeklyHours, avgProgress, todos, pendingInvoices } =
+  const { enrolledCourses, weeklyHours, avgProgress, todos, pendingInvoices, certificates, userStats } =
     await getStudentDashboardData(session.user.id);
 
   return (
@@ -140,13 +175,15 @@ export default async function StudentPage() {
       enrolledCourses={enrolledCourses}
       weeklyHours={weeklyHours}
       avgProgress={avgProgress}
-      todos={todos.map(t => ({
+      todos={todos.map((t: any) => ({
         id: t.id,
         task: t.task,
         done: t.isCompleted,
         date: t.createdDate.toLocaleDateString("id-ID", { day: "numeric", month: "long" })
       }))}
       pendingInvoices={pendingInvoices}
+      certificates={certificates}
+      userStats={userStats}
     />
   );
 }

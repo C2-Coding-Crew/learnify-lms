@@ -106,9 +106,51 @@ export async function POST(request: Request) {
     });
   }
 
+  // ── Gamification: Points & Streaks ───────────────────────────────────────
+  // Update points and streak ONLY if this is a NEW completion
+  if (isCompleted && (!existing || !existing.isCompleted)) {
+    const user = await db.user.findUnique({
+      where: { id: session.user.id },
+      select: { points: true, streak: true, lastStudyDate: true } as any,
+    });
+
+    if (user) {
+      const now = new Date();
+      const lastStudy = (user as any).lastStudyDate ? new Date((user as any).lastStudyDate) : null;
+      let newStreak = (user as any).streak;
+
+      if (!lastStudy) {
+        newStreak = 1;
+      } else {
+        const diffInDays = Math.floor((now.getTime() - lastStudy.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (diffInDays === 1) {
+          // Belajar hari ini dan kemarin (streak berlanjut)
+          newStreak += 1;
+        } else if (diffInDays > 1) {
+          // Bolong belajar (reset streak)
+          newStreak = 1;
+        }
+        // Jika diffInDays === 0 (sudah belajar hari ini), streak tidak berubah
+      }
+
+      await db.user.update({
+        where: { id: session.user.id },
+        data: {
+          points: ((user as any).points || 0) + 10, // Tambah 10 poin per lesson
+          streak: newStreak,
+          lastStudyDate: now,
+        },
+      } as any);
+    }
+  }
+
   return NextResponse.json({
     success: true,
-    progress,
+    progress: {
+      ...progress,
+      id: progress.id.toString(),
+    },
     stats: {
       completedCount,
       totalLessons,
