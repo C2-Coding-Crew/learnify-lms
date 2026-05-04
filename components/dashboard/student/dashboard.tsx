@@ -46,6 +46,8 @@ interface StudentDashboardProps {
   weeklyHours?: number[];
   /** Overall average course progress (0–100) */
   avgProgress?: number;
+  todos?: Todo[];
+  pendingInvoices?: { id: number; dueDate: Date | string; invoiceNumber: string }[];
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -78,6 +80,8 @@ export default function StudentDashboard({
   enrolledCourses = [],
   weeklyHours = [0, 0, 0, 0, 0],
   avgProgress = 0,
+  todos: initialTodos = [],
+  pendingInvoices = [],
 }: StudentDashboardProps) {
   const router = useRouter();
   const today = new Date();
@@ -104,52 +108,78 @@ export default function StudentDashboard({
     else setCalMonth((m) => m + 1);
   };
 
-  // ── Todo (localStorage) ───────────────────────────────────────────────────
-  const [todos, setTodos] = useState<Todo[]>([]);
+  // ── Todo (Database) ───────────────────────────────────────────────────────
+  const [todos, setTodos] = useState<Todo[]>(initialTodos);
   const [newTask, setNewTask] = useState("");
-  const [todosReady, setTodosReady] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
-  useEffect(() => {
+  const toggleTodo = async (id: number, currentStatus: boolean) => {
+    setIsSyncing(true);
     try {
-      const raw = localStorage.getItem(getTodoKey(userId));
-      if (raw) setTodos(JSON.parse(raw));
-    } catch { /* localStorage unavailable */ }
-    setTodosReady(true);
-  }, [userId]);
+      const res = await fetch("/api/student/todos", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, isCompleted: !currentStatus }),
+      });
+      if (res.ok) {
+        setTodos((prev) =>
+          prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t))
+        );
+      }
+    } catch (err) {
+      console.error("Failed to toggle todo", err);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
-  useEffect(() => {
-    if (!todosReady) return;
+  const deleteTodo = async (id: number) => {
+    setIsSyncing(true);
     try {
-      localStorage.setItem(getTodoKey(userId), JSON.stringify(todos));
-    } catch { /* quota exceeded */ }
-  }, [todos, userId, todosReady]);
+      const res = await fetch(`/api/student/todos?id=${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setTodos((prev) => prev.filter((t) => t.id !== id));
+      }
+    } catch (err) {
+      console.error("Failed to delete todo", err);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
-  const toggleTodo = useCallback(
-    (id: number) =>
-      setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t))),
-    []
-  );
-
-  const deleteTodo = useCallback(
-    (id: number) => setTodos((prev) => prev.filter((t) => t.id !== id)),
-    []
-  );
-
-  const addTodo = (e: React.FormEvent) => {
+  const addTodo = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = newTask.trim();
-    if (!trimmed) return;
-    const entry: Todo = {
-      id: Date.now(),
-      task: trimmed,
-      date: `Today, ${today.toLocaleDateString("id-ID", {
-        day: "numeric",
-        month: "long",
-      })}`,
-      done: false,
-    };
-    setTodos((prev) => [entry, ...prev]);
-    setNewTask("");
+    if (!trimmed || isSyncing) return;
+
+    setIsSyncing(true);
+    try {
+      const res = await fetch("/api/student/todos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ task: trimmed }),
+      });
+      if (res.ok) {
+        const newTodo = await res.json();
+        const entry: Todo = {
+          id: newTodo.id,
+          task: newTodo.task,
+          date: `Today, ${today.toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "long",
+          })}`,
+          done: false,
+        };
+        setTodos((prev) => [entry, ...prev]);
+        setNewTask("");
+      }
+    } catch (err) {
+      console.error("Failed to add todo", err);
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   // ── Hours chart (normalize to % height for rendering) ─────────────────────
@@ -436,16 +466,25 @@ export default function StudentDashboard({
               {Array.from({ length: daysInMonth }).map((_, i) => {
                 const day = i + 1;
                 const isToday = isCurrentMonth && day === today.getDate();
+                const hasDeadline = pendingInvoices.some(inv => {
+                  const d = new Date(inv.dueDate);
+                  return d.getFullYear() === calYear && d.getMonth() === calMonth && d.getDate() === day;
+                });
+
                 return (
                   <span
                     key={day}
-                    className={`text-[11px] font-bold py-2 rounded-xl transition-all cursor-pointer ${
+                    title={hasDeadline ? "Payment Deadline" : ""}
+                    className={`text-[11px] font-bold py-2 rounded-xl transition-all cursor-pointer relative ${
                       isToday
                         ? "bg-[#FF6B4A] text-white shadow-md shadow-orange-100"
                         : "text-slate-500 hover:bg-slate-50"
                     }`}
                   >
                     {day}
+                    {hasDeadline && !isToday && (
+                      <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full" />
+                    )}
                   </span>
                 );
               })}
@@ -475,11 +514,13 @@ export default function StudentDashboard({
               </button>
             </form>
 
-            {!todosReady ? (
-              <p className="text-center text-xs text-slate-300 py-4">
-                Loading...
-              </p>
-            ) : todos.length === 0 ? (
+            {isSyncing && (
+              <div className="absolute inset-0 bg-white/50 z-10 flex items-center justify-center">
+                <div className="w-5 h-5 border-2 border-[#FF6B4A] border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
+
+            {todos.length === 0 ? (
               <p className="text-center text-xs text-slate-400 py-4 font-medium">
                 No tasks yet. Add one above!
               </p>
@@ -488,8 +529,8 @@ export default function StudentDashboard({
                 {todos.map((item) => (
                   <div key={item.id} className="flex gap-3 group">
                     <button
-                      onClick={() => toggleTodo(item.id)}
-                      aria-label={item.done ? "Mark incomplete" : "Mark complete"}
+                      onClick={() => toggleTodo(item.id, item.done)}
+                      disabled={isSyncing}
                       className={`flex-shrink-0 w-5 h-5 rounded-md border-2 mt-0.5 flex items-center justify-center transition-all ${
                         item.done
                           ? "bg-[#FF6B4A] border-[#FF6B4A]"

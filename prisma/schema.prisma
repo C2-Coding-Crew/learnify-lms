@@ -40,6 +40,7 @@ model User {
   progress      LessonProgress[]
   twoFactor     twoFactor?
   reviews       Review[]
+  todos         Todo[]
 
   @@map("user")
 }
@@ -54,6 +55,7 @@ model twoFactor {
   backupCodes String
   userId      String @unique
   user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verified    Boolean @default(false)
   createdDate      DateTime @default(now())
   lastUpdatedDate DateTime @default(now()) @updatedAt
 }
@@ -320,4 +322,20 @@ model Review {
   course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([userId, courseId])
+}
+
+model Todo {
+  id              Int      @id @default(autoincrement())
+  userId          String
+  task            String
+  isCompleted     Boolean  @default(false)
+  companyCode     String   @default("LEARNIFY")
+  status          Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

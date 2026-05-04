@@ -15,13 +15,27 @@ interface FormattedCourse {
   active: boolean;
 }
 
+interface InvoiceInfo {
+  id: number;
+  invoiceNumber: string;
+  dueDate: Date;
+  totalAmount: string;
+}
+
+interface Todo {
+  id: number;
+  task: string;
+  isCompleted: boolean;
+  createdDate: Date;
+}
+
 // ── Data Fetcher ──────────────────────────────────────────────────────────────
 async function getStudentDashboardData(userId: string) {
   const fiveDaysAgo = new Date();
   fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 4);
   fiveDaysAgo.setHours(0, 0, 0, 0);
 
-  const [enrollments, allProgress, weeklyActivity] = await Promise.all([
+  const [enrollments, allProgress, weeklyActivity, todos, invoices] = await Promise.all([
     db.enrollment.findMany({
       where: { userId, isDeleted: 0 },
       include: {
@@ -39,6 +53,14 @@ async function getStudentDashboardData(userId: string) {
     db.lessonProgress.findMany({
       where: { userId, isDeleted: 0, lastUpdatedDate: { gte: fiveDaysAgo } },
       select: { watchedSecs: true, lastUpdatedDate: true },
+    }),
+    db.todo.findMany({
+      where: { userId, isDeleted: 0 },
+      orderBy: { createdDate: "desc" },
+    }),
+    db.invoice.findMany({
+      where: { userId, invoiceStatus: "pending", isDeleted: 0 },
+      select: { id: true, invoiceNumber: true, dueDate: true, totalAmount: true },
     }),
   ]);
 
@@ -97,7 +119,7 @@ async function getStudentDashboardData(userId: string) {
         )
       : 0;
 
-  return { enrolledCourses, weeklyHours, avgProgress };
+  return { enrolledCourses, weeklyHours, avgProgress, todos, pendingInvoices: invoices.map(inv => ({ ...inv, totalAmount: inv.totalAmount.toString() })) };
 }
 
 // ── Page Component ────────────────────────────────────────────────────────────
@@ -105,7 +127,7 @@ export default async function StudentPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/auth/login");
 
-  const { enrolledCourses, weeklyHours, avgProgress } =
+  const { enrolledCourses, weeklyHours, avgProgress, todos, pendingInvoices } =
     await getStudentDashboardData(session.user.id);
 
   return (
@@ -118,6 +140,13 @@ export default async function StudentPage() {
       enrolledCourses={enrolledCourses}
       weeklyHours={weeklyHours}
       avgProgress={avgProgress}
+      todos={todos.map(t => ({
+        id: t.id,
+        task: t.task,
+        done: t.isCompleted,
+        date: t.createdDate.toLocaleDateString("id-ID", { day: "numeric", month: "long" })
+      }))}
+      pendingInvoices={pendingInvoices}
     />
   );
 }
