@@ -1,12 +1,44 @@
 import { Video, Play, Clock, Calendar } from "lucide-react";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { db } from "@/lib/db";
 
 export default async function StudentRecordingsPage() {
-  const recordings = [
-    { id: 1, title: "UI/UX Fundamentals — Session 3", course: "UI/UX Fundamentals", duration: "1h 24m", date: "21 Jun 2024", thumbnail: null },
-    { id: 2, title: "Figma Component System Deep Dive", course: "Figma Pro", duration: "58m", date: "18 Jun 2024", thumbnail: null },
-    { id: 3, title: "React Hooks Masterclass", course: "React Masterclass", duration: "2h 10m", date: "15 Jun 2024", thumbnail: null },
-    { id: 4, title: "Introduction to Design Thinking", course: "UI/UX Fundamentals", duration: "45m", date: "10 Jun 2024", thumbnail: null },
-  ];
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) redirect("/auth/login");
+
+  const userId = session.user.id;
+
+  // Fetch enrolled courses
+  const enrollments = await db.enrollment.findMany({
+    where: { userId, isDeleted: 0 },
+    select: { courseId: true },
+  });
+
+  const courseIds = enrollments.map((e) => e.courseId);
+
+  // Fetch recordings for those courses
+  const recordingsData = await db.recording.findMany({
+    where: { courseId: { in: courseIds }, isDeleted: 0 },
+    include: {
+      course: { select: { title: true } },
+    },
+    orderBy: { createdDate: "desc" },
+  });
+
+  const recordings = recordingsData.map((r) => ({
+    id: r.id,
+    title: r.title,
+    course: r.course.title,
+    duration: r.duration || "N/A",
+    date: r.createdDate.toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }),
+    thumbnail: null,
+  }));
 
   return (
     <main className="flex-1 p-6 md:p-10 max-w-[1600px] w-full">
