@@ -8,6 +8,13 @@ export const auth = betterAuth({
   database: prismaAdapter(db, {
     provider: "postgresql",
   }),
+  secret: process.env.BETTER_AUTH_SECRET,
+  baseURL: process.env.BETTER_AUTH_URL || (process.env.NODE_ENV === "production" ? "https://learnify-lms-one.vercel.app" : "http://localhost:3000"),
+  trustedOrigins: [
+    "https://learnify-lms-one.vercel.app",
+    "http://localhost:3000",
+  ],
+  trustHost: true,
 
   databaseHooks: {
     user: {
@@ -35,20 +42,28 @@ export const auth = betterAuth({
         },
       },
       update: {
-        before: async (userData, originalUser) => {
+        before: async (userData, ctx) => {
+          // Cast context ke tipe User agar TypeScript mengenali propertinya
+          const originalUser = ctx as { roleId?: number; email?: string } | null;
+
           // Cegah celah keamanan jika user biasa memanggil updateUser({ roleId: 1 })
-          if (userData.roleId === 1 && originalUser.roleId !== 1) {
-             const adminEmailsStr = process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || "";
-             const adminEmails = adminEmailsStr.split(",").map(e => e.trim().toLowerCase());
-             if (!adminEmails.includes(originalUser.email.toLowerCase())) {
-                console.warn("[auth] SECURITY WARNING: Attempt to escalate role to Admin by", originalUser.email);
-                return {
-                  data: {
-                    ...userData,
-                    roleId: originalUser.roleId, // Kembalikan ke role asli
-                  }
-                };
-             }
+          if (
+            (userData as any).roleId === 1 &&
+            originalUser != null &&
+            originalUser.roleId !== 1
+          ) {
+            const adminEmailsStr = process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || "";
+            const adminEmails = adminEmailsStr.split(",").map(e => e.trim().toLowerCase());
+            const originalEmail = originalUser.email ?? "";
+            if (!adminEmails.includes(originalEmail.toLowerCase())) {
+              console.warn("[auth] SECURITY WARNING: Attempt to escalate role to Admin by", originalEmail);
+              return {
+                data: {
+                  ...userData,
+                  roleId: originalUser.roleId, // Kembalikan ke role asli
+                },
+              };
+            }
           }
           return { data: userData };
         }

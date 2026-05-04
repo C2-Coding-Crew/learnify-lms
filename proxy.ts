@@ -5,7 +5,7 @@ import type { Session } from "@/lib/auth";
 // ─── Route groups ────────────────────────────────────────────────────────────
 const PROTECTED_PREFIXES = ["/dashboard", "/auth/setup-2fa", "/auth/select-role", "/checkout"];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     const pathname = request.nextUrl.pathname;
 
     // 1. Proteksi route yang butuh login ─────────────────────────────────────
@@ -33,7 +33,6 @@ export async function middleware(request: NextRequest) {
 
     // Guard: Cek 2FA jika aktif
     if (session.user.twoFactorEnabled) {
-        // Better Auth 2FA plugin biasanya punya helper, atau kita cek cookie custom jika ada
         const isVerified = request.cookies.get("2fa_verified")?.value === "true";
         if (!isVerified && !pathname.startsWith("/auth/two-factor")) {
             return NextResponse.redirect(new URL("/auth/two-factor", request.url));
@@ -60,9 +59,8 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL("/unauthorized", request.url));
     }
 
-    // Tolak akses student area jika bukan student (optional, admin mungkin bisa lihat)
+    // Tolak akses student area jika bukan student (Admin boleh lihat)
     if (pathname.startsWith("/dashboard/student") && roleId !== 2) {
-        // Biarkan Admin mengakses dashboard student (opsional) - tapi untuk instruktur tolak
         if (roleId !== 1) {
             return NextResponse.redirect(new URL("/unauthorized", request.url));
         }
