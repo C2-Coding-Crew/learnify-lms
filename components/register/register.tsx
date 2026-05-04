@@ -78,14 +78,14 @@ const RegisterPage = () => {
         name: fullName,
         email,
         password,
-        roleId: roleIdFromUrl, // <-- Kirim roleId yang dipilih ke server
+        roleId: roleIdFromUrl,
         fetchOptions: {
           onSuccess: () => {
             router.push("/dashboard");
-            router.refresh(); // Tambahkan refresh untuk memastikan session terbaca
+            router.refresh();
           },
         },
-      });
+      } as any);
 
 
       if (authError) {

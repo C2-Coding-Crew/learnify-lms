@@ -114,7 +114,7 @@ export default async function StudentPage() {
       userName={session.user.name}
       userEmail={session.user.email}
       userRole="Student"
-      twoFactorEnabled={session.user.twoFactorEnabled ?? false}
+      twoFactorEnabled={(session.user as any).twoFactorEnabled ?? false}
       enrolledCourses={enrolledCourses}
       weeklyHours={weeklyHours}
       avgProgress={avgProgress}

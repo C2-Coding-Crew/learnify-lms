@@ -34,7 +34,7 @@ interface RecentReview {
   courseTitle: string;
   rating: number;
   comment: string | null;
-  createdAt: string;
+  createdDate: string;
 }
 
 interface InstructorDashboardProps {
@@ -384,7 +384,7 @@ export default function InstructorDashboard({
 
                     {/* Timestamp */}
                     <span className="text-[9px] font-black px-2 py-1 bg-orange-50 text-[#FF6B4A] rounded-md shrink-0">
-                      {relativeTime(review.createdAt)}
+                      {relativeTime(review.createdDate)}
                     </span>
                   </div>
                 ))}

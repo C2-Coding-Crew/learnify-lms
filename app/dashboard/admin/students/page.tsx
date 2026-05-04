@@ -26,7 +26,7 @@ async function getStudentData() {
         name: true,
         email: true,
         status: true,
-        createdAt: true,
+        createdDate: true,
         enrollments: {
           where: { isDeleted: 0 },
           select: {
@@ -35,7 +35,7 @@ async function getStudentData() {
           },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdDate: "desc" },
     }),
 
     // Total student count
@@ -57,7 +57,7 @@ async function getStudentData() {
     completed: s.enrollments.filter(
       (e: any) => e.enrollmentStatus === "completed" || e.completedAt !== null
     ).length,
-    joinedAt: (s.createdAt as Date).toLocaleDateString("id-ID", {
+    joinedAt: (s.createdDate as Date).toLocaleDateString("id-ID", {
       day: "2-digit",
       month: "short",
       year: "numeric",

@@ -17,7 +17,7 @@ interface RecentReview {
   courseTitle: string;
   rating: number;
   comment: string | null;
-  createdAt: string;
+  createdDate: string;
 }
 
 // ── Data Fetcher ──────────────────────────────────────────────────────────────
@@ -118,7 +118,7 @@ async function getInstructorDashboardData(instructorId: string) {
     courseTitle: r.course.title,
     rating: r.rating,
     comment: r.comment,
-    createdAt: (r.createdDate as Date).toISOString(),
+    createdDate: (r.createdDate as Date).toISOString(),
   }));
 
   return {
@@ -153,7 +153,7 @@ export default async function InstructorPage() {
       monthlyEarnings={monthlyEarnings}
       avgRating={avgRating}
       recentReviews={recentReviews}
-      twoFactorEnabled={session.user.twoFactorEnabled ?? false}
+      twoFactorEnabled={(session.user as any).twoFactorEnabled ?? false}
     />
   );
 }

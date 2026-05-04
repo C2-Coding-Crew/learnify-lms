@@ -44,7 +44,7 @@ async function getActivityData() {
     db.user.count({
       where: {
         isDeleted: 0,
-        createdAt: {
+        createdDate: {
           gte: new Date(Date.now() - 7 * 86_400_000),
         },
       },
@@ -56,8 +56,8 @@ async function getActivityData() {
     // Recent user registrations (last 10)
     db.user.findMany({
       where: { isDeleted: 0 },
-      select: { id: true, name: true, email: true, roleId: true, createdAt: true },
-      orderBy: { createdAt: "desc" },
+      select: { id: true, name: true, email: true, roleId: true, createdDate: true },
+      orderBy: { createdDate: "desc" },
       take: 10,
     }),
 
@@ -103,7 +103,7 @@ async function getActivityData() {
       level: "info",
       message: `User baru mendaftar sebagai ${roleLabel}: ${u.email}`,
       actor: u.name,
-      time: relativeTime(u.createdAt as Date),
+      time: relativeTime(u.createdDate as Date),
     });
   }
 

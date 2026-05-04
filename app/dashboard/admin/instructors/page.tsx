@@ -28,7 +28,7 @@ async function getInstructorData() {
           name: true,
           email: true,
           status: true,
-          createdAt: true,
+          createdDate: true,
           taughtCourses: {
             where: { isDeleted: 0 },
             select: {
@@ -37,7 +37,7 @@ async function getInstructorData() {
             },
           },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdDate: "desc" },
       }),
 
       // Total instructor count
@@ -73,7 +73,7 @@ async function getInstructorData() {
       courseCount: courses.length,
       studentCount: totalStudents,
       avgRating,
-      joinedAt: (ins.createdAt as Date).toLocaleDateString("id-ID", {
+      joinedAt: (ins.createdDate as Date).toLocaleDateString("id-ID", {
         day: "2-digit",
         month: "short",
         year: "numeric",

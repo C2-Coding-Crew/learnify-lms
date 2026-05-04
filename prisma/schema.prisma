@@ -26,9 +26,9 @@ model User {
   status          Int      @default(1)    // 1=aktif, 0=nonaktif
   isDeleted       Int      @default(0)    // 0=ada, 1=terhapus (soft delete)
   createdBy       String?  @default("SYSTEM")
-  createdAt       DateTime @default(now()) @map("createdDate")
+  createdDate      DateTime @default(now())
   lastUpdatedBy   String?  @default("SYSTEM")
-  updatedAt       DateTime @default(now()) @updatedAt @map("lastUpdatedDate")
+  lastUpdatedDate DateTime @default(now()) @updatedAt
 
   // ── Relations ─────────────────────────────────────────────────────────────
   role          Role?            @relation(fields: [roleId], references: [id])
@@ -54,16 +54,16 @@ model twoFactor {
   backupCodes String
   userId      String @unique
   user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now()) @map("createdDate")
-  updatedAt   DateTime @default(now()) @updatedAt @map("lastUpdatedDate")
+  createdDate      DateTime @default(now())
+  lastUpdatedDate DateTime @default(now()) @updatedAt
 }
 
 model session {
   id        String   @id
   expiresAt DateTime
   token     String   @unique
-  createdAt DateTime @default(now()) @map("createdDate")
-  updatedAt DateTime @default(now()) @updatedAt @map("lastUpdatedDate")
+  createdDate      DateTime @default(now())
+  lastUpdatedDate DateTime @default(now()) @updatedAt
   ipAddress String?
   userAgent String?
   userId    String
@@ -85,8 +85,8 @@ model account {
   refreshTokenExpiresAt DateTime?
   scope                 String?
   password              String?
-  createdAt             DateTime  @default(now()) @map("createdDate")
-  updatedAt             DateTime  @default(now()) @updatedAt @map("lastUpdatedDate")
+  createdDate           DateTime  @default(now())
+  lastUpdatedDate       DateTime  @default(now()) @updatedAt
 }
 
 model verification {
@@ -94,8 +94,8 @@ model verification {
   identifier String
   value      String
   expiresAt  DateTime
-  createdAt  DateTime  @default(now()) @map("createdDate")
-  updatedAt  DateTime  @default(now()) @updatedAt @map("lastUpdatedDate")
+  createdDate      DateTime  @default(now())
+  lastUpdatedDate DateTime  @default(now()) @updatedAt
 }
 
 // ═════════════════════════════════════════════════════════════════════════════

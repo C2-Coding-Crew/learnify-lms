@@ -8,6 +8,7 @@ export const auth = betterAuth({
   database: prismaAdapter(db, {
     provider: "postgresql",
   }),
+
   secret: process.env.BETTER_AUTH_SECRET,
   baseURL: process.env.BETTER_AUTH_URL || (process.env.NODE_ENV === "production" ? "https://learnify-lms-one.vercel.app" : "http://localhost:3000"),
   trustedOrigins: [
@@ -117,17 +118,27 @@ export const auth = betterAuth({
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 hari
     updateAge: 60 * 60 * 24,      // refresh setiap 1 hari
-    // Tidak perlu fields mapping karena sudah pakai @map di schema.prisma
+    fields: {
+      createdAt: "createdDate",
+      updatedAt: "lastUpdatedDate",
+    },
   },
 
   account: {
     accountLinking: {
       enabled: true,
     },
-    // Tidak perlu fields mapping karena sudah pakai @map di schema.prisma
+    fields: {
+      createdAt: "createdDate",
+      updatedAt: "lastUpdatedDate",
+    },
   },
 
   user: {
+    fields: {
+      createdAt: "createdDate",
+      updatedAt: "lastUpdatedDate",
+    },
     additionalFields: {
       roleId: {
         type: "number",
@@ -149,8 +160,17 @@ export const auth = betterAuth({
         type: "string",
         required: false,
       },
+      twoFactorEnabled: {
+        type: "boolean",
+        required: false,
+      },
     },
-    // Tidak perlu fields mapping karena sudah pakai @map di schema.prisma
+  },
+  verification: {
+    fields: {
+      createdAt: "createdDate",
+      updatedAt: "lastUpdatedDate",
+    },
   },
 
   socialProviders: {
@@ -164,8 +184,11 @@ export const auth = betterAuth({
 declare global {
   namespace BetterAuth {
     interface User {
-      role?: 1 | 2 | 3;
+      roleId?: number | null;
       twoFactorEnabled?: boolean | null;
+      companyCode?: string | null;
+      status?: number | null;
+      isDeleted?: number | null;
     }
   }
 }

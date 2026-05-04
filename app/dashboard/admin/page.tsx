@@ -93,7 +93,7 @@ export default async function Page() {
       userName={session.user.name}
       userEmail={session.user.email}
       userRole="Admin"
-      twoFactorEnabled={session.user.twoFactorEnabled ?? false}
+      twoFactorEnabled={(session.user as any).twoFactorEnabled ?? false}
       stats={stats}
       monthlyRevenue={monthlyRevenue}
       topCourses={topCourses}
