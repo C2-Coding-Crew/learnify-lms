@@ -1,3 +1,4 @@
+// app/dashboard/admin/page.tsx
 import AdminDashboard from "@/components/dashboard/admin/admin";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -82,12 +83,8 @@ export default async function Page() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/auth/login");
 
-  // Role guard — hanya admin
-  const dbUser = await db.user.findUnique({
-    where: { id: session.user.id },
-    select: { roleId: true },
-  });
-  if (dbUser?.roleId !== 1) redirect("/dashboard");
+  // Role guard sudah ditangani oleh Middleware!
+  // Kita tidak perlu lagi query database di sini, menghemat performa.
 
   const { stats, monthlyRevenue, topCourses } = await getAdminStats();
 

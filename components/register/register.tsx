@@ -22,8 +22,8 @@ const RegisterPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Ambil roleId dari URL (misal: ?roleId=3), default ke 3 (Student)
-  const roleIdFromUrl = Number(searchParams.get("roleId")) || 3;
+  // Ambil roleId dari URL (misal: ?roleId=3), default ke 2 (Siswa)
+  const roleIdFromUrl = Number(searchParams.get("roleId")) || 2;
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState(searchParams.get("email") || "");
@@ -42,8 +42,8 @@ const RegisterPage = () => {
     try {
       const { data, error: googleError } = await authClient.signIn.social({
         provider: "google",
-        // Arahkan ke callback yang akan logout dan redirect ke login
-        callbackURL: `${window.location.origin}/api/auth/google-register-callback`,
+        // Kirim roleId ke callbackURL agar ditangkap oleh databaseHooks di server
+        callbackURL: `/auth/select-role?roleId=${roleIdFromUrl}`,
       });
       if (googleError) {
         setError(googleError.message || "Gagal mendaftar dengan Google. Silakan coba lagi.");
@@ -78,19 +78,11 @@ const RegisterPage = () => {
         name: fullName,
         email,
         password,
+        roleId: roleIdFromUrl, // <-- Kirim roleId yang dipilih ke server
         fetchOptions: {
-          onSuccess: async () => {
-            // Set role after successful signup
-            await authClient.updateUser({
-              // @ts-ignore
-              roleId: roleIdFromUrl,
-            });
-            
-            // Sign out the user so they are required to login manually
-            await authClient.signOut();
-            
-            router.push("/auth/login");
-            router.refresh();
+          onSuccess: () => {
+            router.push("/dashboard");
+            router.refresh(); // Tambahkan refresh untuk memastikan session terbaca
           },
         },
       });

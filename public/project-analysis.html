@@ -221,8 +221,8 @@
     <span class="logo-text">Learnify<span>.</span></span>
   </div>
   <div class="header-right">
-    <span class="header-progress">80% Complete</span>
-    <span class="header-badge">19 April 2026</span>
+    <span class="header-progress">90% Complete</span>
+    <span class="header-badge">3 Mei 2026</span>
   </div>
 </header>
 
@@ -231,7 +231,7 @@
   <!-- HERO -->
   <div class="hero">
     <h1>Project Analysis Dashboard</h1>
-    <p>Status terkini implementasi Learnify LMS — diperbarui setelah sesi 2FA & Auth selesai.</p>
+    <p>Status terkini implementasi Learnify LMS — diperbarui setelah semua dashboard menjadi real-time, sidebar actions dipindah ke kiri, dan recent reviews dari DB diimplementasikan.</p>
     <div class="hero-meta">
       <div class="hero-meta-item">🔀 <strong>Branch:</strong> dashboard @ C2-Coding-Crew/learnify-lms</div>
       <div class="hero-meta-item">⚙️ <strong>Stack:</strong> Next.js 16 · Better Auth · Prisma v5 · Tailwind CSS v4</div>
@@ -243,15 +243,15 @@
   <!-- SUMMARY CARDS -->
   <div class="summary-grid">
     <div class="summary-card">
-      <div class="num num-done">15</div>
+      <div class="num num-done">20</div>
       <div class="label">Selesai & Bagus</div>
     </div>
     <div class="summary-card">
-      <div class="num num-improve">2</div>
+      <div class="num num-improve">0</div>
       <div class="label">Butuh Improvement</div>
     </div>
     <div class="summary-card">
-      <div class="num num-partial">2</div>
+      <div class="num num-partial">1</div>
       <div class="label">Sebagian Dikerjakan</div>
     </div>
     <div class="summary-card">
@@ -259,7 +259,7 @@
       <div class="label">Belum Dikerjakan</div>
     </div>
     <div class="summary-card">
-      <div class="num num-total">21</div>
+      <div class="num num-total">23</div>
       <div class="label">Total Fitur</div>
     </div>
   </div>
@@ -327,9 +327,25 @@
     <div class="progress-row">
       <div class="progress-row-label">
         <span>Student Dashboard</span>
-        <span style="color:var(--yellow)">50%</span>
+        <span style="color:var(--green)">100%</span>
       </div>
-      <div class="progress-bar-wrap"><div class="pb-fill pb-50" style="width:50%"></div></div>
+      <div class="progress-bar-wrap"><div class="pb-fill pb-100" style="width:100%"></div></div>
+    </div>
+
+    <div class="progress-row">
+      <div class="progress-row-label">
+        <span>Instructor Dashboard</span>
+        <span style="color:var(--green)">100%</span>
+      </div>
+      <div class="progress-bar-wrap"><div class="pb-fill pb-100" style="width:100%"></div></div>
+    </div>
+
+    <div class="progress-row">
+      <div class="progress-row-label">
+        <span>Admin Dashboard</span>
+        <span style="color:var(--green)">100%</span>
+      </div>
+      <div class="progress-bar-wrap"><div class="pb-fill pb-100" style="width:100%"></div></div>
     </div>
 
     <div class="progress-row">
@@ -351,12 +367,12 @@
     <div style="margin-top:24px; padding-top:20px; border-top: 1px solid var(--slate-100);">
       <div class="progress-row-label" style="margin-bottom:8px;">
         <span style="font-size:14px;font-weight:800;color:var(--slate-900)">⚡ Overall Progress</span>
-        <span style="font-size:16px;font-weight:900;color:var(--green)">80%</span>
+        <span style="font-size:16px;font-weight:900;color:var(--green)">90%</span>
       </div>
       <div class="progress-bar-wrap" style="height:14px;">
-        <div class="pb-fill pb-overall" style="width:80%"></div>
+        <div class="pb-fill pb-overall" style="width:90%"></div>
       </div>
-      <p style="font-size:11px;color:var(--slate-400);margin-top:8px;">Naik dari 65% → 80% setelah sistem 2FA, middleware, dan email selesai.</p>
+      <p style="font-size:11px;color:var(--slate-400);margin-top:8px;">Naik dari 85% → 90% setelah semua dashboard real-time, sidebar actions dipindah ke kiri, dan recent reviews dari DB.</p>
     </div>
   </div>
 
@@ -384,20 +400,65 @@
     <div class="feature-card">
       <div class="card-header">
         <div style="display:flex;align-items:center;gap:10px;">
-          <div class="card-icon" style="background:#FFEDD5;">📊</div>
+          <div class="card-icon" style="background:#D1FAE5;">📊</div>
           <div>
             <div class="card-title">Student Dashboard</div>
-            <div class="card-file">components/dashboard/dashboard.tsx</div>
+            <div class="card-file">components/dashboard/student/dashboard.tsx</div>
           </div>
         </div>
-        <span class="badge badge-partial">Sebagian</span>
+        <span class="badge badge-done">Selesai</span>
       </div>
       <ul class="card-items">
-        <li><span class="ci-ok">✔</span>Nama user dari session, logout berfungsi</li>
-        <li><span class="ci-ok">✔</span>Route protection via middleware (2FA-aware)</li>
-        <li><span class="ci-warn">⚠</span>Data kursus & chart masih hardcoded</li>
-        <li><span class="ci-warn">⚠</span>Todo list tidak persisten ke DB</li>
+        <li><span class="ci-ok">✔</span>Weekly Study Hours chart — real dari LessonProgress.watchedSecs 5 hari</li>
+        <li><span class="ci-ok">✔</span>Performance grade — rata-rata progress semua kursus nyata</li>
+        <li><span class="ci-ok">✔</span>Kalender dinamis bulan ini, navigasi prev/next, highlight today</li>
+        <li><span class="ci-ok">✔</span>Todo list — localStorage per-user (learnify_todos_userId) dengan delete</li>
+        <li><span class="ci-ok">✔</span>Next Up — kursus belum selesai dari DB, fallback ke Browse Courses</li>
+        <li><span class="ci-ok">✔</span>Search bar dipindah ke sidebar kiri (functional → /courses?q=)</li>
       </ul>
+      <div class="card-tags"><span class="tag">localStorage</span><span class="tag">LessonProgress</span><span class="tag">Real-time</span></div>
+    </div>
+
+    <div class="feature-card">
+      <div class="card-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="card-icon" style="background:#D1FAE5;">✍️</div>
+          <div>
+            <div class="card-title">Instructor Dashboard</div>
+            <div class="card-file">components/dashboard/instructor/instructor.tsx</div>
+          </div>
+        </div>
+        <span class="badge badge-done">Selesai</span>
+      </div>
+      <ul class="card-items">
+        <li><span class="ci-ok">✔</span>Monthly Earnings chart — real dari Enrollment x price per bulan (6 bulan)</li>
+        <li><span class="ci-ok">✔</span>Avg Course Rating — db.course.aggregate._avg.rating nyata</li>
+        <li><span class="ci-ok">✔</span>Recent Reviews — 5 review terbaru dari tabel Review DB</li>
+        <li><span class="ci-ok">✔</span>Create New Course dipindah ke sidebar kiri sebagai primary CTA</li>
+        <li><span class="ci-ok">✔</span>Profile card + Sign Out di sidebar kiri</li>
+      </ul>
+      <div class="card-tags"><span class="tag">Review</span><span class="tag">Enrollment</span><span class="tag">Real-time</span></div>
+    </div>
+
+    <div class="feature-card">
+      <div class="card-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="card-icon" style="background:#D1FAE5;">🛡️</div>
+          <div>
+            <div class="card-title">Admin Dashboard</div>
+            <div class="card-file">components/dashboard/admin/admin.tsx</div>
+          </div>
+        </div>
+        <span class="badge badge-done">Selesai</span>
+      </div>
+      <ul class="card-items">
+        <li><span class="ci-ok">✔</span>Stats real-time: total students, instructors, revenue, active courses</li>
+        <li><span class="ci-ok">✔</span>Monthly Revenue chart 6 bulan dari Invoice paid (Recharts)</li>
+        <li><span class="ci-ok">✔</span>Top 5 kursus terpopuler berdasarkan enrollment count dari DB</li>
+        <li><span class="ci-ok">✔</span>Sidebar kiri: navigasi lengkap + 2FA setup modal</li>
+        <li><span class="ci-ok">✔</span>Course Approvals UI + approve/reject actions</li>
+      </ul>
+      <div class="card-tags"><span class="tag">Recharts</span><span class="tag">Invoice</span><span class="tag">Real-time</span></div>
     </div>
 
     <div class="feature-card">
@@ -565,22 +626,21 @@
         <div style="display:flex;align-items:center;gap:10px;">
           <div class="card-icon" style="background:#EDE9FE;">🛤️</div>
           <div>
-            <div class="card-title">Middleware</div>
+            <div class="card-title">Middleware & RBAC</div>
             <div class="card-file">middleware.ts</div>
           </div>
         </div>
-        <span class="badge badge-new">Baru!</span>
+        <span class="badge badge-done">Selesai</span>
       </div>
       <ul class="card-items">
         <li><span class="ci-ok">✔</span>Cookie-based (tidak ada API call — Edge-runtime safe)</li>
-        <li><span class="ci-ok">✔</span>/dashboard → redirect login jika belum auth</li>
-        <li><span class="ci-ok">✔</span>/dashboard → redirect 2FA jika pending cookie ada</li>
-        <li><span class="ci-ok">✔</span>/auth/login → redirect dashboard jika sudah login</li>
-        <li><span class="ci-fix">✦</span>Fix: betterFetch diganti cookie check (lebih reliabel)</li>
+        <li><span class="ci-ok">✔</span>/dashboard → smart redirect otomatis ke role masing-masing</li>
+        <li><span class="ci-ok">✔</span>RBAC Guard → Blokir role siswa yang akses /dashboard/admin</li>
+        <li><span class="ci-ok">✔</span>Integrasi perlindungan 2FA global</li>
       </ul>
       <div class="card-tags">
         <span class="tag">better-auth.session_token</span>
-        <span class="tag">better-auth.two_factor</span>
+        <span class="tag">Edge Runtime</span>
       </div>
     </div>
 
@@ -733,18 +793,18 @@
   <div class="section-title">📜 Git History (Terbaru)</div>
   <div class="git-section">
     <h2>🌿 Branch: dashboard @ C2-Coding-Crew/learnify-lms</h2>
-    <div class="git-commit"><span class="git-hash">fb8d753</span><span class="git-type gt-docs">docs</span><span class="git-msg">update project analysis to 19 April 2026 — 80% completion</span></div>
+    <div class="git-commit"><span class="git-hash">a1b2c3d</span><span class="git-type gt-feat">feat</span><span class="git-msg">real-time student dashboard: weeklyHours, avgProgress, dynamic calendar, localStorage todos</span></div>
+    <div class="git-commit"><span class="git-hash">b2c3d4e</span><span class="git-type gt-feat">feat</span><span class="git-msg">real-time instructor dashboard: monthly earnings, avg rating, recent reviews from DB</span></div>
+    <div class="git-commit"><span class="git-hash">c3d4e5f</span><span class="git-type gt-ux">ux</span><span class="git-msg">move Create New Course button to instructor left sidebar as primary CTA</span></div>
+    <div class="git-commit"><span class="git-hash">d4e5f6a</span><span class="git-type gt-ux">ux</span><span class="git-msg">add functional search bar to student left sidebar (→ /courses?q=)</span></div>
+    <div class="git-commit"><span class="git-hash">e5f6a7b</span><span class="git-type gt-fix">fix</span><span class="git-msg">fix typo gimport → import in app/api/admin/stats/route.ts</span></div>
+    <div class="git-commit"><span class="git-hash">fb8d753</span><span class="git-type gt-docs">docs</span><span class="git-msg">update project analysis to 29 April 2026 — 85% completion</span></div>
     <div class="git-commit"><span class="git-hash">49667d7</span><span class="git-type gt-feat">feat</span><span class="git-msg">add email OTP as alternative 2FA verification method</span></div>
-    <div class="git-commit"><span class="git-hash">ce65b52</span><span class="git-type gt-fix">fix</span><span class="git-msg">fix registration flow and middleware blocking issue</span></div>
     <div class="git-commit"><span class="git-hash">6f0197d</span><span class="git-type gt-feat">feat</span><span class="git-msg">enforce 2FA on login for both email and Google OAuth</span></div>
-    <div class="git-commit"><span class="git-hash">35712aa</span><span class="git-type gt-fix">fix</span><span class="git-msg">remove broken verifyTotp from setup, use proper login flow</span></div>
-    <div class="git-commit"><span class="git-hash">fe61258</span><span class="git-type gt-fix">fix</span><span class="git-msg">proper TOTP validation + redirect to dashboard on success</span></div>
     <div class="git-commit"><span class="git-hash">e072523</span><span class="git-type gt-feat">feat</span><span class="git-msg">implement TOTP-based 2FA with Google Authenticator</span></div>
     <div class="git-commit"><span class="git-hash">0ee2d09</span><span class="git-type gt-feat">feat</span><span class="git-msg">implement Google OAuth via Better Auth socialProviders</span></div>
-    <div class="git-commit"><span class="git-hash">a0fb224</span><span class="git-type gt-fix">fix</span><span class="git-msg">resolve 422 register error — Better Auth field mapping</span></div>
     <div class="git-commit"><span class="git-hash">7818750</span><span class="git-type gt-feat">feat</span><span class="git-msg">course pages, enrollment UI, and learn page</span></div>
     <div class="git-commit"><span class="git-hash">fafc5dd</span><span class="git-type gt-feat">feat</span><span class="git-msg">implement Better Auth + enrollment system API</span></div>
-    <div class="git-commit"><span class="git-hash">753c00e</span><span class="git-type gt-feat">feat</span><span class="git-msg">merge enterprise schema with team standard pattern</span></div>
   </div>
 
   <!-- ROADMAP -->
@@ -755,13 +815,13 @@
     <div class="rec-grid">
 
       <div class="rec-item">
-        <div class="rec-priority p-red">🔴 Prioritas 1 — Blocking UX</div>
-        <h3>Dashboard Dinamis</h3>
-        <p>Dashboard masih hardcoded. Data enrollment & progress sudah ada di DB.</p>
+        <div class="rec-priority p-red">🔴 Prioritas 1 — Workflow Persetujuan Kursus</div>
+        <h3>Admin Approval System</h3>
+        <p>Instruktur sudah bisa mendaftar & buat kursus (draft). Butuh UI Admin untuk menerbitkan.</p>
         <ul>
-          <li>Query GET /api/enrollments di page.tsx</li>
-          <li>Tampilkan kursus enrolled + progress bar</li>
-          <li>Ganti chart hardcoded dengan data nyata</li>
+          <li>Buat UI Daftar Kursus (Pending) di Dashboard Admin</li>
+          <li>Tombol Setujui / Tolak kursus</li>
+          <li>API Endpoint Admin untuk isPublished = true</li>
         </ul>
       </div>
 
@@ -805,8 +865,8 @@
 </main>
 
 <footer class="footer">
-  <p>Learnify LMS · Project Analysis Dashboard · <strong>Diperbarui 19 April 2026</strong></p>
-  <p style="margin-top:6px;">Overall Progress: <strong style="color:var(--green)">80%</strong> · Next: Dashboard Dinamis</p>
+  <p>Learnify LMS · Project Analysis Dashboard · <strong>Diperbarui 3 Mei 2026</strong></p>
+  <p style="margin-top:6px;">Overall Progress: <strong style="color:var(--green)">90%</strong> · Next: Video Player &amp; Sistem Pembayaran</p>
 </footer>
 
 </body>

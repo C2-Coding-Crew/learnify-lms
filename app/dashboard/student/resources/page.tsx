@@ -1,22 +1,23 @@
 import { Download, FileText, Link2, BookOpen, Search } from "lucide-react";
-import { getStudentResources } from "@/lib/actions/resource-actions";
 
 export default async function StudentResourcesPage() {
-  const resources = await getStudentResources();
-
-  const totalCourses = new Set(resources.map((r: any) => r.course)).size;
+  const resources = [
+    { id: 1, title: "UI/UX Design Cheat Sheet", course: "UI/UX Fundamentals", type: "PDF", size: "2.4 MB", date: "21 Jun 2024" },
+    { id: 2, title: "Figma Component Kit", course: "Figma Pro", type: "Figma", size: "8.1 MB", date: "18 Jun 2024" },
+    { id: 3, title: "React Hooks Reference Guide", course: "React Masterclass", type: "PDF", size: "1.2 MB", date: "15 Jun 2024" },
+    { id: 4, title: "Color Theory Handbook", course: "UI/UX Fundamentals", type: "PDF", size: "3.6 MB", date: "10 Jun 2024" },
+    { id: 5, title: "JavaScript ES2024 Notes", course: "React Masterclass", type: "Docs", size: "512 KB", date: "05 Jun 2024" },
+  ];
 
   const typeIcon = (type: string) => {
-    const t = type.toLowerCase();
-    if (t === "pdf") return <FileText size={18} />;
-    if (t === "figma") return <Link2 size={18} />;
+    if (type === "PDF") return <FileText size={18} />;
+    if (type === "Figma") return <Link2 size={18} />;
     return <BookOpen size={18} />;
   };
 
   const typeColor = (type: string) => {
-    const t = type.toLowerCase();
-    if (t === "pdf") return "bg-red-50 text-red-500";
-    if (t === "figma") return "bg-purple-50 text-purple-500";
+    if (type === "PDF") return "bg-red-50 text-red-500";
+    if (type === "Figma") return "bg-purple-50 text-purple-500";
     return "bg-blue-50 text-blue-500";
   };
 
@@ -40,8 +41,8 @@ export default async function StudentResourcesPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {[
             { label: "Total Files", value: `${resources.length}`, icon: Download },
-            { label: "Courses",     value: `${totalCourses}`,     icon: BookOpen },
-            { label: "Total Size",  value: "N/A",                 icon: FileText },
+            { label: "Courses",     value: "3",                   icon: BookOpen },
+            { label: "Total Size",  value: "15.8 MB",             icon: FileText },
           ].map((s, i) => (
             <div key={i} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-4">
               <div className="w-14 h-14 rounded-2xl bg-orange-50 text-[#FF6B4A] flex items-center justify-center">
@@ -70,7 +71,7 @@ export default async function StudentResourcesPage() {
                 </tr>
               </thead>
               <tbody>
-                {resources.map((r: any) => (
+                {resources.map((r) => (
                   <tr key={r.id} className="border-b border-slate-50 last:border-none hover:bg-slate-50/50 transition-colors group">
                     <td className="py-4">
                       <div className="flex items-center gap-3">

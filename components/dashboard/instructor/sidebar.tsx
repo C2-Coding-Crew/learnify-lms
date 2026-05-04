@@ -3,7 +3,6 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
 import {
   LayoutDashboard,
   Users,
@@ -14,11 +13,26 @@ import {
   TrendingUp,
   MessageSquare,
   FileText,
+  Plus,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-import * as LucideIcons from "lucide-react";
+interface InstructorSidebarProps {
+  userName: string;
+}
 
-export default function InstructorSidebar({ menus = [] }: { menus?: any[] }) {
+const NAV_ITEMS = [
+  { name: "Dashboard",      href: "/dashboard/instructor",              icon: LayoutDashboard },
+  { name: "My Courses",     href: "/dashboard/instructor/courses",      icon: BookOpenCheck },
+  { name: "Students",       href: "/dashboard/instructor/students",     icon: Users },
+  { name: "Assignments",    href: "/dashboard/instructor/assignments",   icon: FileText },
+  { name: "Earnings",       href: "/dashboard/instructor/earnings",     icon: TrendingUp },
+  { name: "Live Sessions",  href: "/dashboard/instructor/live",         icon: Video },
+  { name: "Messages",       href: "/dashboard/instructor/messages",     icon: MessageSquare },
+  { name: "Settings",       href: "/dashboard/settings/security",       icon: Settings },
+] as const;
+
+export default function InstructorSidebar({ userName }: InstructorSidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -26,17 +40,9 @@ export default function InstructorSidebar({ menus = [] }: { menus?: any[] }) {
     window.location.href = "/api/auth/sign-out";
   };
 
-  const navItems = menus.map(m => {
-    const IconComponent = (LucideIcons as any)[m.icon] || LucideIcons.LayoutDashboard;
-    return {
-      name: m.name,
-      href: m.href,
-      icon: IconComponent
-    };
-  });
-
   return (
     <aside className="w-[260px] bg-white border-r border-slate-100 hidden xl:flex flex-col sticky top-0 h-screen">
+      {/* Logo */}
       <div className="p-8 flex items-center gap-3">
         <div className="w-8 h-8 bg-[#FF6B4A] rounded-lg flex items-center justify-center shadow-lg shadow-orange-200">
           <div className="w-3 h-3 bg-white rounded-sm rotate-45" />
@@ -49,8 +55,20 @@ export default function InstructorSidebar({ menus = [] }: { menus?: any[] }) {
         </span>
       </div>
 
-      <nav className="flex-1 px-4 space-y-1">
-        {navItems.map((item) => {
+      {/* Primary CTA — Create New Course */}
+      <div className="px-6 mb-4">
+        <Button
+          onClick={() => router.push("/dashboard/instructor/courses/new")}
+          className="w-full bg-[#FF6B4A] hover:bg-[#e55a3d] text-white rounded-xl flex gap-2 items-center justify-center h-11 text-sm font-black shadow-lg shadow-orange-100 transition-all hover:-translate-y-0.5"
+        >
+          <Plus size={18} />
+          Create New Course
+        </Button>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
+        {NAV_ITEMS.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link
@@ -69,12 +87,29 @@ export default function InstructorSidebar({ menus = [] }: { menus?: any[] }) {
         })}
       </nav>
 
-      <div className="p-6 border-t border-slate-50">
+      {/* User Profile + Logout */}
+      <div className="p-4 mx-4 mb-4 bg-slate-50 rounded-2xl">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-10 h-10 rounded-xl overflow-hidden bg-orange-100 shrink-0">
+            <img
+              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
+                userName
+              )}`}
+              alt="Instructor avatar"
+            />
+          </div>
+          <div className="overflow-hidden">
+            <p className="text-sm font-black text-slate-800 truncate">{userName}</p>
+            <p className="text-[10px] text-[#FF6B4A] font-bold uppercase tracking-wider">
+              Instructor
+            </p>
+          </div>
+        </div>
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 px-4 py-3 w-full text-slate-400 font-bold text-[14px] hover:text-red-500 transition-colors"
+          className="flex items-center justify-center gap-2 w-full py-2.5 bg-white text-slate-400 hover:text-red-500 border border-slate-100 rounded-xl font-bold text-xs transition-colors"
         >
-          <LogOut size={18} /> Logout
+          <LogOut size={14} /> Sign Out
         </button>
       </div>
     </aside>
