@@ -40,13 +40,19 @@ export async function proxy(request: NextRequest) {
     }
 
     // 2. Filter Berdasarkan Role (RBAC) ───────────────────────────────────────
-    const roleId = session.user.roleId; // 1 = Admin, 2 = Student, 3 = Instructor
+    // Paksa jadi number karena JSON bisa mengembalikan string ("3" bukan 3)
+    const roleId = Number((session.user as any).roleId);
+
+    // Debug log (bisa dihapus setelah stabil)
+    console.log(`[proxy] pathname=${pathname} | roleId=${roleId}`);
 
     // Jika mencoba mengakses root /dashboard, kita arahkan ke dashboard yang sesuai
     if (pathname === "/dashboard") {
         if (roleId === 1) return NextResponse.redirect(new URL("/dashboard/admin", request.url));
         if (roleId === 3) return NextResponse.redirect(new URL("/dashboard/instructor", request.url));
-        return NextResponse.redirect(new URL("/dashboard/student", request.url));
+        if (roleId === 2) return NextResponse.redirect(new URL("/dashboard/student", request.url));
+        // roleId belum diset → pilih role dulu
+        return NextResponse.redirect(new URL("/auth/select-role", request.url));
     }
 
     // Tolak akses admin area jika bukan admin
@@ -60,10 +66,8 @@ export async function proxy(request: NextRequest) {
     }
 
     // Tolak akses student area jika bukan student (Admin boleh lihat)
-    if (pathname.startsWith("/dashboard/student") && roleId !== 2) {
-        if (roleId !== 1) {
-            return NextResponse.redirect(new URL("/unauthorized", request.url));
-        }
+    if (pathname.startsWith("/dashboard/student") && roleId !== 2 && roleId !== 1) {
+        return NextResponse.redirect(new URL("/unauthorized", request.url));
     }
 
     return NextResponse.next();
