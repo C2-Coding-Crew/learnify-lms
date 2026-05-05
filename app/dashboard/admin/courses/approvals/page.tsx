@@ -16,7 +16,7 @@ import {
 // ── Data Fetcher ──────────────────────────────────────────────────────────────
 async function getPendingCourses() {
   return db.course.findMany({
-    where: { isPublished: false, isDeleted: 0, status: 1 },
+    where: { status: 2, isDeleted: 0 },
     include: {
       instructor: { select: { name: true, email: true } },
       category: { select: { name: true } },

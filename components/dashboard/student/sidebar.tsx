@@ -13,6 +13,7 @@ import {
   LogOut,
   Search,
   Sparkles,
+  MessageSquare,
 } from "lucide-react";
 
 interface StudentSidebarProps {
@@ -22,6 +23,7 @@ interface StudentSidebarProps {
 const NAV_ITEMS = [
   { name: "Dashboard",   href: "/dashboard/student",             icon: LayoutDashboard },
   { name: "Cari Kursus", href: "/dashboard/student/explore",       icon: Sparkles },
+  { name: "Discussions", href: "/dashboard/student/discussions",   icon: MessageSquare },
   { name: "Assignments", href: "/dashboard/student/assignments",  icon: FileText },
   { name: "Schedule",    href: "/dashboard/student/schedule",     icon: Calendar },
   { name: "Recordings",  href: "/dashboard/student/recordings",   icon: Video },

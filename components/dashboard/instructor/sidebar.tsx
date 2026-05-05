@@ -28,7 +28,7 @@ const NAV_ITEMS = [
   { name: "Assignments",    href: "/dashboard/instructor/assignments",   icon: FileText },
   { name: "Earnings",       href: "/dashboard/instructor/earnings",     icon: TrendingUp },
   { name: "Live Sessions",  href: "/dashboard/instructor/live",         icon: Video },
-  { name: "Messages",       href: "/dashboard/instructor/messages",     icon: MessageSquare },
+  { name: "Discussions",    href: "/dashboard/instructor/messages",     icon: MessageSquare },
   { name: "Settings",       href: "/dashboard/settings/security",       icon: Settings },
 ] as const;
 
@@ -58,7 +58,7 @@ export default function InstructorSidebar({ userName }: InstructorSidebarProps) 
       {/* Primary CTA — Create New Course */}
       <div className="px-6 mb-4">
         <Button
-          onClick={() => router.push("/dashboard/instructor/courses/new")}
+          onClick={() => router.push("/dashboard/instructor/courses/create")}
           className="w-full bg-[#FF6B4A] hover:bg-[#e55a3d] text-white rounded-xl flex gap-2 items-center justify-center h-11 text-sm font-black shadow-lg shadow-orange-100 transition-all hover:-translate-y-0.5"
         >
           <Plus size={18} />

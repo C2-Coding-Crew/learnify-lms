@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { db as prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-
-const prisma = new PrismaClient();
+import { revalidatePath } from "next/cache";
 
 function generateSlug(title: string) {
   return title
@@ -57,8 +56,13 @@ export async function POST(request: Request) {
         price: parseFloat(price),
         level,
         isPublished: false,
+        status: 1,
+        isDeleted: 0,
       }
     });
+
+    revalidatePath("/dashboard/instructor");
+    revalidatePath("/dashboard/instructor/courses");
 
     return NextResponse.json(course, { status: 201 });
   } catch (error) {

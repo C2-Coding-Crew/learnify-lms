@@ -47,6 +47,8 @@ interface InstructorDashboardProps {
   monthlyEarnings?: MonthlyEarning[];
   avgRating?: number;
   recentReviews?: RecentReview[];
+  pendingGradingsCount?: number;
+  totalStudents?: number;
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -85,6 +87,8 @@ export default function InstructorDashboard({
   monthlyEarnings = [],
   avgRating = 0,
   recentReviews = [],
+  totalStudents = 0,
+  pendingGradingsCount = 0,
 }: InstructorDashboardProps) {
   const router = useRouter();
 
@@ -161,7 +165,7 @@ export default function InstructorDashboard({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* ── Main Column ── */}
         <div className="lg:col-span-2 space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Monthly Earnings Chart */}
             <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-50">
               <div className="flex items-center justify-between mb-8">
@@ -255,6 +259,38 @@ export default function InstructorDashboard({
                   ? `Based on ${courses.length} course${courses.length > 1 ? "s" : ""}`
                   : "No courses yet"}
               </p>
+            </div>
+
+            {/* Total Students Card */}
+            <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-50 flex flex-col items-center justify-center relative overflow-hidden group">
+              <div className="w-full flex justify-between items-start mb-6">
+                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                  Total Students
+                </h3>
+                <div className="p-2 bg-indigo-50 text-indigo-500 rounded-lg">
+                   <Users size={16} />
+                </div>
+              </div>
+              
+              <div className="text-center relative z-10">
+                <p className="text-4xl font-black text-slate-900 tracking-tighter">
+                  {totalStudents?.toLocaleString() ?? 0}
+                </p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                  Active Learners
+                </p>
+              </div>
+
+              {pendingGradingsCount !== undefined && pendingGradingsCount > 0 && (
+                <div className="mt-6 flex items-center gap-2 bg-red-50 text-red-600 px-4 py-2 rounded-xl border border-red-100 animate-pulse">
+                  <Star size={12} fill="currentColor" />
+                  <span className="text-[10px] font-black uppercase tracking-tight">
+                    {pendingGradingsCount} Assignments to Grade
+                  </span>
+                </div>
+              )}
+              
+              <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-indigo-50 rounded-full blur-2xl opacity-50 group-hover:scale-150 transition-transform duration-700" />
             </div>
           </div>
 

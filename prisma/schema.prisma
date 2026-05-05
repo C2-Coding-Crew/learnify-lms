@@ -45,6 +45,7 @@ model User {
   reviews       Review[]
   todos         Todo[]
   submissions   Submission[]
+  discussions   CourseDiscussion[]
 
   @@map("user")
 }
@@ -172,6 +173,7 @@ model Course {
   resources   Resource[]
   schedules   Schedule[]
   invoices    Invoice[]
+  discussions CourseDiscussion[]
 }
 
 model Lesson {
@@ -447,3 +449,23 @@ model Schedule {
 
   course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 }
+
+model CourseDiscussion {
+  id              Int      @id @default(autoincrement())
+  courseId        Int
+  userId          String
+  message         String?  @db.Text
+  fileUrl         String?
+  fileType        String?
+  companyCode     String   @default("LEARNIFY")
+  status          Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+

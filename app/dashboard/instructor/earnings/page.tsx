@@ -1,8 +1,9 @@
+import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import InstructorHeader from "@/components/dashboard/instructor/header";
-import { DollarSign, ArrowUpRight, ArrowDownRight, Wallet, Download } from "lucide-react";
+import { DollarSign, ArrowUpRight, Wallet, Download } from "lucide-react";
 
 export default async function InstructorEarningsPage() {
   const session = await auth.api.getSession({
@@ -18,12 +19,28 @@ export default async function InstructorEarningsPage() {
     redirect("/dashboard");
   }
 
-  const mockTransactions = [
-    { id: 1, date: "12 Oct 2024", description: "Course Sale: UI/UX Fundamentals", amount: "+ Rp 450.000", type: "income", status: "completed" },
-    { id: 2, date: "10 Oct 2024", description: "Withdrawal to Bank BCA", amount: "- Rp 2.500.000", type: "withdrawal", status: "completed" },
-    { id: 3, date: "05 Oct 2024", description: "Course Sale: Figma Pro", amount: "+ Rp 850.000", type: "income", status: "completed" },
-    { id: 4, date: "01 Oct 2024", description: "Course Sale: React Masterclass", amount: "+ Rp 350.000", type: "income", status: "completed" },
-  ];
+  const instructorId = session.user.id;
+
+  // 1. Fetch real paid invoices
+  const invoices = await (db as any).invoice.findMany({
+    where: {
+      course: { instructorId, isDeleted: 0 },
+      invoiceStatus: "paid",
+    },
+    include: {
+      course: { select: { title: true } },
+    },
+    orderBy: { lastUpdatedDate: "desc" },
+  });
+
+  const totalEarnings = invoices.reduce((acc: number, inv: any) => acc + Number(inv.totalAmount), 0);
+  
+  const formatIDR = (amount: number) =>
+    new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      maximumFractionDigits: 0,
+    }).format(amount);
 
   return (
     <main className="flex-1 p-6 md:p-10 max-w-[1600px] mx-auto w-full">
@@ -43,17 +60,17 @@ export default async function InstructorEarningsPage() {
               </div>
               <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Available Balance</span>
             </div>
-            <h4 className="text-3xl font-black mb-1">Rp 12.450.000</h4>
+            <h4 className="text-3xl font-black mb-1">{formatIDR(totalEarnings)}</h4>
             <p className="text-sm font-medium text-green-400 flex items-center gap-1">
-              <ArrowUpRight size={16} /> +14.5% this month
+              <ArrowUpRight size={16} /> Total Earnings
             </p>
           </div>
           <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-[#FF6B4A]/20 rounded-full blur-[50px] group-hover:bg-[#FF6B4A]/40 transition-all duration-700" />
         </div>
 
         {[
-          { label: "Total Earnings", value: "Rp 45.200.000", icon: DollarSign, color: "text-green-600", bg: "bg-green-50" },
-          { label: "Pending Payout", value: "Rp 0", icon: ArrowDownRight, color: "text-orange-600", bg: "bg-orange-50" },
+          { label: "Total Invoices", value: invoices.length.toString(), icon: DollarSign, color: "text-green-600", bg: "bg-green-50" },
+          { label: "Avg. Sale", value: invoices.length > 0 ? formatIDR(totalEarnings / invoices.length) : "Rp 0", icon: ArrowUpRight, color: "text-orange-600", bg: "bg-orange-50" },
         ].map((stat, i) => (
           <div key={i} className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-center">
             <div className="flex items-center gap-4 mb-4">
@@ -86,20 +103,28 @@ export default async function InstructorEarningsPage() {
               </tr>
             </thead>
             <tbody>
-              {mockTransactions.map((trx) => (
-                <tr key={trx.id} className="border-b border-slate-50 last:border-none hover:bg-slate-50/50 transition-colors">
-                  <td className="py-5 text-sm font-bold text-slate-500">{trx.date}</td>
-                  <td className="py-5 text-sm font-bold text-slate-800">{trx.description}</td>
-                  <td className={`py-5 text-sm font-black ${trx.type === 'income' ? 'text-green-500' : 'text-slate-800'}`}>
-                    {trx.amount}
-                  </td>
-                  <td className="py-5">
-                    <span className="text-[10px] font-black uppercase tracking-wider bg-green-50 text-green-600 px-3 py-1 rounded-lg">
-                      {trx.status}
-                    </span>
-                  </td>
+              {invoices.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="py-20 text-center text-slate-400 font-bold">No transactions found.</td>
                 </tr>
-              ))}
+              ) : (
+                invoices.map((inv: any) => (
+                  <tr key={inv.id} className="border-b border-slate-50 last:border-none hover:bg-slate-50/50 transition-colors">
+                    <td className="py-5 text-sm font-bold text-slate-500">
+                      {inv.lastUpdatedDate.toLocaleDateString("id-ID", { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </td>
+                    <td className="py-5 text-sm font-bold text-slate-800">Course Sale: {(inv as any).course?.title}</td>
+                    <td className="py-5 text-sm font-black text-green-500">
+                      + {formatIDR(Number(inv.totalAmount))}
+                    </td>
+                    <td className="py-5">
+                      <span className="text-[10px] font-black uppercase tracking-wider bg-green-50 text-green-600 px-3 py-1 rounded-lg">
+                        {inv.invoiceStatus}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
