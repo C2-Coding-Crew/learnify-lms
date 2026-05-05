@@ -49,8 +49,8 @@ export async function proxy(request: NextRequest) {
     // Jika mencoba mengakses root /dashboard, kita arahkan ke dashboard yang sesuai
     if (pathname === "/dashboard") {
         if (roleId === 1) return NextResponse.redirect(new URL("/dashboard/admin", request.url));
-        if (roleId === 3) return NextResponse.redirect(new URL("/dashboard/instructor", request.url));
-        if (roleId === 2) return NextResponse.redirect(new URL("/dashboard/student", request.url));
+        if (roleId === 2) return NextResponse.redirect(new URL("/dashboard/instructor", request.url));
+        if (roleId === 3) return NextResponse.redirect(new URL("/dashboard/student", request.url));
         // roleId belum diset → pilih role dulu
         return NextResponse.redirect(new URL("/auth/select-role", request.url));
     }
@@ -61,12 +61,12 @@ export async function proxy(request: NextRequest) {
     }
 
     // Tolak akses instructor area jika bukan instructor
-    if (pathname.startsWith("/dashboard/instructor") && roleId !== 3) {
+    if (pathname.startsWith("/dashboard/instructor") && roleId !== 2) {
         return NextResponse.redirect(new URL("/unauthorized", request.url));
     }
 
     // Tolak akses student area jika bukan student (Admin boleh lihat)
-    if (pathname.startsWith("/dashboard/student") && roleId !== 2 && roleId !== 1) {
+    if (pathname.startsWith("/dashboard/student") && roleId !== 3 && roleId !== 1) {
         return NextResponse.redirect(new URL("/unauthorized", request.url));
     }
 
