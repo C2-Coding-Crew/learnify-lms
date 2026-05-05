@@ -24,10 +24,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // 3. Validate file type (allow images)
-    if (!file.type.startsWith("image/")) {
+    // 3. Validate file type (allow images and documents)
+    const allowedTypes = [
+      "image/",
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "text/plain",
+      "application/zip"
+    ];
+
+    const isAllowed = allowedTypes.some(type => file.type.startsWith(type));
+
+    if (!isAllowed) {
       return NextResponse.json(
-        { error: "Invalid file type. Only images are allowed." },
+        { error: "Invalid file type. Only images and documents are allowed." },
+        { status: 400 }
+      );
+    }
+
+    // Optional: Max size check (e.g., 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json(
+        { error: "File too large. Max 10MB allowed." },
         { status: 400 }
       );
     }
@@ -40,6 +61,14 @@ export async function POST(request: Request) {
     
     // 5. Save to public/uploads
     const uploadDir = path.join(process.cwd(), "public", "uploads");
+    
+    try {
+      const { mkdir } = await import("fs/promises");
+      await mkdir(uploadDir, { recursive: true });
+    } catch (err) {
+      // Directory might already exist or error
+    }
+
     const filepath = path.join(uploadDir, filename);
     await writeFile(filepath, buffer);
 

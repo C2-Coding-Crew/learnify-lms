@@ -120,6 +120,19 @@ export default function LearnPageClient({
     });
   };
 
+  const getEmbedUrl = (url: string) => {
+    if (!url) return "";
+    let videoId = "";
+    if (url.includes("v=")) {
+      videoId = url.split("v=")[1]?.split("&")[0];
+    } else if (url.includes("youtu.be/")) {
+      videoId = url.split("youtu.be/")[1]?.split("?")[0];
+    } else if (url.includes("embed/")) {
+      return url;
+    }
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+  };
+
   return (
     <div className="flex h-screen bg-[#0F0F1A] text-white overflow-hidden">
 
@@ -223,7 +236,7 @@ export default function LearnPageClient({
             {currentLesson?.videoUrl ? (
               <iframe
                 key={currentLessonId}
-                src={currentLesson.videoUrl}
+                src={getEmbedUrl(currentLesson.videoUrl)}
                 className="w-full h-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
