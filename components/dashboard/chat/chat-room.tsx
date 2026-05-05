@@ -222,7 +222,7 @@ export default function ChatRoom({ courseId, courseTitle, currentUserId }: ChatR
                     <div className="flex items-center gap-2 mb-1">
                       <p className="text-[10px] font-black text-[#FF6B4A] uppercase tracking-wider">{msg.user.name}</p>
                       <span className="text-[9px] bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded font-bold uppercase">
-                        {msg.user.roleId === 3 ? 'Student' : 'Instructor'}
+                        {msg.user.roleId === 3 ? 'Student' : msg.user.roleId === 2 ? 'Instructor' : 'Admin'}
                       </span>
                     </div>
                   )}

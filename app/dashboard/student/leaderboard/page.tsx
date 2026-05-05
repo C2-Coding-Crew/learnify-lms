@@ -11,7 +11,7 @@ export default async function LeaderboardPage() {
 
   const topStudents = await db.user.findMany({
     where: { 
-      roleId: 2, 
+      roleId: 3,  // 3 = Student
       isDeleted: 0,
       points: { gt: 0 }
     },

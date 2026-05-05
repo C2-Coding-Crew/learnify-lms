@@ -17,7 +17,7 @@ export default async function StudentLayout({
   }
 
   const roleId = (session.user as any).roleId;
-  if (roleId !== 2) {
+  if (roleId !== 3) {
     redirect("/dashboard");
   }
 

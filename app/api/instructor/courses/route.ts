@@ -22,9 +22,8 @@ export async function POST(request: Request) {
     }
 
     const instructorId = session.user.id;
-    // Check if user is instructor (roleId === 3) or admin (roleId === 1)
     const roleId = (session.user as any).roleId;
-    if (roleId !== 1 && roleId !== 3) {
+    if (roleId !== 1 && roleId !== 2) {
       return NextResponse.json({ error: "Forbidden: Only instructors can create courses" }, { status: 403 });
     }
 

@@ -9,8 +9,8 @@ async function getAdminStats() {
   // Stats
   const [totalStudents, totalInstructors, totalActiveCourses, revenueAggregate, topCourses] =
     await Promise.all([
-      db.user.count({ where: { roleId: 2, isDeleted: 0, status: 1 } }),
-      db.user.count({ where: { roleId: 3, isDeleted: 0, status: 1 } }),
+      db.user.count({ where: { roleId: 3, isDeleted: 0, status: 1 } }), // Students
+      db.user.count({ where: { roleId: 2, isDeleted: 0, status: 1 } }), // Instructors
       db.course.count({ where: { isPublished: true, isDeleted: 0, status: 1 } }),
       db.invoice.aggregate({
         where: { invoiceStatus: "paid", isDeleted: 0, status: 1 },

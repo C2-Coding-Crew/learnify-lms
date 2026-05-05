@@ -22,7 +22,7 @@ async function getInstructorData() {
     await Promise.all([
       // All instructors with course & enrollment data
       db.user.findMany({
-        where: { roleId: 3, isDeleted: 0 },
+        where: { roleId: 2, isDeleted: 0 },
         select: {
           id: true,
           name: true,
@@ -41,7 +41,7 @@ async function getInstructorData() {
       }),
 
       // Total instructor count
-      db.user.count({ where: { roleId: 3, isDeleted: 0 } }),
+      db.user.count({ where: { roleId: 2, isDeleted: 0 } }),
 
       // Total published courses across all instructors
       db.course.count({ where: { isPublished: true, isDeleted: 0 } }),

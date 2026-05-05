@@ -87,7 +87,7 @@ export async function PUT(request: Request, context: any) {
     };
 
     // Instructor Flow
-    if (roleId === 3) {
+    if (roleId === 2) {
       // Instructor can set status to 2 (Submit for Review)
       if (status === 2) {
         updateData.status = 2;

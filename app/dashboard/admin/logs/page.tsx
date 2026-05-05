@@ -97,7 +97,7 @@ async function getActivityData() {
 
   for (const u of recentUsers) {
     const roleLabel =
-      u.roleId === 3 ? "Instructor" : u.roleId === 1 ? "Admin" : "Student";
+      u.roleId === 2 ? "Instructor" : u.roleId === 1 ? "Admin" : "Student";
     activities.push({
       id: `user-${u.id}`,
       level: "info",

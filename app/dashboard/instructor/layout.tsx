@@ -13,7 +13,7 @@ export default async function InstructorLayout({
   if (!session) redirect("/auth/login");
 
   const roleId = (session.user as any).roleId;
-  if (roleId !== 3) redirect("/dashboard");
+  if (roleId !== 2) redirect("/dashboard");
 
   return (
     <div className="flex min-h-screen bg-[#F8F9FB] font-sans text-[#1E1E1E]">

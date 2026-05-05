@@ -16,7 +16,7 @@ export default async function InstructorCoursesPage() {
   }
 
   const roleId = (session.user as any).roleId;
-  if (roleId !== 3) {
+  if (roleId !== 2) {
     redirect("/dashboard");
   }
 

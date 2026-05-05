@@ -5,7 +5,7 @@ export async function GET() {
   try {
     const topStudents = await db.user.findMany({
       where: { 
-        roleId: 2, // 2 = Student
+        roleId: 3, // 3 = Student
         isDeleted: 0,
         points: { gt: 0 }
       },

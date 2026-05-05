@@ -20,7 +20,7 @@ async function getStudentData() {
   const [students, totalCount, enrollmentStats] = await Promise.all([
     // List of students with enrollment counts
     db.user.findMany({
-      where: { roleId: 2, isDeleted: 0 },
+      where: { roleId: 3, isDeleted: 0 },
       select: {
         id: true,
         name: true,
@@ -39,7 +39,7 @@ async function getStudentData() {
     }),
 
     // Total student count
-    db.user.count({ where: { roleId: 2, isDeleted: 0 } }),
+    db.user.count({ where: { roleId: 3, isDeleted: 0 } }),
 
     // Average enrollments
     db.enrollment.groupBy({
