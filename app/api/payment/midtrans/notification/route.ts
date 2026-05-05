@@ -116,6 +116,7 @@ export async function POST(request: Request) {
     const pendingEnrollment = await db.enrollment.findFirst({
       where: {
         userId: invoice.userId,
+        courseId: invoice.courseId || undefined,
         enrollmentStatus: "pending_payment",
         isDeleted: 0,
       },

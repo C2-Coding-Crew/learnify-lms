@@ -526,6 +526,41 @@ export default function StudentDashboard({
               )}
             </div>
           </div>
+
+          {/* ── Discussion Groups ── */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between px-2">
+              <h3 className="font-bold text-slate-800">Discussion Groups 💬</h3>
+              <button 
+                onClick={() => router.push("/dashboard/student/discussions")}
+                className="text-[11px] font-black text-[#FF6B4A] uppercase tracking-widest hover:underline"
+              >
+                View All
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {enrolledCourses.slice(0, 4).map((cls) => (
+                <div
+                  key={`discus-${cls.id}`}
+                  onClick={() => router.push("/dashboard/student/discussions")}
+                  className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md hover:border-orange-100 transition-all cursor-pointer group"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-orange-50 text-[#FF6B4A] rounded-2xl flex items-center justify-center font-black text-lg group-hover:scale-110 transition-transform">
+                      {cls.title.charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-black text-slate-800 text-sm truncate">{cls.title}</p>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Community Group</p>
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-[#FF6B4A] group-hover:text-white transition-all">
+                      <ChevronRight size={14} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* ── Right Column ── */}

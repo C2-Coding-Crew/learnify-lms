@@ -78,14 +78,14 @@ const RegisterPage = () => {
         name: fullName,
         email,
         password,
-        roleId: roleIdFromUrl,
+        // Kita tidak mengirim roleId di sini agar user dipaksa pilih role setelah login pertama
         fetchOptions: {
           onSuccess: () => {
-            router.push("/dashboard");
-            router.refresh();
+            // Setelah daftar, arahkan ke login dengan parameter sukses
+            router.push("/auth/login?registered=true");
           },
         },
-      } as any);
+      });
 
 
       if (authError) {

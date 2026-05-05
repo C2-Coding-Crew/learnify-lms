@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import InstructorHeader from "@/components/dashboard/instructor/header";
 import { FileText, CheckCircle, Clock, AlertCircle } from "lucide-react";
 
@@ -122,9 +123,11 @@ export default async function InstructorAssignmentsPage() {
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Submitted</p>
                     <p className="text-xs font-bold text-slate-600">{getRelativeTime(s.createdDate)}</p>
                   </div>
-                  <button className={`h-10 px-6 rounded-xl font-bold text-xs transition-all ${s.grade === null ? 'bg-[#FF6B4A] text-white hover:bg-[#fa5a36] shadow-md shadow-orange-100' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>
-                    {s.grade === null ? 'Grade Now' : 'Review'}
-                  </button>
+                  <Link href={`/dashboard/instructor/assignments/${s.id}`}>
+                    <button className={`h-10 px-6 rounded-xl font-bold text-xs transition-all ${s.grade === null ? 'bg-[#FF6B4A] text-white hover:bg-[#fa5a36] shadow-md shadow-orange-100' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>
+                      {s.grade === null ? 'Grade Now' : 'Review'}
+                    </button>
+                  </Link>
                 </div>
               </div>
             ))}

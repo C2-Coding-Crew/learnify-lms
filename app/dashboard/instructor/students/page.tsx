@@ -26,7 +26,7 @@ export default async function InstructorStudentsPage() {
     where: {
       course: { instructorId, isDeleted: 0 },
       isDeleted: 0,
-      enrollmentStatus: "active",
+      enrollmentStatus: { in: ["active", "completed"] },
     },
     include: {
       user: { select: { name: true, email: true, image: true } },

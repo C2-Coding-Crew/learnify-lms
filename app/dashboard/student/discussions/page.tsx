@@ -20,7 +20,7 @@ export default async function StudentDiscussionsPage() {
     where: {
       userId,
       isDeleted: 0,
-      enrollmentStatus: "active"
+      enrollmentStatus: { in: ["active", "completed"] }
     },
     include: {
       course: {

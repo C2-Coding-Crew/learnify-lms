@@ -14,6 +14,7 @@ import {
   MessageSquare,
   FileText,
   Plus,
+  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -29,7 +30,8 @@ const NAV_ITEMS = [
   { name: "Earnings",       href: "/dashboard/instructor/earnings",     icon: TrendingUp },
   { name: "Live Sessions",  href: "/dashboard/instructor/live",         icon: Video },
   { name: "Discussions",    href: "/dashboard/instructor/messages",     icon: MessageSquare },
-  { name: "Settings",       href: "/dashboard/settings/security",       icon: Settings },
+  { name: "Profile",        href: "/dashboard/settings/profile",        icon: User },
+  { name: "Security",       href: "/dashboard/settings/security",       icon: Settings },
 ] as const;
 
 export default function InstructorSidebar({ userName }: InstructorSidebarProps) {

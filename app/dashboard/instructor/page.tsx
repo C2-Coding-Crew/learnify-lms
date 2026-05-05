@@ -33,7 +33,7 @@ async function getInstructorDashboardData(instructorId: string) {
       db.course.findMany({
         where: { instructorId, isDeleted: 0 },
         include: {
-          _count: { select: { enrollments: { where: { isDeleted: 0, enrollmentStatus: "active" } } } },
+          _count: { select: { enrollments: { where: { isDeleted: 0, enrollmentStatus: { in: ["active", "completed"] } } } } },
         },
         orderBy: { createdDate: "desc" },
       }),

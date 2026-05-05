@@ -65,11 +65,16 @@ export async function POST(request: Request) {
         first_name: invoice.user.name,
         email: invoice.user.email,
       },
+      // Callbacks opsional jika ingin redirect otomatis oleh Midtrans
+      // Namun kita sudah handle via Snap JS di frontend (onSuccess, dll)
+      // Jadi dikosongkan agar tidak terjadi error iframe redirection
+      /*
       callbacks: {
         finish: `${process.env.BETTER_AUTH_URL}/checkout/${invoiceNumber}/success`,
         error: `${process.env.BETTER_AUTH_URL}/checkout/${invoiceNumber}/failed`,
         pending: `${process.env.BETTER_AUTH_URL}/checkout/${invoiceNumber}/pending`,
       },
+      */
     }),
   });
 

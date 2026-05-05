@@ -31,7 +31,10 @@ export default async function InstructorCoursesPage() {
     include: {
       category: true,
       _count: {
-        select: { lessons: true, enrollments: true }
+        select: { 
+          lessons: { where: { isDeleted: 0 } }, 
+          enrollments: { where: { isDeleted: 0, enrollmentStatus: { in: ["active", "completed"] } } } 
+        }
       }
     },
     orderBy: { createdDate: "desc" }

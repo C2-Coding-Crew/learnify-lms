@@ -21,18 +21,18 @@ export const auth = betterAuth({
     user: {
       create: {
         before: async (userData) => {
-          // 1. Dukung multiple admin email (pisahkan dengan koma di .env)
+          // 1. Dukung multiple admin email
           const adminEmailsStr = process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || "";
           const adminEmails = adminEmailsStr.split(",").map(e => e.trim().toLowerCase());
-          
-          // 2. Ambil roleId dari payload (dari frontend saat register), default 2
-          let finalRoleId = userData.roleId === 3 ? 3 : 2; // Hanya izinkan 2 atau 3 dari client
-          
+
+          // 2. Gunakan roleId dari payload (jika ada), jika tidak biarkan null
+          let finalRoleId = userData.roleId;
+
           // 3. Jika email termasuk admin, paksa jadi Admin (1)
           if (adminEmails.includes(userData.email.toLowerCase())) {
             finalRoleId = 1;
           }
-          
+
           console.log("[auth] user.create.before → assigning roleId:", finalRoleId, "to", userData.email);
           return {
             data: {
@@ -77,13 +77,16 @@ export const auth = betterAuth({
       created: async (data: any) => {
         try {
           // Fix roleId admin jika login Google (user sudah ada) tapi roleId belum 1
-          const adminEmail = process.env.ADMIN_EMAIL;
-          if (adminEmail && data.user.email === adminEmail && (data.user as any).roleId !== 1) {
+          const adminEmailsStr = process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || "";
+          const adminEmails = adminEmailsStr.split(",").map(e => e.trim().toLowerCase());
+          const userEmail = data.user?.email?.toLowerCase();
+
+          if (userEmail && adminEmails.includes(userEmail) && (data.user as any).roleId !== 1) {
             await db.user.update({
               where: { id: data.user.id },
               data: { roleId: 1 },
             });
-            console.log("[auth] Admin roleId fixed for:", data.user.email);
+            console.log("[auth] Admin roleId fixed for:", userEmail);
           }
         } catch (err) {
           console.error("[auth] session.created event error:", err);
