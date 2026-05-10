@@ -239,7 +239,15 @@ export default function StudentDashboard({
                 <p className="text-sm font-black text-slate-800">{userStats.points}</p>
               </div>
             </div>
+          </div>
 
+          <div className="flex items-center gap-3">
+            <div className="text-right hidden sm:block">
+              <p className="text-sm font-bold text-slate-800">{userName}</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                Rank #{userStats.rank}
+              </p>
+            </div>
             <div 
               onClick={() => router.push("/dashboard/settings/security")}
               className="w-10 h-10 bg-slate-200 rounded-xl overflow-hidden shadow-sm ring-2 ring-white cursor-pointer hover:ring-[#FF6B4A] transition-all"
