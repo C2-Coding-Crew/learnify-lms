@@ -5,19 +5,17 @@ import { headers } from "next/headers";
 
 async function guardAdmin() {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session?.user || (session.user as any).roleId !== 1) {
+    return null;
   }
-  const roleId = (session.user as any).roleId;
-  if (roleId !== 1) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-  return { user: session.user };
+  return session.user;
 }
 
 export async function GET() {
-  const guard = await guardAdmin();
-  if ("error" in guard) return guard;
+  const user = await guardAdmin();
+  if (!user) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const categories = await db.category.findMany({
     where: { isDeleted: 0 },
@@ -28,8 +26,10 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const guard = await guardAdmin();
-  if ("error" in guard) return guard;
+  const user = await guardAdmin();
+  if (!user) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   try {
     const { name, slug, status } = await req.json();
@@ -48,8 +48,8 @@ export async function POST(req: NextRequest) {
         name,
         slug,
         status: status !== undefined ? status : 1,
-        createdBy: guard.user.name || "ADMIN",
-        lastUpdatedBy: guard.user.name || "ADMIN",
+        createdBy: user.name || "ADMIN",
+        lastUpdatedBy: user.name || "ADMIN",
       },
     });
 
