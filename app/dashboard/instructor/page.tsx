@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 interface MonthlyEarning {
   month: string;
   amount: number;
+  enrollments: number;
 }
 
 interface RecentReview {
@@ -27,7 +28,7 @@ async function getInstructorDashboardData(instructorId: string) {
   sixMonthsAgo.setDate(1);
   sixMonthsAgo.setHours(0, 0, 0, 0);
 
-  const [instructorCourses, ratingAggregate, paidInvoices, recentReviews] =
+  const [instructorCourses, ratingAggregate, paidInvoices, recentReviews, recentEnrollments] =
     await Promise.all([
       // 1. All courses by this instructor with active enrollment counts
       db.course.findMany({
@@ -68,6 +69,16 @@ async function getInstructorDashboardData(instructorId: string) {
         orderBy: { createdDate: "desc" },
         take: 5,
       }),
+
+      // 5. Enrollments in the last 6 months
+      db.enrollment.findMany({
+        where: {
+          course: { instructorId, isDeleted: 0 },
+          enrolledAt: { gte: sixMonthsAgo },
+          isDeleted: 0,
+        },
+        select: { enrolledAt: true },
+      }),
     ]);
 
   // ── Calculate Revenue ──────────────────────────────────────────────────────
@@ -85,6 +96,12 @@ async function getInstructorDashboardData(instructorId: string) {
 
     const monthKey = inv.lastUpdatedDate.toISOString().slice(0, 7);
     monthlyMap[monthKey] = (monthlyMap[monthKey] ?? 0) + amount;
+  });
+
+  const monthlyEnrollmentsMap: Record<string, number> = {};
+  recentEnrollments.forEach((en: any) => {
+    const monthKey = en.enrolledAt.toISOString().slice(0, 7);
+    monthlyEnrollmentsMap[monthKey] = (monthlyEnrollmentsMap[monthKey] ?? 0) + 1;
   });
 
   // ── Format courses ────────────────────────────────────────────────────────
@@ -110,7 +127,7 @@ async function getInstructorDashboardData(instructorId: string) {
       month: "short",
       year: "2-digit",
     });
-    return { month: label, amount: monthlyMap[key] ?? 0 };
+    return { month: label, amount: monthlyMap[key] ?? 0, enrollments: monthlyEnrollmentsMap[key] ?? 0 };
   });
 
   // ── Average rating ────────────────────────────────────────────────────────

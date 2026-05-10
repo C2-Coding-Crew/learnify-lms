@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
+// Force TS reload
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface FormattedCourse {
@@ -35,7 +36,7 @@ async function getStudentDashboardData(userId: string) {
   fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 4);
   fiveDaysAgo.setHours(0, 0, 0, 0);
 
-  const [enrollments, allProgress, weeklyActivity, todos, invoices, certificates, userInfo, allUsersByPoints] = await Promise.all([
+  const [enrollments, allProgress, weeklyActivity, todos, invoices, certificates, userInfo, allUsersByPoints, allBadges, userBadges] = await Promise.all([
     db.enrollment.findMany({
       where: { userId, isDeleted: 0 },
       include: {
@@ -76,6 +77,15 @@ async function getStudentDashboardData(userId: string) {
       orderBy: { points: "desc" },
       select: { id: true },
     }),
+    (db as any).badge.findMany({
+      where: { status: 1, isDeleted: 0 },
+      orderBy: { id: "asc" }
+    }),
+    (db as any).userBadge.findMany({
+      where: { userId, isDeleted: 0 },
+      include: { badge: true },
+      orderBy: { earnedAt: "desc" }
+    })
   ]);
 
   const userIndex = allUsersByPoints.findIndex((u: { id: string }) => u.id === userId);
@@ -154,6 +164,8 @@ async function getStudentDashboardData(userId: string) {
       date: c.createdDate.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
     })),
     userStats,
+    allBadges,
+    userBadges
   };
 }
 
@@ -162,7 +174,7 @@ export default async function StudentPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/auth/login");
 
-  const { enrolledCourses, weeklyHours, avgProgress, todos, pendingInvoices, certificates, userStats } =
+  const { enrolledCourses, weeklyHours, avgProgress, todos, pendingInvoices, certificates, userStats, allBadges, userBadges } =
     await getStudentDashboardData(session.user.id);
 
   return (
@@ -184,6 +196,8 @@ export default async function StudentPage() {
       pendingInvoices={pendingInvoices}
       certificates={certificates}
       userStats={userStats}
+      allBadges={allBadges}
+      userBadges={userBadges}
     />
   );
 }

@@ -27,10 +27,12 @@ export interface EnrollmentResponse {
 
 export interface EnrollmentStatusCheck {
   isEnrolled: boolean;
+  isWishlisted?: boolean;
   enrollment: {
     id: number;
-    enrollmentStatus: EnrollmentStatus;
+    enrollmentStatus: string;
     enrolledAt: string;
+    certificate?: { id: number } | null;
   } | null;
 }
 

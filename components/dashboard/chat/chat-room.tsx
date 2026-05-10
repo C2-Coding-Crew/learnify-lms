@@ -55,9 +55,27 @@ export default function ChatRoom({ courseId, courseTitle, currentUserId }: ChatR
 
   useEffect(() => {
     fetchMessages();
-    const interval = setInterval(fetchMessages, 5000);
-    return () => clearInterval(interval);
-  }, [fetchMessages]);
+    
+    // SSE Real-time connection
+    const eventSource = new EventSource(`/api/discussions/stream?courseId=${courseId}`);
+    
+    eventSource.onmessage = (event) => {
+      try {
+        const newMsg = JSON.parse(event.data);
+        setMessages((prev) => {
+          // Prevent duplicates if we already received it from our own POST or initial fetch
+          if (prev.some(m => m.id === newMsg.id)) return prev;
+          return [...prev, newMsg];
+        });
+      } catch (err) {
+        console.error("SSE parsing error", err);
+      }
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [fetchMessages, courseId]);
 
   useEffect(() => {
     if (scrollRef.current) {

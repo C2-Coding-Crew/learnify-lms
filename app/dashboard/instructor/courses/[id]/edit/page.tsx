@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save, Loader2, Video, Plus, Trash2, GripVertical, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Video, Plus, Trash2, GripVertical, CheckCircle2, FileQuestion } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { QuizBuilder } from "@/components/dashboard/instructor/quiz-builder";
 
 export default function EditCoursePage() {
   const params = useParams();
@@ -18,6 +19,11 @@ export default function EditCoursePage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [course, setCourse] = useState<any>(null);
   const [lessons, setLessons] = useState<any[]>([]);
+  const [quizzes, setQuizzes] = useState<any[]>([]);
+
+  // Quiz Builder State
+  const [isAddingQuiz, setIsAddingQuiz] = useState(false);
+  const [selectedLessonId, setSelectedLessonId] = useState<number | null>(null);
 
   // Add Lesson State
   const [isAddingLesson, setIsAddingLesson] = useState(false);
@@ -26,13 +32,15 @@ export default function EditCoursePage() {
   useEffect(() => {
     Promise.all([
       fetch(`/api/instructor/courses/${courseId}`).then(res => res.json()),
+      fetch(`/api/instructor/courses/${courseId}/quizzes`).then(res => res.json()),
       fetch("/api/categories").then(res => res.json())
-    ]).then(([courseData, catData]) => {
+    ]).then(([courseData, quizData, catData]) => {
       if (courseData.error) {
         setError(courseData.error);
       } else {
         setCourse(courseData);
         setLessons(courseData.lessons || []);
+        setQuizzes(quizData || []);
       }
       setCategories(catData);
       setIsLoading(false);
@@ -41,6 +49,16 @@ export default function EditCoursePage() {
       setIsLoading(false);
     });
   }, [courseId]);
+
+  const refreshQuizzes = async () => {
+    try {
+      const res = await fetch(`/api/instructor/courses/${courseId}/quizzes`);
+      const data = await res.json();
+      setQuizzes(data);
+    } catch (err) {
+      console.error("Failed to refresh quizzes", err);
+    }
+  };
 
   const handleUpdateCourse = async (e?: React.FormEvent, submitForReview = false) => {
     if (e) e.preventDefault();
@@ -296,9 +314,66 @@ export default function EditCoursePage() {
                 </div>
               ))}
             </div>
+
+            {/* Section Kuis */}
+            <div className="mt-12 pt-8 border-t border-slate-100">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-xl font-black text-slate-800">Kuis Pelajaran 📝</h3>
+                  <p className="text-xs font-bold text-slate-400 mt-1">Uji pemahaman siswa setelah materi selesai.</p>
+                </div>
+                <Button 
+                  onClick={() => {
+                    setSelectedLessonId(null);
+                    setIsAddingQuiz(true);
+                  }}
+                  className="bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white rounded-xl h-10 px-4 font-black transition-all flex items-center gap-2"
+                >
+                  <Plus size={16} /> Tambah Kuis Umum
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {quizzes.length === 0 && (
+                  <div className="md:col-span-2 text-center py-10 bg-slate-50 border border-dashed border-slate-200 rounded-2xl">
+                    <FileQuestion size={32} className="mx-auto text-slate-300 mb-2" />
+                    <p className="text-sm font-bold text-slate-400">Belum ada kuis untuk kelas ini.</p>
+                  </div>
+                )}
+                {quizzes.map((quiz: any) => (
+                  <div key={quiz.id} className="p-5 bg-white border border-slate-100 rounded-3xl hover:shadow-lg transition-all flex items-center gap-4 group">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black shrink-0">
+                      Q
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-bold text-slate-800 text-sm">{quiz.title}</h4>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">
+                        {quiz._count.questions} Pertanyaan • Lulus {quiz.passingScore}%
+                      </p>
+                    </div>
+                    <button className="p-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Quiz Builder Modal */}
+      {isAddingQuiz && (
+        <QuizBuilder 
+          courseId={parseInt(courseId)}
+          lessonId={selectedLessonId}
+          onClose={() => setIsAddingQuiz(false)}
+          onSuccess={() => {
+            setIsAddingQuiz(false);
+            refreshQuizzes();
+          }}
+        />
+      )}
     </main>
   );
 }

@@ -79,7 +79,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { courseId } = body;
+  const { courseId, couponCode } = body;
 
   if (!courseId || typeof courseId !== "number") {
     return NextResponse.json({ error: "courseId wajib diisi" }, { status: 400 });
@@ -110,8 +110,33 @@ export async function POST(request: Request) {
     );
   }
 
-  // ─── 3. Routing: Gratis vs Berbayar ──────────────────────────────────────
-  const isFree = Number(course.price) === 0;
+  // 3. Cek kupon
+  let discountPercent = 0;
+  let validCoupon = null;
+
+  if (couponCode) {
+    validCoupon = await db.coupon.findUnique({ where: { code: couponCode } });
+    if (validCoupon && validCoupon.status === 1 && validCoupon.isDeleted === 0 && validCoupon.validUntil >= new Date()) {
+      if (validCoupon.maxUses === 0 || validCoupon.usedCount < validCoupon.maxUses) {
+        discountPercent = Number(validCoupon.discountPercent);
+      } else {
+        validCoupon = null; // invalid due to max uses
+      }
+    } else {
+      validCoupon = null;
+    }
+  }
+
+  // ─── 4. Routing: Gratis vs Berbayar ──────────────────────────────────────
+  let finalPrice = Number(course.price);
+  let discountAmt = 0;
+
+  if (discountPercent > 0) {
+    discountAmt = (finalPrice * discountPercent) / 100;
+    finalPrice = Math.max(0, finalPrice - discountAmt);
+  }
+
+  const isFree = finalPrice === 0;
 
   if (isFree) {
     // ── FREE: Langsung buat enrollment ──────────────────────────────────
@@ -146,12 +171,14 @@ export async function POST(request: Request) {
     const invoiceNumber = generateInvoiceNumber();
     const dueDate = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 jam
 
-    const [invoice] = await Promise.all([
+    const [invoice] = await db.$transaction([
       db.invoice.create({
         data: {
           userId: session.user.id,
           invoiceNumber,
-          totalAmount: course.price,
+          totalAmount: finalPrice,
+          couponId: validCoupon?.id,
+          discountAmt: discountAmt,
           invoiceStatus: "pending",
           dueDate,
           companyCode: COMPANY,
@@ -180,6 +207,12 @@ export async function POST(request: Request) {
           lastUpdatedDate: new Date(),
         },
       }),
+      ...(validCoupon ? [
+        db.coupon.update({
+          where: { id: validCoupon.id },
+          data: { usedCount: { increment: 1 } },
+        })
+      ] : []),
     ]);
 
     return NextResponse.json(

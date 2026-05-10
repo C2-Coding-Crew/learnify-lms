@@ -29,6 +29,12 @@ export default async function LearnPage({ params, searchParams }: Props) {
         where: { isDeleted: 0, status: 1 },
         orderBy: { order: "asc" },
       },
+      quizzes: {
+        where: { isDeleted: 0, status: 1 },
+        include: {
+          _count: { select: { questions: true } }
+        }
+      }
     },
   });
 
@@ -91,6 +97,14 @@ export default async function LearnPage({ params, searchParams }: Props) {
           description: l.description,
           videoUrl: l.videoUrl,
         })),
+        quizzes: course.quizzes.map(q => ({
+          id: q.id,
+          lessonId: q.lessonId,
+          title: q.title,
+          description: q.description,
+          questionCount: q._count.questions,
+          passingScore: q.passingScore
+        }))
       }}
       activeLessonId={activeLesson?.id ?? null}
       progressMap={progressMap}

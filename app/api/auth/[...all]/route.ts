@@ -1,6 +1,13 @@
 import { auth } from "@/lib/auth";
 import { toNextJsHandler } from "better-auth/next-js";
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimit } from "@/lib/rate-limit";
+
+const authLimiter = rateLimit({
+  interval: 60 * 1000, // 1 minute
+  uniqueTokenPerInterval: 1000,
+  limit: 5, // max 5 attempts per IP per minute
+});
 
 const handler = toNextJsHandler(auth);
 
@@ -12,6 +19,14 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   
+  if (pathname.includes("/sign-in") || pathname.includes("/sign-up") || pathname.includes("/two-factor")) {
+    const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
+    const { success } = await authLimiter.check(5, ip);
+    if (!success) {
+      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+    }
+  }
+
   // DEBUG: Log semua POST requests ke /api/auth
   console.log(`[auth endpoint] POST ${pathname}`);
   

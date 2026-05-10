@@ -93,8 +93,8 @@ export async function POST(request: Request) {
 
   const isCourseCompleted = completedCount === totalLessons;
 
-  // Jika kursus selesai, update enrollment status
-  if (isCourseCompleted) {
+  // Jika kursus selesai, update enrollment status dan berikan sertifikat
+  if (isCourseCompleted && (!existing || !existing.isCompleted) && isCompleted) {
     await db.enrollment.update({
       where: { id: enrollment.id },
       data: {
@@ -104,6 +104,25 @@ export async function POST(request: Request) {
         lastUpdatedDate: new Date(),
       },
     });
+
+    // Generate Certificate
+    const certExists = await db.certificate.findUnique({
+      where: { enrollmentId: enrollment.id }
+    });
+
+    if (!certExists) {
+      const randomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const year = new Date().getFullYear();
+      const certNumber = `LRNFY-CERT-${year}-${randomId}`;
+
+      await db.certificate.create({
+        data: {
+          enrollmentId: enrollment.id,
+          certificateNumber: certNumber,
+          createdBy: "SYSTEM",
+        }
+      });
+    }
   }
 
   // ── Gamification: Points & Streaks ───────────────────────────────────────
@@ -142,6 +161,36 @@ export async function POST(request: Request) {
           lastStudyDate: now,
         },
       } as any);
+
+      // Award STREAK_7_DAYS badge
+      if (newStreak === 7) {
+        const streakBadge = await (db as any).badge.findUnique({ where: { criteria: 'STREAK_7_DAYS' } });
+        if (streakBadge) {
+          const hasBadge = await (db as any).userBadge.findUnique({
+            where: { userId_badgeId: { userId: session.user.id, badgeId: streakBadge.id } }
+          });
+          if (!hasBadge) {
+            await (db as any).userBadge.create({
+              data: { userId: session.user.id, badgeId: streakBadge.id, createdBy: "SYSTEM" }
+            });
+          }
+        }
+      }
+    }
+  }
+
+  // Award COURSE_COMPLETER badge if course just completed
+  if (isCourseCompleted && (!existing || !existing.isCompleted) && isCompleted) {
+    const completerBadge = await (db as any).badge.findUnique({ where: { criteria: 'COURSE_COMPLETER' } });
+    if (completerBadge) {
+      const hasBadge = await (db as any).userBadge.findUnique({
+        where: { userId_badgeId: { userId: session.user.id, badgeId: completerBadge.id } }
+      });
+      if (!hasBadge) {
+        await (db as any).userBadge.create({
+          data: { userId: session.user.id, badgeId: completerBadge.id, createdBy: "SYSTEM" }
+        });
+      }
     }
   }
 

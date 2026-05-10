@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { pubsub } from "@/lib/pubsub";
 
 export async function GET(
   request: Request,
@@ -126,6 +127,8 @@ export async function POST(
         user: { select: { id: true, name: true, image: true, roleId: true } }
       }
     });
+
+    pubsub.publish(`course_${courseId}_discussions`, newMessage);
 
     return NextResponse.json(newMessage);
   } catch (error) {

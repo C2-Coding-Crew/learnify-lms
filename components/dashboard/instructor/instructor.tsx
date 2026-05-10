@@ -10,6 +10,16 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  ComposedChart,
+  Line,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface ManagedCourse {
@@ -25,6 +35,7 @@ interface ManagedCourse {
 interface MonthlyEarning {
   month: string;
   amount: number;
+  enrollments: number;
 }
 
 interface RecentReview {
@@ -56,12 +67,6 @@ const SVG_CIRCUMFERENCE = 339.29; // 2π × 54
 const RATING_MAX = 5;
 
 // ── Pure helpers ──────────────────────────────────────────────────────────────
-/** Normalise monthly amounts to bar heights (2%–95%) */
-function toBarHeights(amounts: number[]): number[] {
-  const max = Math.max(...amounts, 1);
-  return amounts.map((a) => Math.max((a / max) * 95, 2));
-}
-
 /** SVG stroke offset for a 0–5 rating (mapped to 0–100%) */
 function ratingOffset(rating: number): number {
   return SVG_CIRCUMFERENCE * (1 - rating / RATING_MAX);
@@ -92,8 +97,7 @@ export default function InstructorDashboard({
 }: InstructorDashboardProps) {
   const router = useRouter();
 
-  const barHeights = toBarHeights(monthlyEarnings.map((m) => m.amount));
-  const hasEarnings = monthlyEarnings.some((m) => m.amount > 0);
+  const hasEarnings = monthlyEarnings.some((m) => m.amount > 0 || m.enrollments > 0);
 
   const formatIDR = (amount: number) =>
     new Intl.NumberFormat("id-ID", {
@@ -184,28 +188,25 @@ export default function InstructorDashboard({
                 )}
               </div>
 
-              <div className="flex items-end justify-between h-32 gap-2">
-                {barHeights.map((height, i) => (
-                  <div
-                    key={i}
-                    className="flex-1 flex flex-col items-center gap-1 h-full"
-                  >
-                    <div className="w-full h-full flex flex-col justify-end bg-orange-50 rounded-lg overflow-hidden">
-                      <div
-                        className="w-full bg-[#FF6B4A] rounded-lg transition-all duration-500 hover:bg-[#100E2E]"
-                        style={{ height: `${height}%` }}
-                        title={
-                          monthlyEarnings[i]
-                            ? `${monthlyEarnings[i].month}: ${formatIDR(monthlyEarnings[i].amount)}`
-                            : ""
-                        }
-                      />
-                    </div>
-                    <span className="text-[8px] font-bold text-slate-300 uppercase">
-                      {monthlyEarnings[i]?.month ?? ""}
-                    </span>
-                  </div>
-                ))}
+              <div className="h-48 mt-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={monthlyEarnings} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} dy={10} />
+                    <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={(val) => `Rp${val / 1000}k`} />
+                    <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                    <Tooltip
+                      cursor={{ fill: '#f8fafc' }}
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
+                      formatter={(value: number, name: string) => {
+                        if (name === "amount") return [formatIDR(value), "Revenue"];
+                        return [value, "Enrollments"];
+                      }}
+                    />
+                    <Bar yAxisId="left" dataKey="amount" fill="#FF6B4A" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                    <Line yAxisId="right" type="monotone" dataKey="enrollments" stroke="#6366f1" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                  </ComposedChart>
+                </ResponsiveContainer>
               </div>
 
               <p className="mt-6 text-2xl font-black text-slate-800 tracking-tighter">

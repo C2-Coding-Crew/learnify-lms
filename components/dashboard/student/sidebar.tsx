@@ -14,6 +14,7 @@ import {
   Search,
   Sparkles,
   MessageSquare,
+  Heart,
 } from "lucide-react";
 
 interface StudentSidebarProps {
@@ -28,6 +29,7 @@ const NAV_ITEMS = [
   { name: "Schedule",    href: "/dashboard/student/schedule",     icon: Calendar },
   { name: "Recordings",  href: "/dashboard/student/recordings",   icon: Video },
   { name: "Resources",   href: "/dashboard/student/resources",    icon: Download },
+  { name: "Wishlist",    href: "/dashboard/student/wishlist",     icon: Heart },
   { name: "Settings",    href: "/dashboard/settings/security",    icon: Settings },
 ] as const;
 
