@@ -12,8 +12,12 @@ import {
   Star,
   Users,
   BookOpen,
+  CheckCircle,
+  XCircle,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import {
   BarChart,
   Bar,
@@ -48,6 +52,15 @@ interface TopCourse {
   reviewCount: number;
 }
 
+interface PendingCourse {
+  id: number;
+  title: string;
+  category: string;
+  instructor: string;
+  price: number;
+  createdDate: string;
+}
+
 interface AdminDashboardProps {
   userName: string;
   userEmail: string;
@@ -56,6 +69,7 @@ interface AdminDashboardProps {
   stats: AdminStats;
   monthlyRevenue: MonthlyRevenue[];
   topCourses: TopCourse[];
+  pendingCourses: PendingCourse[];
 }
 
 // ─── Custom Tooltip ───────────────────────────────────────────────────────────
@@ -86,9 +100,11 @@ export default function AdminDashboard({
   stats,
   monthlyRevenue,
   topCourses,
+  pendingCourses,
 }: AdminDashboardProps) {
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
+  const [loadingId, setLoadingId] = useState<number | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -106,6 +122,37 @@ export default function AdminDashboard({
   const formatNumber = (num: number) => {
     if (!isMounted) return "...";
     return num.toLocaleString("id-ID");
+  };
+
+  const handleApprove = async (id: number) => {
+    setLoadingId(id);
+    try {
+      const res = await fetch(`/api/admin/courses/${id}`, { method: "PATCH" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal menyetujui kursus");
+      toast.success("Berhasil!", { description: data.message });
+      router.refresh();
+    } catch (error: any) {
+      toast.error("Gagal", { description: error.message });
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
+  const handleReject = async (id: number) => {
+    if (!confirm("Apakah Anda yakin ingin menolak dan menghapus kursus ini?")) return;
+    setLoadingId(id);
+    try {
+      const res = await fetch(`/api/admin/courses/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal menolak kursus");
+      toast.success("Berhasil!", { description: data.message });
+      router.refresh();
+    } catch (error: any) {
+      toast.error("Gagal", { description: error.message });
+    } finally {
+      setLoadingId(null);
+    }
   };
 
   const hasRevenueData = monthlyRevenue.some((m) => m.revenue > 0);
@@ -270,6 +317,78 @@ export default function AdminDashboard({
             />
           </div>
         </div>
+      </div>
+
+      {/* Pending Course Approvals */}
+      <div className="mt-8 bg-white rounded-[2.5rem] p-8 shadow-sm border border-red-50 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-red-50/50 rounded-full blur-[80px] -mr-32 -mt-32 pointer-events-none" />
+        <div className="flex items-center justify-between mb-6 relative z-10">
+          <div>
+            <h3 className="font-black text-[#2D2D2D] text-lg flex items-center gap-2">
+              Persetujuan Kursus
+              {pendingCourses.length > 0 && (
+                <span className="bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded-full">
+                  {pendingCourses.length} Menunggu
+                </span>
+              )}
+            </h3>
+            <p className="text-xs text-slate-400 font-medium mt-1">Review dan publikasikan kursus dari instruktur</p>
+          </div>
+        </div>
+
+        {pendingCourses.length === 0 ? (
+          <div className="flex flex-col items-center justify-center text-center gap-3 py-10 relative z-10">
+            <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center">
+              <CheckCircle size={24} className="text-slate-300" />
+            </div>
+            <p className="text-slate-400 font-bold text-sm">Tidak ada kursus yang menunggu persetujuan.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 relative z-10">
+            {pendingCourses.map((course) => (
+              <div key={course.id} className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start mb-3">
+                  <span className="text-[10px] font-black text-[#FF6B4A] bg-orange-50 px-2 py-1 rounded-lg">
+                    {course.category}
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-400">
+                    {new Date(course.createdDate).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}
+                  </span>
+                </div>
+                <h4 className="font-black text-slate-800 line-clamp-2 mb-1">{course.title}</h4>
+                <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium mb-4">
+                  <UserCheck size={14} className="text-slate-400" />
+                  {course.instructor}
+                </div>
+                <div className="flex items-center justify-between mt-auto">
+                  <span className="font-black text-green-600 text-sm">
+                    {course.price > 0 ? formatIDR(course.price) : "Gratis"}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-8 p-0 rounded-lg text-red-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                      onClick={() => handleReject(course.id)}
+                      disabled={loadingId === course.id}
+                    >
+                      {loadingId === course.id ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
+                    </Button>
+                    <Button 
+                      size="sm"
+                      className="h-8 rounded-lg bg-[#FF6B4A] hover:bg-[#E55A3B] text-white px-3 font-bold shadow-md shadow-orange-500/20"
+                      onClick={() => handleApprove(course.id)}
+                      disabled={loadingId === course.id}
+                    >
+                      {loadingId === course.id ? <Loader2 size={14} className="animate-spin mr-1" /> : <CheckCircle size={14} className="mr-1" />}
+                      Terima
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Top Courses Table */}

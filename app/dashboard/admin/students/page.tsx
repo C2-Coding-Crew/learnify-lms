@@ -4,6 +4,8 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Search, MoreVertical, GraduationCap, Users, BookOpen, Filter } from "lucide-react";
 
+import StudentCRUD from "@/components/dashboard/admin/users/student-crud";
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface StudentRow {
   id: string;
@@ -11,8 +13,11 @@ interface StudentRow {
   email: string;
   enrolled: number;
   completed: number;
-  joinedAt: string;
-  status: "active" | "inactive";
+  status: number;
+  createdBy: string;
+  createdDate: string;
+  lastUpdatedBy: string;
+  lastUpdatedDate: string;
 }
 
 // ── Data Fetcher ──────────────────────────────────────────────────────────────
@@ -26,7 +31,10 @@ async function getStudentData() {
         name: true,
         email: true,
         status: true,
+        createdBy: true,
         createdDate: true,
+        lastUpdatedBy: true,
+        lastUpdatedDate: true,
         enrollments: {
           where: { isDeleted: 0 },
           select: {
@@ -57,12 +65,11 @@ async function getStudentData() {
     completed: s.enrollments.filter(
       (e: any) => e.enrollmentStatus === "completed" || e.completedAt !== null
     ).length,
-    joinedAt: (s.createdDate as Date).toLocaleDateString("id-ID", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }),
-    status: s.status === 1 ? "active" : "inactive",
+    status: s.status,
+    createdBy: s.createdBy || "SYSTEM",
+    createdDate: s.createdDate.toISOString(),
+    lastUpdatedBy: s.lastUpdatedBy || "SYSTEM",
+    lastUpdatedDate: s.lastUpdatedDate.toISOString(),
   }));
 
   const avgEnrollments =
@@ -148,107 +155,7 @@ export default async function AdminStudentsPage() {
       </div>
 
       {/* Student Table */}
-      <div className="bg-white rounded-[2.5rem] shadow-sm border border-orange-50 p-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <h3 className="font-black text-[#2D2D2D] text-lg">
-            Student List{" "}
-            <span className="text-sm font-bold text-slate-400 ml-2">
-              ({totalCount} total)
-            </span>
-          </h3>
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <Search
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                size={16}
-              />
-              <input
-                type="text"
-                placeholder="Search students..."
-                className="pl-11 pr-4 h-11 bg-orange-50/40 rounded-xl border-none text-sm outline-none focus:ring-2 focus:ring-orange-200 w-56 font-medium transition-all"
-              />
-            </div>
-            <button className="h-11 px-4 bg-orange-50 text-orange-600 rounded-xl flex items-center gap-2 font-bold text-sm hover:bg-orange-100 transition-colors">
-              <Filter size={16} /> Filter
-            </button>
-          </div>
-        </div>
-
-        {rows.length === 0 ? (
-          <div className="text-center py-20 text-slate-400">
-            <GraduationCap size={40} className="mx-auto mb-3 text-slate-200" />
-            <p className="font-bold">Belum ada student terdaftar.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-100">
-                  {["Student", "Enrolled", "Completed", "Joined", "Status", ""].map(
-                    (h, i) => (
-                      <th
-                        key={i}
-                        className="pb-4 font-black text-[11px] uppercase tracking-widest text-slate-400"
-                      >
-                        {h}
-                      </th>
-                    )
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((s) => (
-                  <tr
-                    key={s.id}
-                    className="border-b border-slate-50 last:border-none hover:bg-orange-50/30 transition-colors group"
-                  >
-                    <td className="py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center font-black text-sm shrink-0">
-                          {s.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="font-bold text-sm text-[#2D2D2D]">
-                            {s.name}
-                          </p>
-                          <p className="text-[11px] text-slate-400 font-medium">
-                            {s.email}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-4 text-sm font-bold text-slate-600">
-                      {s.enrolled} courses
-                    </td>
-                    <td className="py-4 text-sm font-bold text-green-600">
-                      {s.completed} courses
-                    </td>
-                    <td className="py-4 text-xs font-bold text-slate-400">
-                      {s.joinedAt}
-                    </td>
-                    <td className="py-4">
-                      <span
-                        className={`text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-lg ${
-                          s.status === "active"
-                            ? "bg-green-50 text-green-600"
-                            : "bg-slate-100 text-slate-400"
-                        }`}
-                      >
-                        {s.status}
-                      </span>
-                    </td>
-                    <td className="py-4 text-right">
-                      <button className="p-2 text-slate-300 hover:text-orange-500 transition-colors rounded-lg hover:bg-orange-50">
-                        <MoreVertical size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      <StudentCRUD initialData={rows} />
     </main>
   );
 }

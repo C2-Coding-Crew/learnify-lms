@@ -12,6 +12,7 @@ import {
   QrCode,
   ShieldCheck,
   LogOut,
+  Tags,
 } from "lucide-react";
 
 interface AdminSidebarProps {
@@ -55,6 +56,12 @@ const NAV_ITEMS = [
     name: "System Activity",
     href: "/dashboard/admin/logs",
     icon: Activity,
+    badge: null,
+  },
+  {
+    name: "Master Categories",
+    href: "/dashboard/admin/categories",
+    icon: Tags,
     badge: null,
   },
 ] as const;
