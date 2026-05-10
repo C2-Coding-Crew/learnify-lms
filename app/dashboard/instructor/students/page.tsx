@@ -1,3 +1,4 @@
+import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -14,16 +15,73 @@ export default async function InstructorStudentsPage() {
   }
 
   const roleId = (session.user as any).roleId;
-  if (roleId !== 3) {
+  if (roleId !== 2) {
     redirect("/dashboard");
   }
 
-  const mockStudents = [
-    { id: 1, name: "Budi Santoso", email: "budi@example.com", enrolledDate: "12 Oct 2024", progress: 85, course: "UI/UX Fundamentals" },
-    { id: 2, name: "Siti Aminah", email: "siti@example.com", enrolledDate: "10 Oct 2024", progress: 45, course: "React Masterclass" },
-    { id: 3, name: "Andi Wijaya", email: "andi@example.com", enrolledDate: "05 Oct 2024", progress: 100, course: "Figma Pro" },
-    { id: 4, name: "Rina Kusuma", email: "rina@example.com", enrolledDate: "01 Oct 2024", progress: 10, course: "UI/UX Fundamentals" },
-  ];
+  const instructorId = session.user.id;
+
+  // 1. Fetch all enrollments for instructor's courses
+  const enrollments = await db.enrollment.findMany({
+    where: {
+      course: { instructorId, isDeleted: 0 },
+      isDeleted: 0,
+      enrollmentStatus: { in: ["active", "completed"] },
+    },
+    include: {
+      user: { select: { name: true, email: true, image: true } },
+      course: { 
+        select: { 
+          title: true,
+          _count: { select: { lessons: { where: { isDeleted: 0, status: 1 } } } }
+        } 
+      },
+    },
+    orderBy: { createdDate: "desc" },
+  });
+
+  // 2. Fetch progress for these students
+  const studentIds = Array.from(new Set(enrollments.map(e => e.userId)));
+  const courseIds = Array.from(new Set(enrollments.map(e => e.courseId)));
+
+  const progressRecords = await db.lessonProgress.findMany({
+    where: {
+      userId: { in: studentIds },
+      lesson: { courseId: { in: courseIds } },
+      isCompleted: true,
+    },
+    select: { userId: true, lesson: { select: { courseId: true } } },
+  });
+
+  // 3. Map and calculate progress
+  const students = enrollments.map((enr: any) => {
+    const totalLessons = enr.course._count.lessons || 1; // avoid div by zero
+    const completedLessons = progressRecords.filter(
+      p => p.userId === enr.userId && p.lesson.courseId === enr.courseId
+    ).length;
+    
+    const progressPercent = Math.min(Math.round((completedLessons / totalLessons) * 100), 100);
+
+    return {
+      id: enr.id,
+      name: enr.user.name,
+      email: enr.user.email,
+      enrolledDate: enr.createdDate.toLocaleDateString("id-ID", { day: '2-digit', month: 'short', year: 'numeric' }),
+      progress: progressPercent,
+      course: enr.course.title,
+    };
+  });
+
+  // 4. Calculate stats
+  const totalStudents = students.length;
+  const activeThisWeek = enrollments.filter((e: any) => {
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    return e.createdDate >= weekAgo;
+  }).length;
+  const avgCompletion = students.length > 0 
+    ? Math.round(students.reduce((acc, s) => acc + s.progress, 0) / students.length)
+    : 0;
 
   return (
     <main className="flex-1 p-6 md:p-10 max-w-[1600px] mx-auto w-full">
@@ -36,9 +94,9 @@ export default async function InstructorStudentsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {[
-          { label: "Total Students", value: "1,248", icon: GraduationCap, color: "text-blue-600", bg: "bg-blue-50" },
-          { label: "Active This Week", value: "856", icon: ArrowUpRight, color: "text-green-600", bg: "bg-green-50" },
-          { label: "Completion Rate", value: "68%", icon: GraduationCap, color: "text-orange-600", bg: "bg-orange-50" },
+          { label: "Total Students", value: totalStudents.toLocaleString(), icon: GraduationCap, color: "text-blue-600", bg: "bg-blue-50" },
+          { label: "New This Week", value: activeThisWeek.toString(), icon: ArrowUpRight, color: "text-green-600", bg: "bg-green-50" },
+          { label: "Avg. Progress", value: `${avgCompletion}%`, icon: GraduationCap, color: "text-orange-600", bg: "bg-orange-50" },
         ].map((stat, i) => (
           <div key={i} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-4">
             <div className={`w-14 h-14 rounded-2xl ${stat.bg} ${stat.color} flex items-center justify-center`}>
@@ -82,7 +140,7 @@ export default async function InstructorStudentsPage() {
               </tr>
             </thead>
             <tbody>
-              {mockStudents.map((student) => (
+              {students.map((student) => (
                 <tr key={student.id} className="border-b border-slate-50 last:border-none group hover:bg-slate-50/50 transition-colors">
                   <td className="py-4">
                     <div className="flex items-center gap-3">

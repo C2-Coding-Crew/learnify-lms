@@ -14,8 +14,13 @@ import {
   BarChart2,
   Menu,
   X,
+  FileQuestion,
+  Award
 } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import QuizPlayer from "./quiz-player";
+import CustomVideoPlayer from "./custom-video-player";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Lesson {
@@ -36,6 +41,14 @@ interface Course {
   category: { name: string; slug: string };
   instructor: { name: string; image: string | null };
   lessons: Lesson[];
+  quizzes: {
+    id: number;
+    lessonId: number | null;
+    title: string;
+    description: string | null;
+    questionCount: number;
+    passingScore: number;
+  }[];
 }
 
 interface Props {
@@ -65,11 +78,18 @@ export default function LearnPageClient({
   const [completedCount, setCompletedCount] = useState(initialCompleted);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Quiz State
+  const [activeQuizId, setActiveQuizId] = useState<number | null>(null);
+  const [isQuizOpen, setIsQuizOpen] = useState(false);
+
   const currentLesson = course.lessons.find((l) => l.id === currentLessonId) ?? course.lessons[0];
   const currentIndex = course.lessons.findIndex((l) => l.id === currentLessonId);
   const prevLesson = currentIndex > 0 ? course.lessons[currentIndex - 1] : null;
   const nextLesson = currentIndex < course.lessons.length - 1 ? course.lessons[currentIndex + 1] : null;
   const isCompleted = !!progressMap[String(currentLessonId)]?.isCompleted;
+
+  // Find quiz for current lesson
+  const currentQuiz = course.quizzes.find(q => q.lessonId === currentLessonId);
 
   const navigateLesson = (lessonId: number) => {
     setCurrentLessonId(lessonId);
@@ -120,6 +140,19 @@ export default function LearnPageClient({
     });
   };
 
+  const getEmbedUrl = (url: string) => {
+    if (!url) return "";
+    let videoId = "";
+    if (url.includes("v=")) {
+      videoId = url.split("v=")[1]?.split("&")[0];
+    } else if (url.includes("youtu.be/")) {
+      videoId = url.split("youtu.be/")[1]?.split("?")[0];
+    } else if (url.includes("embed/")) {
+      return url;
+    }
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+  };
+
   return (
     <div className="flex h-screen bg-[#0F0F1A] text-white overflow-hidden">
 
@@ -133,7 +166,7 @@ export default function LearnPageClient({
         {/* Sidebar Header */}
         <div className="p-5 border-b border-white/5">
           <Link
-            href={`/courses/${course.slug}`}
+            href={`/dashboard/student/explore/${course.slug}`}
             className="flex items-center gap-2 text-xs text-white/40 hover:text-white/60 transition-colors mb-4"
           >
             <ChevronLeft size={14} /> Kembali ke Detail
@@ -221,13 +254,7 @@ export default function LearnPageClient({
           {/* Video Area */}
           <div className="aspect-video max-h-[55vh] bg-black w-full flex items-center justify-center relative">
             {currentLesson?.videoUrl ? (
-              <iframe
-                key={currentLessonId}
-                src={currentLesson.videoUrl}
-                className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
+              <CustomVideoPlayer videoUrl={currentLesson.videoUrl} lessonId={currentLessonId} />
             ) : (
               <div className="text-center space-y-4 p-8">
                 <div className="w-20 h-20 bg-white/5 rounded-2xl flex items-center justify-center mx-auto">
@@ -243,6 +270,50 @@ export default function LearnPageClient({
               </div>
             )}
           </div>
+
+          {/* Quiz Notification / Start Button */}
+          {currentQuiz && !isQuizOpen && (
+            <div className="mx-6 mt-6 p-6 bg-indigo-600 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-4 animate-in slide-in-from-top-4 duration-500">
+              <div className="flex items-center gap-4 text-center md:text-left">
+                <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
+                  <FileQuestion size={24} className="text-white" />
+                </div>
+                <div>
+                  <h4 className="font-black text-white text-lg">Waktunya Kuis! 📝</h4>
+                  <p className="text-indigo-100 text-sm font-medium">Uji pemahamanmu tentang materi {currentLesson?.title}</p>
+                </div>
+              </div>
+              <Button 
+                onClick={() => {
+                  setActiveQuizId(currentQuiz.id);
+                  setIsQuizOpen(true);
+                }}
+                className="bg-white hover:bg-indigo-50 text-indigo-600 rounded-xl h-12 px-8 font-black shadow-xl shadow-indigo-900/20"
+              >
+                Mulai Kuis Sekarang
+              </Button>
+            </div>
+          )}
+
+          {/* Quiz Player Overlay */}
+          {isQuizOpen && activeQuizId && (
+            <div className="fixed inset-0 z-50 bg-[#0F0F1A] overflow-y-auto pt-10">
+              <QuizPlayer 
+                quizId={activeQuizId}
+                onClose={() => setIsQuizOpen(false)}
+                onComplete={(result) => {
+                  if (result.isPassed) {
+                    toast.success("Skor kamu: " + Math.round(result.score) + "%. Kamu lulus!");
+                    // Optional: auto mark complete lesson if passed quiz
+                    markComplete();
+                  } else {
+                    toast.error("Skor kamu: " + Math.round(result.score) + "%. Kamu belum lulus.");
+                  }
+                  setIsQuizOpen(false);
+                }}
+              />
+            </div>
+          )}
 
           {/* Lesson Info + Controls */}
           <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">

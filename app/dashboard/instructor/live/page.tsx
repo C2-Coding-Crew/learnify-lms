@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import InstructorHeader from "@/components/dashboard/instructor/header";
 import { Video, Calendar, Plus, PlayCircle, Users } from "lucide-react";
+import { db } from "@/lib/db";
 
 export default async function InstructorLivePage() {
   const session = await auth.api.getSession({
@@ -14,14 +15,39 @@ export default async function InstructorLivePage() {
   }
 
   const roleId = (session.user as any).roleId;
-  if (roleId !== 3) {
+  if (roleId !== 2) {
     redirect("/dashboard");
   }
 
-  const upcomingSessions = [
-    { id: 1, title: "Q&A Session: UI/UX", date: "Tomorrow, 10:00 AM", attendees: 45 },
-    { id: 2, title: "Figma Pro Workshop", date: "15 Oct 2024, 14:00", attendees: 120 },
-  ];
+  const instructorId = session.user.id;
+  
+  // 1. Fetch upcoming sessions from real Schedule table
+  const upcomingSessions = await db.schedule.findMany({
+    where: {
+      course: { instructorId, isDeleted: 0 },
+      endTime: { gte: new Date() },
+      isDeleted: 0
+    },
+    include: {
+      course: { select: { title: true } }
+    },
+    orderBy: { startTime: "asc" },
+    take: 10
+  });
+
+  const formattedSessions = upcomingSessions.map((s: any) => ({
+    id: s.id,
+    title: s.title,
+    courseTitle: s.course.title,
+    date: s.startTime.toLocaleDateString("id-ID", { 
+      weekday: 'short', 
+      day: 'numeric', 
+      month: 'short', 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    }),
+    attendees: 0 // In future, connect to real live attendee tracking
+  }));
 
   return (
     <main className="flex-1 p-6 md:p-10 max-w-[1600px] mx-auto w-full">
@@ -61,15 +87,16 @@ export default async function InstructorLivePage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {upcomingSessions.map((session) => (
-            <div key={session.id} className="p-6 border border-slate-100 rounded-3xl hover:shadow-xl hover:shadow-slate-100 transition-all group bg-white">
+          {formattedSessions.map((liveSession) => (
+            <div key={liveSession.id} className="p-6 border border-slate-100 rounded-3xl hover:shadow-xl hover:shadow-slate-100 transition-all group bg-white">
               <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <Video size={24} />
               </div>
-              <h4 className="font-black text-slate-800 text-lg mb-2">{session.title}</h4>
+              <h4 className="font-black text-slate-800 text-lg mb-1">{liveSession.title}</h4>
+              <p className="text-[10px] font-bold text-[#FF6B4A] mb-4 uppercase tracking-widest">{liveSession.courseTitle}</p>
               <div className="flex items-center gap-4 text-xs font-bold text-slate-400 mb-6">
-                <span className="flex items-center gap-1.5"><Calendar size={14} /> {session.date}</span>
-                <span className="flex items-center gap-1.5"><Users size={14} /> {session.attendees}</span>
+                <span className="flex items-center gap-1.5"><Calendar size={14} /> {liveSession.date}</span>
+                <span className="flex items-center gap-1.5"><Users size={14} /> {liveSession.attendees}</span>
               </div>
               <button className="w-full h-12 bg-slate-50 text-slate-600 hover:bg-slate-100 rounded-xl font-bold transition-colors">
                 Edit Details

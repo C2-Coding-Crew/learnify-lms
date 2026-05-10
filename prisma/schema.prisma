@@ -26,9 +26,12 @@ model User {
   status          Int      @default(1)    // 1=aktif, 0=nonaktif
   isDeleted       Int      @default(0)    // 0=ada, 1=terhapus (soft delete)
   createdBy       String?  @default("SYSTEM")
-  createdAt       DateTime @default(now()) @map("createdDate")
+  createdDate      DateTime @default(now())
   lastUpdatedBy   String?  @default("SYSTEM")
-  updatedAt       DateTime @default(now()) @updatedAt @map("lastUpdatedDate")
+  lastUpdatedDate DateTime @default(now()) @updatedAt
+  points          Int      @default(0)
+  streak          Int      @default(0)
+  lastStudyDate   DateTime?
 
   // ── Relations ─────────────────────────────────────────────────────────────
   role          Role?            @relation(fields: [roleId], references: [id])
@@ -40,6 +43,12 @@ model User {
   progress      LessonProgress[]
   twoFactor     twoFactor?
   reviews       Review[]
+  todos         Todo[]
+  submissions   Submission[]
+  discussions   CourseDiscussion[]
+  quizAttempts  QuizAttempt[]
+  badges        UserBadge[]
+  wishlists     Wishlist[]
 
   @@map("user")
 }
@@ -54,16 +63,17 @@ model twoFactor {
   backupCodes String
   userId      String @unique
   user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now()) @map("createdDate")
-  updatedAt   DateTime @default(now()) @updatedAt @map("lastUpdatedDate")
+  verified    Boolean @default(false)
+  createdDate      DateTime @default(now())
+  lastUpdatedDate DateTime @default(now()) @updatedAt
 }
 
 model session {
-  id        String   @id @default(uuid())
+  id        String   @id
   expiresAt DateTime
   token     String   @unique
-  createdAt DateTime @default(now()) @map("createdDate")
-  updatedAt DateTime @default(now()) @updatedAt @map("lastUpdatedDate")
+  createdDate      DateTime @default(now())
+  lastUpdatedDate DateTime @default(now()) @updatedAt
   ipAddress String?
   userAgent String?
   userId    String
@@ -73,7 +83,7 @@ model session {
 }
 
 model account {
-  id                    String    @id @default(uuid())
+  id                    String    @id
   accountId             String
   providerId            String
   userId                String
@@ -85,17 +95,17 @@ model account {
   refreshTokenExpiresAt DateTime?
   scope                 String?
   password              String?
-  createdAt             DateTime  @default(now()) @map("createdDate")
-  updatedAt             DateTime  @default(now()) @updatedAt @map("lastUpdatedDate")
+  createdDate           DateTime  @default(now())
+  lastUpdatedDate       DateTime  @default(now()) @updatedAt
 }
 
 model verification {
-  id         String    @id @default(uuid())
+  id         String    @id
   identifier String
   value      String
   expiresAt  DateTime
-  createdAt  DateTime  @default(now()) @map("createdDate")
-  updatedAt  DateTime  @default(now()) @updatedAt @map("lastUpdatedDate")
+  createdDate      DateTime  @default(now())
+  lastUpdatedDate DateTime  @default(now()) @updatedAt
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -161,6 +171,14 @@ model Course {
   enrollments Enrollment[]
   tags        CourseTag[]
   reviews     Review[]
+  assignments Assignment[]
+  recordings  Recording[]
+  resources   Resource[]
+  schedules   Schedule[]
+  invoices    Invoice[]
+  discussions CourseDiscussion[]
+  quizzes     Quiz[]
+  wishlists   Wishlist[]
 }
 
 model Lesson {
@@ -182,6 +200,7 @@ model Lesson {
 
   course   Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
   progress LessonProgress[]
+  quiz     Quiz?
 }
 
 model LessonProgress {
@@ -257,7 +276,12 @@ model Invoice {
   lastUpdatedBy   String   @default("SYSTEM")
   lastUpdatedDate DateTime @updatedAt
 
+  course       Course?       @relation(fields: [courseId], references: [id])
+  courseId     Int?
   user         User          @relation(fields: [userId], references: [id])
+  coupon       Coupon?       @relation(fields: [couponId], references: [id])
+  couponId     Int?
+  discountAmt  Decimal?      @default(0)
   transactions Transaction[]
 }
 
@@ -321,3 +345,294 @@ model Review {
 
   @@unique([userId, courseId])
 }
+
+model Todo {
+  id              Int      @id @default(autoincrement())
+  userId          String
+  task            String
+  isCompleted     Boolean  @default(false)
+  companyCode     String   @default("LEARNIFY")
+  status          Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Assignment {
+  id              Int      @id @default(autoincrement())
+  courseId        Int
+  title           String
+  description     String?
+  dueDate         DateTime
+  companyCode     String   @default("LEARNIFY")
+  status          Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  submissions Submission[]
+}
+
+model Submission {
+  id              Int      @id @default(autoincrement())
+  assignmentId    Int
+  userId          String
+  filePath        String?
+  content         String?
+  grade           String?
+  feedback        String?
+  status          String   @default("submitted")
+  companyCode     String   @default("LEARNIFY")
+  status_code     Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, assignmentId])
+}
+
+model Recording {
+  id              Int      @id @default(autoincrement())
+  courseId        Int
+  title           String
+  description     String?
+  videoUrl        String
+  duration        String?
+  companyCode     String   @default("LEARNIFY")
+  status          Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model Resource {
+  id              Int      @id @default(autoincrement())
+  courseId        Int
+  title           String
+  description     String?
+  fileUrl         String
+  fileType        String
+  fileSize        String?
+  companyCode     String   @default("LEARNIFY")
+  status          Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model Schedule {
+  id              Int      @id @default(autoincrement())
+  courseId        Int
+  title           String
+  description     String?
+  startTime       DateTime
+  endTime         DateTime
+  location        String?
+  companyCode     String   @default("LEARNIFY")
+  status          Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model CourseDiscussion {
+  id              Int      @id @default(autoincrement())
+  courseId        Int
+  userId          String
+  message         String?  @db.Text
+  fileUrl         String?
+  fileType        String?
+  companyCode     String   @default("LEARNIFY")
+  status          Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  QUIZ SYSTEM
+// ═════════════════════════════════════════════════════════════════════════════
+
+model Quiz {
+  id              Int      @id @default(autoincrement())
+  courseId        Int
+  lessonId        Int?     @unique
+  title           String
+  description     String?
+  timeLimit       Int?     // Dalam menit
+  passingScore    Int      @default(70)
+  companyCode     String   @default("LEARNIFY")
+  status          Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  course   Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lesson   Lesson?       @relation(fields: [lessonId], references: [id])
+  questions Question[]
+  attempts  QuizAttempt[]
+}
+
+model Question {
+  id              Int      @id @default(autoincrement())
+  quizId          Int
+  content         String   @db.Text
+  type            String   @default("MULTIPLE_CHOICE") // MULTIPLE_CHOICE, TRUE_FALSE
+  points          Int      @default(10)
+  order           Int      @default(0)
+  companyCode     String   @default("LEARNIFY")
+  status          Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  quiz    Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  options Option[]
+}
+
+model Option {
+  id              Int      @id @default(autoincrement())
+  questionId      Int
+  content         String   @db.Text
+  isCorrect       Boolean  @default(false)
+  companyCode     String   @default("LEARNIFY")
+  status          Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model QuizAttempt {
+  id              Int      @id @default(autoincrement())
+  quizId          Int
+  userId          String
+  score           Float    @default(0)
+  isPassed        Boolean  @default(false)
+  completedAt     DateTime @default(now())
+  companyCode     String   @default("LEARNIFY")
+  status          Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, quizId, completedAt]) // Memungkinkan multiple attempts, unik per timestamp
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  GAMIFICATION (BADGE)
+// ═════════════════════════════════════════════════════════════════════════════
+
+model Badge {
+  id              Int      @id @default(autoincrement())
+  name            String
+  description     String
+  imageUrl        String?
+  criteria        String   @unique // e.g., "QUIZ_MASTER", "COURSE_COMPLETER"
+  companyCode     String   @default("LEARNIFY")
+  status          Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  users UserBadge[]
+}
+
+model UserBadge {
+  id              Int      @id @default(autoincrement())
+  userId          String
+  badgeId         Int
+  earnedAt        DateTime @default(now())
+  companyCode     String   @default("LEARNIFY")
+  status          Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+}
+
+model Wishlist {
+  id              Int      @id @default(autoincrement())
+  userId          String
+  courseId        Int
+  companyCode     String   @default("LEARNIFY")
+  status          Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+}
+
+model Coupon {
+  id              Int      @id @default(autoincrement())
+  code            String   @unique
+  discountPercent Decimal
+  maxUses         Int      @default(0)
+  usedCount       Int      @default(0)
+  validUntil      DateTime
+  companyCode     String   @default("LEARNIFY")
+  status          Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  invoices        Invoice[]
+}
+

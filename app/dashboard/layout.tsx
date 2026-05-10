@@ -21,7 +21,7 @@ export default async function DashboardLayout({
   // `2fa_verified` pada route handler untuk melacak jika mereka benar-benar
   // melewati verifikasi.
   // ─────────────────────────────────────────────────────────────────────────
-  if (session.user.twoFactorEnabled) {
+  if ((session.user as any).twoFactorEnabled) {
     const isVerified = (await cookies()).get("2fa_verified")?.value === "true";
     if (!isVerified) {
       // Jika mereka punya Session tetapi belum diverifikasi 2FA-nya di sesi ini

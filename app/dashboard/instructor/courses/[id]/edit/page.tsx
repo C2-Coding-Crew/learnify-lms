@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save, Loader2, Video, Plus, Trash2, GripVertical, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Video, Plus, Trash2, GripVertical, CheckCircle2, FileQuestion } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { QuizBuilder } from "@/components/dashboard/instructor/quiz-builder";
 
 export default function EditCoursePage() {
   const params = useParams();
@@ -18,6 +19,11 @@ export default function EditCoursePage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [course, setCourse] = useState<any>(null);
   const [lessons, setLessons] = useState<any[]>([]);
+  const [quizzes, setQuizzes] = useState<any[]>([]);
+
+  // Quiz Builder State
+  const [isAddingQuiz, setIsAddingQuiz] = useState(false);
+  const [selectedLessonId, setSelectedLessonId] = useState<number | null>(null);
 
   // Add Lesson State
   const [isAddingLesson, setIsAddingLesson] = useState(false);
@@ -26,13 +32,15 @@ export default function EditCoursePage() {
   useEffect(() => {
     Promise.all([
       fetch(`/api/instructor/courses/${courseId}`).then(res => res.json()),
+      fetch(`/api/instructor/courses/${courseId}/quizzes`).then(res => res.json()),
       fetch("/api/categories").then(res => res.json())
-    ]).then(([courseData, catData]) => {
+    ]).then(([courseData, quizData, catData]) => {
       if (courseData.error) {
         setError(courseData.error);
       } else {
         setCourse(courseData);
         setLessons(courseData.lessons || []);
+        setQuizzes(quizData || []);
       }
       setCategories(catData);
       setIsLoading(false);
@@ -42,8 +50,18 @@ export default function EditCoursePage() {
     });
   }, [courseId]);
 
-  const handleUpdateCourse = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const refreshQuizzes = async () => {
+    try {
+      const res = await fetch(`/api/instructor/courses/${courseId}/quizzes`);
+      const data = await res.json();
+      setQuizzes(data);
+    } catch (err) {
+      console.error("Failed to refresh quizzes", err);
+    }
+  };
+
+  const handleUpdateCourse = async (e?: React.FormEvent, submitForReview = false) => {
+    if (e) e.preventDefault();
     setIsSaving(true);
     try {
       const res = await fetch(`/api/instructor/courses/${courseId}`, {
@@ -55,11 +73,20 @@ export default function EditCoursePage() {
           categoryId: course.categoryId,
           price: course.price,
           level: course.level,
-          isPublished: course.isPublished
+          isPublished: course.isPublished,
+          status: submitForReview ? 2 : course.status
         })
       });
       if (!res.ok) throw new Error("Failed to update course");
-      alert("Perubahan berhasil disimpan!");
+      
+      const updatedData = await res.json();
+      setCourse(updatedData);
+      
+      if (submitForReview) {
+        alert("Kursus telah diajukan ke admin untuk direview!");
+      } else {
+        alert("Perubahan berhasil disimpan!");
+      }
     } catch (err: any) {
       alert(err.message);
     } finally {
@@ -118,15 +145,31 @@ export default function EditCoursePage() {
         </div>
         
         <div className="flex items-center gap-3">
+          {/* Status Badge */}
+          <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 ${
+            course.isPublished 
+              ? 'bg-green-50 text-green-600 border-green-100' 
+              : course.status === 2 
+                ? 'bg-orange-50 text-orange-600 border-orange-100 animate-pulse'
+                : 'bg-slate-50 text-slate-400 border-slate-100'
+          }`}>
+            {course.isPublished ? "Status: Published" : course.status === 2 ? "Status: Pending Review" : "Status: Draft"}
+          </div>
+
+          {/* Instructor Action: Submit for Review */}
+          {!course.isPublished && course.status !== 2 && (
+            <Button 
+              onClick={() => handleUpdateCourse(undefined, true)}
+              disabled={isSaving}
+              variant="outline"
+              className="rounded-xl h-11 font-black px-6 border-2 border-orange-500 text-orange-600 hover:bg-orange-50 transition-all"
+            >
+              Submit for Review 🚀
+            </Button>
+          )}
+
           <Button 
-            onClick={() => setCourse({...course, isPublished: !course.isPublished})}
-            variant="outline"
-            className={`rounded-xl h-11 font-black px-6 border-2 transition-all ${course.isPublished ? 'border-orange-500 text-orange-600 bg-orange-50' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
-          >
-            {course.isPublished ? <><CheckCircle2 size={18} className="mr-2" /> Published</> : "Draft (Not Published)"}
-          </Button>
-          <Button 
-            onClick={handleUpdateCourse}
+            onClick={() => handleUpdateCourse()}
             disabled={isSaving}
             className="bg-[#FF6B4A] hover:bg-[#e55a3d] text-white rounded-xl h-11 px-6 font-black shadow-lg shadow-orange-100 transition-all flex items-center gap-2"
           >
@@ -260,8 +303,8 @@ export default function EditCoursePage() {
                   </div>
                   <div className="flex-1">
                     <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
-                      {lesson.title}
-                      {lesson.isFree && <span className="bg-green-100 text-green-700 text-[9px] px-1.5 py-0.5 rounded uppercase tracking-wider">Preview</span>}
+                       {lesson.title}
+                       {lesson.isFree && <span className="bg-green-100 text-green-700 text-[9px] px-1.5 py-0.5 rounded uppercase tracking-wider">Preview</span>}
                     </h4>
                     <p className="text-[11px] text-slate-400 font-medium mt-1">Durasi: {lesson.duration} Menit</p>
                   </div>
@@ -271,9 +314,66 @@ export default function EditCoursePage() {
                 </div>
               ))}
             </div>
+
+            {/* Section Kuis */}
+            <div className="mt-12 pt-8 border-t border-slate-100">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-xl font-black text-slate-800">Kuis Pelajaran 📝</h3>
+                  <p className="text-xs font-bold text-slate-400 mt-1">Uji pemahaman siswa setelah materi selesai.</p>
+                </div>
+                <Button 
+                  onClick={() => {
+                    setSelectedLessonId(null);
+                    setIsAddingQuiz(true);
+                  }}
+                  className="bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white rounded-xl h-10 px-4 font-black transition-all flex items-center gap-2"
+                >
+                  <Plus size={16} /> Tambah Kuis Umum
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {quizzes.length === 0 && (
+                  <div className="md:col-span-2 text-center py-10 bg-slate-50 border border-dashed border-slate-200 rounded-2xl">
+                    <FileQuestion size={32} className="mx-auto text-slate-300 mb-2" />
+                    <p className="text-sm font-bold text-slate-400">Belum ada kuis untuk kelas ini.</p>
+                  </div>
+                )}
+                {quizzes.map((quiz: any) => (
+                  <div key={quiz.id} className="p-5 bg-white border border-slate-100 rounded-3xl hover:shadow-lg transition-all flex items-center gap-4 group">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black shrink-0">
+                      Q
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-bold text-slate-800 text-sm">{quiz.title}</h4>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">
+                        {quiz._count.questions} Pertanyaan • Lulus {quiz.passingScore}%
+                      </p>
+                    </div>
+                    <button className="p-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Quiz Builder Modal */}
+      {isAddingQuiz && (
+        <QuizBuilder 
+          courseId={parseInt(courseId)}
+          lessonId={selectedLessonId}
+          onClose={() => setIsAddingQuiz(false)}
+          onSuccess={() => {
+            setIsAddingQuiz(false);
+            refreshQuizzes();
+          }}
+        />
+      )}
     </main>
   );
 }

@@ -96,6 +96,8 @@ export default function CourseDetailClient({ course }: { course: CourseDetail })
   });
   const [statusLoading, setStatusLoading] = useState(true);
   const [isEnrolling, setIsEnrolling] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [discountPercent, setDiscountPercent] = useState(0);
 
   // UI state
   const [expandedLessons, setExpandedLessons] = useState(false);
@@ -111,6 +113,9 @@ export default function CourseDetailClient({ course }: { course: CourseDetail })
         const res = await fetch(`/api/courses/${course.slug}/enrollment-status`);
         const data: EnrollmentStatusCheck = await res.json();
         setEnrollmentStatus(data);
+        if (data.isWishlisted !== undefined) {
+          setSavedCourse(data.isWishlisted);
+        }
       } catch {
         // Jika gagal, anggap belum enroll (safe default)
       } finally {
@@ -120,7 +125,35 @@ export default function CourseDetailClient({ course }: { course: CourseDetail })
     checkStatus();
   }, [course.slug]);
 
-  // ─── Handle Enroll ────────────────────────────────────────────────────────
+  // ─── Handle Save Wishlist ───────────────────────────────────────────────────
+  const handleSaveCourse = async () => {
+    if (!session && !sessionLoading) {
+      router.push(`/auth/login?callbackUrl=/courses/${course.slug}`);
+      return;
+    }
+
+    try {
+      const isCurrentlySaved = savedCourse;
+      // Optimistic update
+      setSavedCourse(!isCurrentlySaved);
+
+      if (isCurrentlySaved) {
+        await fetch(`/api/wishlist?courseId=${course.id}`, { method: "DELETE" });
+        toast.success("Dihapus dari Wishlist");
+      } else {
+        await fetch("/api/wishlist", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ courseId: course.id }),
+        });
+        toast.success("Disimpan ke Wishlist! ❤️");
+      }
+    } catch (error) {
+      // Revert optimistic update on error
+      setSavedCourse(savedCourse);
+      toast.error("Gagal memperbarui wishlist");
+    }
+  };
   const handleEnroll = async () => {
     // 1. Belum login → redirect ke login
     if (!session && !sessionLoading) {
@@ -144,7 +177,7 @@ export default function CourseDetailClient({ course }: { course: CourseDetail })
       const res = await fetch("/api/enrollments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ courseId: course.id }),
+        body: JSON.stringify({ courseId: course.id, couponCode }),
       });
 
       const data = await res.json();
@@ -184,8 +217,9 @@ export default function CourseDetailClient({ course }: { course: CourseDetail })
     if (sessionLoading || statusLoading) return { label: "Memuat...", disabled: true };
     if (enrollmentStatus.isEnrolled) return { label: "🎓 Lanjut Belajar", disabled: false };
     if (isEnrolling) return { label: "Mendaftar...", disabled: true };
-    if (course.price === 0) return { label: "🎉 Daftar Gratis Sekarang", disabled: false };
-    return { label: `Enroll — ${formatPrice(course.price)}`, disabled: false };
+    if (course.price === 0 || (discountPercent > 0 && Number(course.price) * (1 - discountPercent / 100) <= 0)) return { label: "🎉 Daftar Gratis Sekarang", disabled: false };
+    const finalPrice = discountPercent > 0 ? Number(course.price) * (1 - discountPercent / 100) : course.price;
+    return { label: `Enroll — ${formatPrice(finalPrice)}`, disabled: false };
   })();
 
   return (
@@ -277,8 +311,9 @@ export default function CourseDetailClient({ course }: { course: CourseDetail })
                 isEnrolling={isEnrolling}
                 savedCourse={savedCourse}
                 isEnrolled={enrollmentStatus.isEnrolled}
+                certificateId={enrollmentStatus.enrollment?.certificate?.id}
                 onEnroll={handleEnroll}
-                onSave={() => setSavedCourse(!savedCourse)}
+                onSave={handleSaveCourse}
               />
             </div>
           </div>
@@ -302,12 +337,22 @@ export default function CourseDetailClient({ course }: { course: CourseDetail })
                     Terdaftar sejak {new Date(enrollmentStatus.enrollment!.enrolledAt).toLocaleDateString("id-ID", { year: "numeric", month: "long", day: "numeric" })}
                   </p>
                 </div>
-                <button
-                  onClick={() => router.push(`/courses/${course.slug}/learn`)}
-                  className="px-5 py-2.5 bg-green-600 text-white font-bold rounded-xl text-sm hover:bg-green-700 transition-colors flex items-center gap-2"
-                >
-                  Lanjut Belajar <ChevronRight size={16} />
-                </button>
+                <div className="flex gap-2">
+                  {enrollmentStatus.enrollment?.enrollmentStatus === "completed" && enrollmentStatus.enrollment?.certificate && (
+                    <button
+                      onClick={() => window.open(`/certificates/${enrollmentStatus.enrollment?.certificate?.id}`, '_blank')}
+                      className="px-5 py-2.5 bg-yellow-500 text-white font-bold rounded-xl text-sm hover:bg-yellow-600 transition-colors flex items-center gap-2"
+                    >
+                      <Award size={16} /> Lihat Sertifikat
+                    </button>
+                  )}
+                  <button
+                    onClick={() => router.push(`/courses/${course.slug}/learn`)}
+                    className="px-5 py-2.5 bg-green-600 text-white font-bold rounded-xl text-sm hover:bg-green-700 transition-colors flex items-center gap-2"
+                  >
+                    Lanjut Belajar <ChevronRight size={16} />
+                  </button>
+                </div>
               </div>
             )}
 
@@ -446,8 +491,13 @@ export default function CourseDetailClient({ course }: { course: CourseDetail })
                 isEnrolling={isEnrolling}
                 savedCourse={savedCourse}
                 isEnrolled={enrollmentStatus.isEnrolled}
+                certificateId={enrollmentStatus.enrollment?.certificate?.id}
                 onEnroll={handleEnroll}
-                onSave={() => setSavedCourse(!savedCourse)}
+                onSave={handleSaveCourse}
+                couponCode={couponCode}
+                setCouponCode={setCouponCode}
+                discountPercent={discountPercent}
+                setDiscountPercent={setDiscountPercent}
               />
             </div>
           </div>
@@ -495,8 +545,13 @@ function PurchaseCard({
   isEnrolling,
   savedCourse,
   isEnrolled,
+  certificateId,
   onEnroll,
   onSave,
+  couponCode,
+  setCouponCode,
+  discountPercent,
+  setDiscountPercent,
 }: {
   course: CourseDetail;
   freeLessons: number;
@@ -504,9 +559,45 @@ function PurchaseCard({
   isEnrolling: boolean;
   savedCourse: boolean;
   isEnrolled: boolean;
+  certificateId?: number;
   onEnroll: () => void;
   onSave: () => void;
+  couponCode?: string;
+  setCouponCode?: (code: string) => void;
+  discountPercent?: number;
+  setDiscountPercent?: (percent: number) => void;
 }) {
+  const [isValidating, setIsValidating] = useState(false);
+
+  const applyCoupon = async () => {
+    if (!couponCode || !setDiscountPercent) return;
+    setIsValidating(true);
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: couponCode }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setDiscountPercent(data.coupon.discountPercent);
+        toast.success(`Kupon diterapkan! Diskon ${data.coupon.discountPercent}%`);
+      } else {
+        setDiscountPercent(0);
+        toast.error(data.error || "Kupon tidak valid");
+      }
+    } catch {
+      setDiscountPercent(0);
+      toast.error("Gagal memvalidasi kupon");
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
+  const finalPrice = discountPercent && discountPercent > 0 
+    ? Math.max(0, Number(course.price) * (1 - discountPercent / 100)) 
+    : course.price;
+
   return (
     <div className={`bg-white rounded-3xl border overflow-hidden shadow-2xl shadow-slate-200/60 ${isEnrolled ? "border-green-200" : "border-slate-100"}`}>
       {/* Thumbnail */}
@@ -546,16 +637,46 @@ function PurchaseCard({
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">
                   {course.price === 0 ? "Kursus ini" : "Harga"}
                 </p>
-                <p className={`text-3xl font-black ${course.price === 0 ? "text-green-600" : "text-slate-900"}`}>
-                  {formatPrice(course.price)}
+                <p className={`text-3xl font-black ${finalPrice === 0 ? "text-green-600" : "text-slate-900"}`}>
+                  {formatPrice(finalPrice)}
                 </p>
+                {discountPercent && discountPercent > 0 ? (
+                  <p className="text-xs text-slate-400 line-through mt-1">
+                    {formatPrice(course.price)}
+                  </p>
+                ) : null}
               </>
             )}
           </div>
-          {!isEnrolled && course.price > 0 && (
-            <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-lg">Hemat 40%</span>
-          )}
+          {!isEnrolled && course.price > 0 && discountPercent && discountPercent > 0 ? (
+            <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-lg">Diskon {discountPercent}%</span>
+          ) : !isEnrolled && course.price > 0 ? (
+            <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-lg">Penawaran Spesial</span>
+          ) : null}
         </div>
+
+        {/* Kupon Input */}
+        {!isEnrolled && course.price > 0 && setCouponCode && (
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              placeholder="Masukkan Kupon"
+              value={couponCode}
+              onChange={(e) => {
+                setCouponCode(e.target.value);
+                if (setDiscountPercent) setDiscountPercent(0);
+              }}
+              className="flex-1 h-10 px-3 bg-slate-50 border border-slate-100 rounded-xl text-sm outline-none focus:border-orange-200 focus:ring-2 focus:ring-orange-50 transition-all uppercase"
+            />
+            <button
+              onClick={applyCoupon}
+              disabled={!couponCode || isValidating || (discountPercent ?? 0) > 0}
+              className="h-10 px-4 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600 font-bold text-xs rounded-xl transition-colors"
+            >
+              {isValidating ? <Loader2 size={14} className="animate-spin" /> : discountPercent && discountPercent > 0 ? "Dipakai" : "Terapkan"}
+            </button>
+          </div>
+        )}
 
         {/* CTA Buttons */}
         <div className="space-y-3">
@@ -574,6 +695,15 @@ function PurchaseCard({
               <>{buttonState.label} {!isEnrolled && <ChevronRight size={18} />}</>
             )}
           </button>
+
+          {isEnrolled && certificateId && (
+            <button
+              onClick={() => window.open(`/certificates/${certificateId}`, '_blank')}
+              className="w-full h-11 border-2 border-yellow-400 bg-yellow-50 text-yellow-600 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2 hover:bg-yellow-100 mt-2"
+            >
+              <Award size={16} /> Lihat Sertifikat
+            </button>
+          )}
 
           {!isEnrolled && (
             <button

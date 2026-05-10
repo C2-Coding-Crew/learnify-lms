@@ -27,23 +27,26 @@ export async function approveCourse(courseId: number) {
   
   await db.course.update({
     where: { id: courseId },
-    data: { isPublished: true },
+    data: { isPublished: true, status: 1 },
   });
   
   revalidatePath("/dashboard/admin/courses/approvals");
   revalidatePath("/courses");
+  revalidatePath("/dashboard/instructor/courses");
   return { success: true };
 }
 
 export async function rejectCourse(courseId: number) {
   await verifyAdmin();
   
+  // Set back to Draft (status 1, isPublished false)
   await db.course.update({
     where: { id: courseId },
-    data: { isDeleted: 1, status: 0 },
+    data: { isPublished: false, status: 1 },
   });
   
   revalidatePath("/dashboard/admin/courses/approvals");
+  revalidatePath("/dashboard/instructor/courses");
   return { success: true };
 }
 

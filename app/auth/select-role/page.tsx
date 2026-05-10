@@ -55,6 +55,8 @@ const handleAction = async () => {
           targetPath = "/dashboard/admin";
         } else if (selectedRole === 2) {
           targetPath = "/dashboard/instructor";
+        } else if (selectedRole === 3) {
+          targetPath = "/dashboard/student";
         }
         router.push(targetPath);
         return;

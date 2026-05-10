@@ -78,16 +78,11 @@ const RegisterPage = () => {
         name: fullName,
         email,
         password,
-        roleId: roleIdFromUrl, // <-- Kirim roleId yang dipilih ke server
+        // Kita tidak mengirim roleId di sini agar user dipaksa pilih role setelah login pertama
         fetchOptions: {
-          onSuccess: async () => {
-            // Set role after successful signup
-            await authClient.updateUser({
-              // @ts-ignore
-              roleId: roleIdFromUrl,
-            });
-            router.push("/dashboard");
-            router.refresh();
+          onSuccess: () => {
+            // Setelah daftar, arahkan ke login dengan parameter sukses
+            router.push("/auth/login?registered=true");
           },
         },
       });

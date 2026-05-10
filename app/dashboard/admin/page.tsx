@@ -1,3 +1,4 @@
+// app/dashboard/admin/page.tsx
 import AdminDashboard from "@/components/dashboard/admin/admin";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -6,17 +7,17 @@ import { redirect } from "next/navigation";
 
 async function getAdminStats() {
   // Stats
-  const [totalStudents, totalInstructors, totalActiveCourses, revenueAggregate, topCourses] =
+  const [totalStudents, totalInstructors, totalActiveCourses, revenueAggregate, topCourses, pendingCourses] =
     await Promise.all([
-      db.user.count({ where: { roleId: 2, isDeleted: 0, status: 1 } }),
-      db.user.count({ where: { roleId: 3, isDeleted: 0, status: 1 } }),
+      db.user.count({ where: { roleId: 3, isDeleted: 0, status: 1 } }), // Students
+      db.user.count({ where: { roleId: 2, isDeleted: 0, status: 1 } }), // Instructors
       db.course.count({ where: { isPublished: true, isDeleted: 0, status: 1 } }),
       db.invoice.aggregate({
         where: { invoiceStatus: "paid", isDeleted: 0, status: 1 },
         _sum: { totalAmount: true },
       }),
       db.course.findMany({
-        where: { isDeleted: 0, status: 1 },
+        where: { isPublished: true, isDeleted: 0, status: 1 },
         select: {
           id: true,
           title: true,
@@ -29,6 +30,18 @@ async function getAdminStats() {
         },
         orderBy: { enrollments: { _count: "desc" } },
         take: 5,
+      }),
+      db.course.findMany({
+        where: { isPublished: false, isDeleted: 0, status: 1 },
+        select: {
+          id: true,
+          title: true,
+          price: true,
+          createdDate: true,
+          category: { select: { name: true } },
+          instructor: { select: { name: true } },
+        },
+        orderBy: { createdDate: "asc" },
       }),
     ]);
 
@@ -75,6 +88,14 @@ async function getAdminStats() {
       rating: c.rating,
       reviewCount: c.reviewCount,
     })),
+    pendingCourses: pendingCourses.map((c) => ({
+      id: c.id,
+      title: c.title,
+      price: Number(c.price),
+      category: c.category.name,
+      instructor: c.instructor.name,
+      createdDate: c.createdDate.toISOString(),
+    })),
   };
 }
 
@@ -85,17 +106,18 @@ export default async function Page() {
   // Role guard sudah ditangani oleh Middleware!
   // Kita tidak perlu lagi query database di sini, menghemat performa.
 
-  const { stats, monthlyRevenue, topCourses } = await getAdminStats();
+  const { stats, monthlyRevenue, topCourses, pendingCourses } = await getAdminStats();
 
   return (
     <AdminDashboard
       userName={session.user.name}
       userEmail={session.user.email}
       userRole="Admin"
-      twoFactorEnabled={session.user.twoFactorEnabled ?? false}
+      twoFactorEnabled={(session.user as any).twoFactorEnabled ?? false}
       stats={stats}
       monthlyRevenue={monthlyRevenue}
       topCourses={topCourses}
+      pendingCourses={pendingCourses}
     />
   );
 }

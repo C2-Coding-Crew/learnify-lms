@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Mail, Lock, Chrome, ChevronRight, X, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { Mail, Lock, Chrome, ChevronRight, X, Eye, EyeOff, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import { loginSchema } from "@/lib/validations/auth";
@@ -26,6 +26,12 @@ const LoginPage = () => {
     const errorParam = searchParams.get("error");
     if (errorParam === "session_invalid") {
       setError("Sesi Anda tidak valid. Silakan login kembali.");
+    }
+    
+    // Cek jika baru saja mendaftar
+    const registered = searchParams.get("registered");
+    if (registered === "true") {
+      // Kita bisa menggunakan state khusus atau sekadar menampilkan info
     }
   }, [searchParams]);
 
@@ -166,6 +172,23 @@ const LoginPage = () => {
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Atau</span>
             <div className="h-[1px] bg-slate-100 flex-1" />
           </div>
+
+          {/* Registration Success Banner */}
+          {searchParams.get("registered") === "true" && !error && (
+            <div className="mb-6 bg-green-50 border border-green-100 rounded-2xl p-4 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <CheckCircle2 className="w-5 h-5 text-green-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-slate-800 text-sm">Pendaftaran Berhasil! 🎉</p>
+                  <p className="text-slate-500 text-xs mt-0.5 leading-relaxed">
+                    Akun Anda telah dibuat. Silakan cek email untuk verifikasi (jika diperlukan) dan masuk menggunakan akun tersebut.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* User Not Found / Suggest Register Banner */}
           {userNotFound && (

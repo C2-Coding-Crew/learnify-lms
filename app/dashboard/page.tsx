@@ -16,7 +16,7 @@ export default async function DashboardRootPage() {
     }
 
     // ── Penanganan 2FA ──────────────────────────────────────────────────────
-    if (session.user.twoFactorEnabled) {
+    if ((session.user as any).twoFactorEnabled) {
         const isVerified = (await cookies()).get("2fa_verified")?.value === "true";
         if (!isVerified) {
             redirect("/auth/two-factor");
@@ -46,7 +46,9 @@ export default async function DashboardRootPage() {
         redirect("/dashboard/admin");
     } else if (roleId === 2) {
         redirect("/dashboard/instructor");
-    } else {
+    } else if (roleId === 3) {
         redirect("/dashboard/student");
+    } else {
+        redirect("/auth/select-role");
     }
 }

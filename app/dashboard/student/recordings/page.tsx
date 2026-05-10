@@ -1,8 +1,44 @@
 import { Video, Play, Clock, Calendar } from "lucide-react";
-import { getStudentRecordings } from "@/lib/actions/resource-actions";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { db } from "@/lib/db";
 
 export default async function StudentRecordingsPage() {
-  const recordings = await getStudentRecordings();
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) redirect("/auth/login");
+
+  const userId = session.user.id;
+
+  // Fetch enrolled courses
+  const enrollments = await db.enrollment.findMany({
+    where: { userId, isDeleted: 0 },
+    select: { courseId: true },
+  });
+
+  const courseIds = enrollments.map((e) => e.courseId);
+
+  // Fetch recordings for those courses
+  const recordingsData = await db.recording.findMany({
+    where: { courseId: { in: courseIds }, isDeleted: 0 },
+    include: {
+      course: { select: { title: true } },
+    },
+    orderBy: { createdDate: "desc" },
+  });
+
+  const recordings = recordingsData.map((r) => ({
+    id: r.id,
+    title: r.title,
+    course: r.course.title,
+    duration: r.duration || "N/A",
+    date: r.createdDate.toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }),
+    thumbnail: null,
+  }));
 
   return (
     <main className="flex-1 p-6 md:p-10 max-w-[1600px] w-full">
@@ -12,7 +48,7 @@ export default async function StudentRecordingsPage() {
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {recordings.map((rec: any) => (
+          {recordings.map((rec) => (
             <div key={rec.id} className="bg-white border border-slate-100 rounded-3xl overflow-hidden hover:shadow-xl hover:shadow-slate-100 transition-all duration-300 group">
               {/* Thumbnail */}
               <div className="relative h-44 bg-gradient-to-br from-[#100E2E] to-indigo-800 flex items-center justify-center">

@@ -90,6 +90,8 @@ const TwoFactorVerifyPage = () => {
         return;
       }
 
+      document.cookie = "2fa_verified=true; path=/; max-age=86400";
+
       router.push("/dashboard");
       router.refresh();
     } catch {
@@ -140,6 +142,8 @@ const TwoFactorVerifyPage = () => {
         return;
       }
 
+      document.cookie = "2fa_verified=true; path=/; max-age=86400";
+
       router.push("/dashboard");
       router.refresh();
     } catch {
@@ -165,6 +169,8 @@ const TwoFactorVerifyPage = () => {
         setError("Backup code tidak valid atau sudah pernah digunakan.");
         return;
       }
+
+      document.cookie = "2fa_verified=true; path=/; max-age=86400";
 
       router.push("/dashboard");
       router.refresh();

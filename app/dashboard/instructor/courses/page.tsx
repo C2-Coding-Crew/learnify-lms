@@ -16,7 +16,7 @@ export default async function InstructorCoursesPage() {
   }
 
   const roleId = (session.user as any).roleId;
-  if (roleId !== 3) {
+  if (roleId !== 2) {
     redirect("/dashboard");
   }
 
@@ -31,7 +31,10 @@ export default async function InstructorCoursesPage() {
     include: {
       category: true,
       _count: {
-        select: { lessons: true, enrollments: true }
+        select: { 
+          lessons: { where: { isDeleted: 0 } }, 
+          enrollments: { where: { isDeleted: 0, enrollmentStatus: { in: ["active", "completed"] } } } 
+        }
       }
     },
     orderBy: { createdDate: "desc" }
@@ -72,8 +75,14 @@ export default async function InstructorCoursesPage() {
                     </div>
                   )}
                   <div className="absolute top-4 left-4">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${course.isPublished ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>
-                      {course.isPublished ? 'Published' : 'Draft'}
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                      course.isPublished 
+                        ? 'bg-green-100 text-green-700' 
+                        : course.status === 2 
+                          ? 'bg-orange-100 text-orange-700 animate-pulse' 
+                          : 'bg-slate-100 text-slate-600'
+                    }`}>
+                      {course.isPublished ? 'Published' : course.status === 2 ? 'Pending Review' : 'Draft'}
                     </span>
                   </div>
                   <div className="absolute top-4 right-4">

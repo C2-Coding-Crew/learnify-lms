@@ -5,16 +5,16 @@ export async function GET() {
   try {
     // Tambahkan listener untuk semua Prisma events
     const users = await db.user.findMany({
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdDate: 'desc' },
     });
     
     const accounts = await db.account.findMany({
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdDate: 'desc' },
       take: 10,
     });
     
     const sessions = await db.session.findMany({
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdDate: 'desc' },
       take: 5,
     });
 

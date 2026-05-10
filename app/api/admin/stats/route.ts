@@ -1,4 +1,4 @@
-gimport { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { headers } from "next/headers";
@@ -30,11 +30,11 @@ export async function GET() {
     revenueAggregate,
     topCourses,
   ] = await Promise.all([
-    // Total students (roleId = 2)
-    db.user.count({ where: { roleId: 2, isDeleted: 0, status: 1 } }),
-
-    // Total instructors (roleId = 3)
+    // Total students (roleId = 3)
     db.user.count({ where: { roleId: 3, isDeleted: 0, status: 1 } }),
+
+    // Total instructors (roleId = 2)
+    db.user.count({ where: { roleId: 2, isDeleted: 0, status: 1 } }),
 
     // Total active courses
     db.course.count({ where: { isPublished: true, isDeleted: 0, status: 1 } }),
