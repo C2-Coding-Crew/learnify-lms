@@ -17,26 +17,17 @@ export const metadata: Metadata = {
   description: "Platform belajar online terbaik dengan ribuan materi eksklusif dari mentor terpilih.",
 };
 
-import { ThemeProvider } from "@/components/providers/theme-provider";
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-        </ThemeProvider>
+        {children}
       </body>
     </html>
   );
