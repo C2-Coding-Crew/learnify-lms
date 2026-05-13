@@ -36,57 +36,94 @@ async function getStudentDashboardData(userId: string) {
   fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 4);
   fiveDaysAgo.setHours(0, 0, 0, 0);
 
-  const [enrollments, allProgress, weeklyActivity, todos, invoices, certificates, userInfo, allUsersByPoints, allBadges, userBadges] = await Promise.all([
-    db.enrollment.findMany({
-      where: { userId, isDeleted: 0 },
-      include: {
-        course: {
-          include: {
-            lessons: { where: { isDeleted: 0, status: 1 } },
+  let enrollments = [] as any[];
+  let allProgress = [] as any[];
+  let weeklyActivity = [] as any[];
+  let todos = [] as any[];
+  let invoices = [] as any[];
+  let certificates = [] as any[];
+  let userInfo: any = null;
+  let allUsersByPoints: any[] = [];
+  let allBadges: any[] = [];
+  let userBadges: any[] = [];
+
+  try {
+    [
+      enrollments,
+      allProgress,
+      weeklyActivity,
+      todos,
+      invoices,
+      certificates,
+      userInfo,
+      allUsersByPoints,
+      allBadges,
+      userBadges,
+    ] = await Promise.all([
+      db.enrollment.findMany({
+        where: { userId, isDeleted: 0 },
+        include: {
+          course: {
+            include: {
+              lessons: { where: { isDeleted: 0, status: 1 } },
+            },
           },
         },
-      },
-      orderBy: { enrolledAt: "desc" },
-    }),
-    db.lessonProgress.findMany({
-      where: { userId, isDeleted: 0 },
-    }),
-    db.lessonProgress.findMany({
-      where: { userId, isDeleted: 0, lastUpdatedDate: { gte: fiveDaysAgo } },
-      select: { watchedSecs: true, lastUpdatedDate: true },
-    }),
-    db.todo.findMany({
-      where: { userId, isDeleted: 0 },
-      orderBy: { createdDate: "desc" },
-    }),
-    db.invoice.findMany({
-      where: { userId, invoiceStatus: "pending", isDeleted: 0 },
-      select: { id: true, invoiceNumber: true, dueDate: true, totalAmount: true },
-    }),
-    db.certificate.findMany({
-      where: { enrollment: { userId }, isDeleted: 0 },
-      include: { enrollment: { include: { course: { select: { title: true } } } } },
-      orderBy: { createdDate: "desc" },
-    }),
-    db.user.findUnique({
-      where: { id: userId },
-      select: { points: true, streak: true },
-    }),
-    db.user.findMany({
-      where: { isDeleted: 0, points: { gt: 0 } },
-      orderBy: { points: "desc" },
-      select: { id: true },
-    }),
-    (db as any).badge.findMany({
-      where: { status: 1, isDeleted: 0 },
-      orderBy: { id: "asc" }
-    }),
-    (db as any).userBadge.findMany({
-      where: { userId, isDeleted: 0 },
-      include: { badge: true },
-      orderBy: { earnedAt: "desc" }
-    })
-  ]);
+        orderBy: { enrolledAt: "desc" },
+      }),
+      db.lessonProgress.findMany({
+        where: { userId, isDeleted: 0 },
+      }),
+      db.lessonProgress.findMany({
+        where: { userId, isDeleted: 0, lastUpdatedDate: { gte: fiveDaysAgo } },
+        select: { watchedSecs: true, lastUpdatedDate: true },
+      }),
+      db.todo.findMany({
+        where: { userId, isDeleted: 0 },
+        orderBy: { createdDate: "desc" },
+      }),
+      db.invoice.findMany({
+        where: { userId, invoiceStatus: "pending", isDeleted: 0 },
+        select: { id: true, invoiceNumber: true, dueDate: true, totalAmount: true },
+      }),
+      db.certificate.findMany({
+        where: { enrollment: { userId }, isDeleted: 0 },
+        include: { enrollment: { include: { course: { select: { title: true } } } } },
+        orderBy: { createdDate: "desc" },
+      }),
+      db.user.findUnique({
+        where: { id: userId },
+        select: { points: true, streak: true },
+      }),
+      db.user.findMany({
+        where: { isDeleted: 0, points: { gt: 0 } },
+        orderBy: { points: "desc" },
+        select: { id: true },
+      }),
+      (db as any).badge.findMany({
+        where: { status: 1, isDeleted: 0 },
+        orderBy: { id: "asc" },
+      }),
+      (db as any).userBadge.findMany({
+        where: { userId, isDeleted: 0 },
+        include: { badge: true },
+        orderBy: { earnedAt: "desc" },
+      }),
+    ]);
+  } catch (error) {
+    console.error("Failed to load student dashboard data:", error);
+    return {
+      enrolledCourses: [],
+      weeklyHours: [0, 0, 0, 0, 0],
+      avgProgress: 0,
+      todos: [],
+      pendingInvoices: [],
+      certificates: [],
+      userStats: { points: 0, streak: 0, rank: "-" },
+      allBadges: [],
+      userBadges: [],
+    };
+  }
 
   const userIndex = allUsersByPoints.findIndex((u: { id: string }) => u.id === userId);
   const rank = userIndex !== -1 ? userIndex + 1 : "-";
@@ -174,8 +211,27 @@ export default async function StudentPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/auth/login");
 
+  let dashboardData;
+
+  try {
+    dashboardData = await getStudentDashboardData(session.user.id);
+  } catch (error) {
+    console.error("Failed to load student dashboard data:", error);
+
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 py-10">
+        <div className="max-w-lg w-full rounded-3xl border border-border bg-background p-10 text-center shadow-lg">
+          <h1 className="text-2xl font-semibold">Terjadi masalah koneksi database</h1>
+          <p className="mt-4 text-sm text-muted-foreground">
+            Mohon coba lagi beberapa saat. Jika masalah berlanjut, hubungi administrator.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const { enrolledCourses, weeklyHours, avgProgress, todos, pendingInvoices, certificates, userStats, allBadges, userBadges } =
-    await getStudentDashboardData(session.user.id);
+    dashboardData;
 
   return (
     <StudentDashboard

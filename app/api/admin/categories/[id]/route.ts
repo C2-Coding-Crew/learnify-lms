@@ -5,22 +5,20 @@ import { headers } from "next/headers";
 
 async function guardAdmin() {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session?.user || (session.user as any).roleId !== 1) {
+    return null;
   }
-  const roleId = (session.user as any).roleId;
-  if (roleId !== 1) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-  return { user: session.user };
+  return session.user;
 }
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const guard = await guardAdmin();
-  if ("error" in guard) return guard;
+  const user = await guardAdmin();
+  if (!user) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   try {
     const { id } = await params;
@@ -33,7 +31,7 @@ export async function PATCH(
         name,
         slug,
         status,
-        lastUpdatedBy: guard.user.name || "ADMIN",
+        lastUpdatedBy: user.name || "ADMIN",
       },
     });
 
@@ -47,8 +45,10 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const guard = await guardAdmin();
-  if ("error" in guard) return guard;
+  const user = await guardAdmin();
+  if (!user) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   try {
     const { id } = await params;
@@ -59,7 +59,7 @@ export async function DELETE(
       data: {
         isDeleted: 1,
         status: 0,
-        lastUpdatedBy: guard.user.name || "ADMIN",
+        lastUpdatedBy: user.name || "ADMIN",
       },
     });
 
