@@ -10,7 +10,7 @@ async function createAccountWithPassword(userId: string, email: string, plainPas
   const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
   const existing = await prisma.account.findFirst({
-    where: {userId }
+    where: { userId }
   });
 
   if (!existing) {
@@ -90,14 +90,14 @@ async function main() {
   // ─── 3. Seed Instructor Users ─────────────────────────────────────────────
   console.log("\n3️⃣  Seeding Instructor Users...");
   const instructor1 = await prisma.user.upsert({
-    where: { email: "budi.santoso@learnify.id" },
+    where: { email: "wirdiansyah.312410067@mhs.pelitabangsa.ac.id" },
     update: {},
     create: {
       id: "instructor-001",
-      name: "Budi Santoso",
-      email: "budi.santoso@learnify.id",
+      name: "Wirdiansyah",
+      email: "wirdiansyah.312410067@mhs.pelitabangsa.ac.id",
       emailVerified: true,
-      image: "https://api.dicebear.com/7.x/avataaars/svg?seed=BudiSantoso",
+      image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Wirdiansyah",
       roleId: roleInstructor!.id,
       companyCode: COMPANY,
       status: 1,
@@ -109,14 +109,14 @@ async function main() {
     },
   });
   const instructor2 = await prisma.user.upsert({
-    where: { email: "sari.dewi@learnify.id" },
+    where: { email: "thelearnify11@gmail.com" },
     update: {},
     create: {
       id: "instructor-002",
-      name: "Sari Dewi",
-      email: "sari.dewi@learnify.id",
+      name: "Learnify",
+      email: "learnify11@gmail.com",
       emailVerified: true,
-      image: "https://api.dicebear.com/7.x/avataaars/svg?seed=SariDewi",
+      image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Learnify",
       roleId: roleInstructor!.id,
       companyCode: COMPANY,
       status: 1,

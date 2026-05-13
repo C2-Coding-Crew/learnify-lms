@@ -363,7 +363,7 @@
             </p>
             <div class="meta-list">
                 <div class="meta-item">
-                    <i data-lucide="calendar"></i> Update: 10 Mei 2026
+                    <i data-lucide="calendar"></i> Update: 14 Mei 2026
                 </div>
                 <div class="meta-item">
                     <i data-lucide="git-branch"></i> Branch: main
@@ -379,15 +379,15 @@
 
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-value">17</div>
+                <div class="stat-value">20</div>
                 <div class="stat-label">Fitur Selesai</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value">2</div>
+                <div class="stat-value">1</div>
                 <div class="stat-label">Sedang Proses</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value">2</div>
+                <div class="stat-value">1</div>
                 <div class="stat-label">Belum Dimulai</div>
             </div>
             <div class="stat-card">
@@ -399,10 +399,10 @@
         <div class="progress-container">
             <div class="progress-header">
                 <h3 class="progress-title">Overall Completion Status</h3>
-                <span class="progress-percentage">85%</span>
+                <span class="progress-percentage">95%</span>
             </div>
             <div class="progress-track">
-                <div class="progress-fill" style="width: 85%;"></div>
+                <div class="progress-fill" style="width: 95%;"></div>
             </div>
         </div>
 
@@ -420,7 +420,9 @@
                 </div>
                 <div class="feature-meta">app/dashboard/admin/page.tsx</div>
                 <ul class="feature-list">
-                    <li>Admin Dashboard menampilkan stats live dari database (users, courses, revenue)</li>
+                    <li>Admin Dashboard menampilkan stats live dari database secara real-time via Prisma</li>
+                    <li>Admin User CRUD (Students & Instructors) selesai dengan UI responsif & reusable</li>
+                    <li>Isu pool timeout database Neon berhasil diselesaikan (serverless cold start fix)</li>
                     <li>Instructor Dashboard menampilkan kursus milik pengajar beserta revenue & rating</li>
                     <li>Route protection 100% aman (Role-based)</li>
                 </ul>
@@ -473,12 +475,13 @@
                     <h3 class="feature-title">Authentication System</h3>
                     <span class="badge badge-success"><i data-lucide="check-circle" style="width: 14px; height: 14px;"></i> Selesai</span>
                 </div>
-                <div class="feature-meta">Better Auth Integration</div>
+                <div class="feature-meta">Better Auth Integration & Prisma Sync</div>
                 <ul class="feature-list">
-                    <li>Email + password & Google OAuth login</li>
-                    <li>Pilihan Role (Siswa / Instruktur) Udemy-style saat Register</li>
-                    <li>Halaman Lupa Password, 2FA Setup & Verify</li>
-                    <li>Halaman Unauthorized dengan opsi ganti akun</li>
+                    <li>Email + password & Google OAuth login berfungsi penuh</li>
+                    <li>Sinkronisasi Better Auth dan PostgreSQL berhasil (memperbaiki 'session_invalid' & loop login)</li>
+                    <li>Optimasi Google Login: Kecepatan login instan (< 1 detik) via database Singapore</li>
+                    <li>Forgot Password & Email Verification: Integrasi Gmail SMTP/Nodemailer selesai</li>
+                    <li>2FA Security: TOTP (Authenticator App) & Email OTP berfungsi penuh</li>
                 </ul>
             </div>
 
@@ -517,13 +520,15 @@
 
             <div class="feature-card">
                 <div class="feature-header">
-                    <h3 class="feature-title">Database & ORM</h3>
-                    <span class="badge badge-success"><i data-lucide="check-circle" style="width: 14px; height: 14px;"></i> Selesai</span>
+                    <h3 class="feature-title">Database Infrastructure</h3>
+                    <span class="badge badge-success"><i data-lucide="check-circle" style="width: 14px; height: 14px;"></i> Optimized</span>
                 </div>
-                <div class="feature-meta">prisma/schema.prisma</div>
+                <div class="feature-meta">Neon ap-southeast-1 (Singapore)</div>
                 <ul class="feature-list">
-                    <li>Model auth, bisnis, audit fields, soft delete</li>
-                    <li>Tipe timestamp yang disesuaikan (createdDate & lastUpdatedDate)</li>
+                    <li>Migrasi ke Region Singapore: Mengurangi latency dari 250ms ke ~20ms</li>
+                    <li>Serverless Adapter: Implementasi @prisma/adapter-neon dengan WebSocket support</li>
+                    <li>Singleton Pattern: Mencegah kebocoran koneksi saat Hot Reload</li>
+                    <li>Prisma Driver Adapters: Optimasi performa query di environment Serverless</li>
                 </ul>
             </div>
 
@@ -588,6 +593,45 @@
                     <h3>PRIORITAS 4 — Polish UI & Deploy</h3>
                     <p>Navbar active state, perbaiki Todo list dashboard student agar persisten ke database, dan bersiap deploy ke Vercel.</p>
                 </div>
+            </div>
+        </div>
+
+        <div class="section-header" style="margin-top: 4rem;">
+            <i data-lucide="award" style="color: var(--success); width: 32px; height: 32px;"></i>
+            <h2>Saran Update & Best Practices Industri</h2>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-header">
+                    <h3 class="feature-title">Keamanan & Performa</h3>
+                </div>
+                <ul class="feature-list">
+                    <li><strong>Rate Limiting & DDoS Protection:</strong> Implementasikan rate limiting di Edge (misal dengan Vercel KV) untuk API publik dan form login/register guna mencegah brute-force.</li>
+                    <li><strong>Caching Strategy:</strong> Gunakan Redis (Upstash) atau Next.js Data Cache untuk endpoint berat seperti dashboard stats agar mempercepat response time dan mengurangi beban database.</li>
+                    <li><strong>Image & Media Optimization:</strong> Gunakan CDN dan Next.js Image Optimization secara menyeluruh, serta implementasi HLS (HTTP Live Streaming) untuk video courses agar tidak buffering.</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-header">
+                    <h3 class="feature-title">Code Quality & DevOps</h3>
+                </div>
+                <ul class="feature-list">
+                    <li><strong>Automated Testing:</strong> Tambahkan Unit Testing (Jest/Vitest) untuk core logic (seperti kalkulasi progress) dan E2E Testing (Playwright/Cypress) untuk user flow kritis (Checkout & Belajar).</li>
+                    <li><strong>CI/CD Pipeline:</strong> Siapkan GitHub Actions untuk otomatisasi linting, type-checking, testing, dan preview deployment sebelum merge ke main.</li>
+                    <li><strong>Error Monitoring:</strong> Integrasikan Sentry atau Datadog untuk melacak error di production secara real-time dan mengetahui isu lebih cepat sebelum dikeluhkan user.</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-header">
+                    <h3 class="feature-title">SEO & Aksesibilitas (a11y)</h3>
+                </div>
+                <ul class="feature-list">
+                    <li><strong>Semantic HTML & ARIA:</strong> Pastikan seluruh form, tombol, dan navigasi menggunakan atribut ARIA yang tepat untuk mendukung screen reader.</li>
+                    <li><strong>Dynamic Meta Tags:</strong> Implementasikan metadata Next.js yang dinamis untuk SEO pada halaman detail kursus agar mudah ditemukan di mesin pencari.</li>
+                </ul>
             </div>
         </div>
     </div>
