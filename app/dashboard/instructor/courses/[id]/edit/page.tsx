@@ -3,13 +3,16 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save, Loader2, Video, Plus, Trash2, GripVertical, CheckCircle2, FileQuestion } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Video, Plus, Trash2, GripVertical, CheckCircle2, FileQuestion, Type, Clock, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { QuizBuilder } from "@/components/dashboard/instructor/quiz-builder";
+import { useToast } from "@/components/ui/toast-provider";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export default function EditCoursePage() {
   const params = useParams();
   const router = useRouter();
+  const toast = useToast();
   const courseId = params.id as string;
 
   const [isLoading, setIsLoading] = useState(true);
@@ -28,6 +31,9 @@ export default function EditCoursePage() {
   // Add Lesson State
   const [isAddingLesson, setIsAddingLesson] = useState(false);
   const [newLesson, setNewLesson] = useState({ title: "", description: "", videoUrl: "", duration: "", isFree: false });
+
+  // Delete State
+  const [confirmDeleteLesson, setConfirmDeleteLesson] = useState<any | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -83,12 +89,12 @@ export default function EditCoursePage() {
       setCourse(updatedData);
       
       if (submitForReview) {
-        alert("Kursus telah diajukan ke admin untuk direview!");
+        toast.success("Berhasil!", "Kursus telah diajukan ke admin untuk direview.");
       } else {
-        alert("Perubahan berhasil disimpan!");
+        toast.success("Tersimpan", "Perubahan kursus berhasil disimpan.");
       }
     } catch (err: any) {
-      alert(err.message);
+      toast.error("Gagal", err.message);
     } finally {
       setIsSaving(false);
     }
@@ -108,23 +114,27 @@ export default function EditCoursePage() {
       setLessons([...lessons, addedLesson]);
       setIsAddingLesson(false);
       setNewLesson({ title: "", description: "", videoUrl: "", duration: "", isFree: false });
+      toast.success("Materi Ditambahkan", `"${addedLesson.title}" berhasil ditambahkan.`);
     } catch (err: any) {
-      alert(err.message);
+      toast.error("Gagal", err.message);
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleDeleteLesson = async (lessonId: number) => {
-    if (!confirm("Hapus materi ini?")) return;
+  const handleDeleteLessonConfirmed = async () => {
+    if (!confirmDeleteLesson) return;
+    const lesson = confirmDeleteLesson;
+    setConfirmDeleteLesson(null);
     try {
-      const res = await fetch(`/api/instructor/courses/${courseId}/lessons/${lessonId}`, {
+      const res = await fetch(`/api/instructor/courses/${courseId}/lessons/${lesson.id}`, {
         method: "DELETE"
       });
       if (!res.ok) throw new Error("Failed to delete lesson");
-      setLessons(lessons.filter(l => l.id !== lessonId));
+      setLessons(lessons.filter(l => l.id !== lesson.id));
+      toast.success("Materi Dihapus", "Materi telah dihapus dari silabus.");
     } catch (err: any) {
-      alert(err.message);
+      toast.error("Gagal", err.message);
     }
   };
 
@@ -186,39 +196,47 @@ export default function EditCoursePage() {
             <h3 className="text-lg font-black text-slate-800 mb-6">Informasi Dasar</h3>
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-700">Judul Kelas</label>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 ml-1">
+                   <Type size={12} className="text-[#FF6B4A]" /> Judul Kelas
+                </label>
                 <input 
                   type="text" 
                   value={course.title}
                   onChange={e => setCourse({...course, title: e.target.value})}
-                  className="w-full h-11 bg-slate-50 border border-slate-200 rounded-xl px-4 outline-none focus:border-[#FF6B4A] transition-all font-medium text-sm"
+                  className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 outline-none focus:border-[#FF6B4A] focus:ring-4 focus:ring-orange-50 transition-all font-bold text-sm text-slate-700"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-700">Harga (Rp)</label>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 ml-1">
+                   Harga (Rp)
+                </label>
                 <input 
                   type="number" 
                   value={course.price}
                   onChange={e => setCourse({...course, price: e.target.value})}
-                  className="w-full h-11 bg-slate-50 border border-slate-200 rounded-xl px-4 outline-none focus:border-[#FF6B4A] transition-all font-medium text-sm"
+                  className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 outline-none focus:border-[#FF6B4A] focus:ring-4 focus:ring-orange-50 transition-all font-bold text-sm text-slate-700"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-700">Kategori</label>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 ml-1">
+                   Kategori
+                </label>
                 <select 
                   value={course.categoryId}
                   onChange={e => setCourse({...course, categoryId: e.target.value})}
-                  className="w-full h-11 bg-slate-50 border border-slate-200 rounded-xl px-4 outline-none focus:border-[#FF6B4A] transition-all font-medium text-sm"
+                  className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 outline-none focus:border-[#FF6B4A] focus:ring-4 focus:ring-orange-50 transition-all font-bold text-sm text-slate-700"
                 >
                   {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-700">Level</label>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 ml-1">
+                   Level
+                </label>
                 <select 
                   value={course.level}
                   onChange={e => setCourse({...course, level: e.target.value})}
-                  className="w-full h-11 bg-slate-50 border border-slate-200 rounded-xl px-4 outline-none focus:border-[#FF6B4A] transition-all font-medium text-sm"
+                  className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 outline-none focus:border-[#FF6B4A] focus:ring-4 focus:ring-orange-50 transition-all font-bold text-sm text-slate-700"
                 >
                   <option value="Beginner">Beginner</option>
                   <option value="Intermediate">Intermediate</option>
@@ -227,12 +245,14 @@ export default function EditCoursePage() {
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-700">Deskripsi</label>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 ml-1">
+                   Deskripsi
+                </label>
                 <textarea 
                   rows={4}
                   value={course.description}
                   onChange={e => setCourse({...course, description: e.target.value})}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 outline-none focus:border-[#FF6B4A] transition-all font-medium text-sm resize-none"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 outline-none focus:border-[#FF6B4A] focus:ring-4 focus:ring-orange-50 transition-all font-medium text-sm resize-none text-slate-700"
                 />
               </div>
             </div>
@@ -241,8 +261,8 @@ export default function EditCoursePage() {
 
         {/* Kolom Kanan: Silabus Materi */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-[2rem] shadow-sm border border-slate-50 p-6 md:p-8">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-50 p-6 md:p-8">
+            <div className="flex items-center justify-between mb-8">
               <div>
                 <h3 className="text-xl font-black text-slate-800">Silabus Materi</h3>
                 <p className="text-xs font-bold text-slate-400 mt-1">Total {lessons.length} video materi</p>
@@ -250,74 +270,101 @@ export default function EditCoursePage() {
               {!isAddingLesson && (
                 <Button 
                   onClick={() => setIsAddingLesson(true)}
-                  className="bg-orange-50 hover:bg-[#FF6B4A] text-[#FF6B4A] hover:text-white rounded-xl h-10 px-4 font-black transition-all flex items-center gap-2"
+                  className="bg-orange-50 hover:bg-[#FF6B4A] text-[#FF6B4A] hover:text-white rounded-xl h-11 px-6 font-black transition-all flex items-center gap-2 shadow-sm"
                 >
-                  <Plus size={16} /> Tambah Materi
+                  <Plus size={18} /> Tambah Materi
                 </Button>
               )}
             </div>
 
             {/* Form Tambah Materi */}
             {isAddingLesson && (
-              <form onSubmit={handleAddLesson} className="bg-slate-50 border border-slate-100 rounded-2xl p-5 mb-6 space-y-4">
+              <form onSubmit={handleAddLesson} className="bg-slate-50 border border-slate-100 rounded-[2rem] p-8 mb-8 space-y-6 shadow-inner relative overflow-hidden group/form">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover/form:scale-125 transition-transform" />
+                
+                <h4 className="text-sm font-black text-slate-800 flex items-center gap-2 uppercase tracking-widest">
+                  <Video size={16} className="text-[#FF6B4A]" /> Materi Baru
+                </h4>
+
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700">Judul Materi</label>
-                  <input type="text" required value={newLesson.title} onChange={e => setNewLesson({...newLesson, title: e.target.value})} className="w-full h-10 bg-white border border-slate-200 rounded-lg px-3 text-sm focus:border-[#FF6B4A] outline-none" />
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Judul Materi</label>
+                  <input type="text" required value={newLesson.title} onChange={e => setNewLesson({...newLesson, title: e.target.value})} placeholder="Contoh: Pengenalan Dasar-Dasar" className="w-full h-12 bg-white border border-slate-200 rounded-xl px-4 text-sm font-bold focus:border-[#FF6B4A] focus:ring-4 focus:ring-orange-50 outline-none transition-all" />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-700">URL Video (YouTube)</label>
-                    <input type="text" value={newLesson.videoUrl} onChange={e => setNewLesson({...newLesson, videoUrl: e.target.value})} placeholder="https://youtube.com/..." className="w-full h-10 bg-white border border-slate-200 rounded-lg px-3 text-sm focus:border-[#FF6B4A] outline-none" />
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1">
+                      <Globe size={12} /> URL Video (YouTube)
+                    </label>
+                    <input type="text" value={newLesson.videoUrl} onChange={e => setNewLesson({...newLesson, videoUrl: e.target.value})} placeholder="https://youtube.com/watch?v=..." className="w-full h-12 bg-white border border-slate-200 rounded-xl px-4 text-sm font-bold focus:border-[#FF6B4A] focus:ring-4 focus:ring-orange-50 outline-none transition-all" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-700">Durasi (Menit)</label>
-                    <input type="number" required value={newLesson.duration} onChange={e => setNewLesson({...newLesson, duration: e.target.value})} placeholder="Misal: 15" className="w-full h-10 bg-white border border-slate-200 rounded-lg px-3 text-sm focus:border-[#FF6B4A] outline-none" />
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1">
+                      <Clock size={12} /> Durasi (Menit)
+                    </label>
+                    <input type="number" required value={newLesson.duration} onChange={e => setNewLesson({...newLesson, duration: e.target.value})} placeholder="Misal: 15" className="w-full h-12 bg-white border border-slate-200 rounded-xl px-4 text-sm font-bold focus:border-[#FF6B4A] focus:ring-4 focus:ring-orange-50 outline-none transition-all" />
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                
+                <div className="flex items-center gap-3 bg-white w-fit px-4 py-2.5 rounded-xl border border-slate-100 shadow-sm">
                   <input type="checkbox" id="isFree" checked={newLesson.isFree} onChange={e => setNewLesson({...newLesson, isFree: e.target.checked})} className="w-4 h-4 rounded text-[#FF6B4A] focus:ring-[#FF6B4A]" />
-                  <label htmlFor="isFree" className="text-xs font-bold text-slate-600">Video Gratis (Preview)</label>
+                  <label htmlFor="isFree" className="text-xs font-black text-slate-600">Video Gratis (Preview Saja)</label>
                 </div>
-                <div className="flex gap-2 pt-2">
-                  <Button type="button" onClick={() => setIsAddingLesson(false)} variant="outline" className="h-9 rounded-lg text-xs font-bold">Batal</Button>
-                  <Button type="submit" disabled={isSaving} className="h-9 bg-[#FF6B4A] hover:bg-[#e55a3d] text-white rounded-lg text-xs font-bold">{isSaving ? 'Menyimpan...' : 'Simpan Materi'}</Button>
+
+                <div className="flex gap-3 pt-4">
+                  <Button type="button" onClick={() => setIsAddingLesson(false)} variant="ghost" className="h-12 px-6 rounded-xl font-black text-slate-400">Batal</Button>
+                  <Button type="submit" disabled={isSaving} className="h-12 bg-[#FF6B4A] hover:bg-[#e55a3d] text-white rounded-xl px-8 font-black shadow-lg shadow-orange-100">{isSaving ? 'Menyimpan...' : 'Simpan & Tambahkan'}</Button>
                 </div>
               </form>
             )}
 
             {/* List Materi */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               {lessons.length === 0 && !isAddingLesson && (
-                <div className="text-center py-10 bg-slate-50 border border-dashed border-slate-200 rounded-2xl">
-                  <Video size={32} className="mx-auto text-slate-300 mb-2" />
-                  <p className="text-sm font-bold text-slate-400">Belum ada materi pelajaran.</p>
+                <div className="text-center py-20 bg-slate-50 border border-dashed border-slate-200 rounded-[2rem]">
+                  <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+                    <Video size={32} className="text-slate-300" />
+                  </div>
+                  <p className="text-sm font-black text-slate-400">Belum Ada Materi Pelajaran</p>
+                  <p className="text-xs font-bold text-slate-300 mt-1">Mulai susun kurikulum Anda sekarang.</p>
                 </div>
               )}
               {lessons.map((lesson, idx) => (
-                <div key={lesson.id} className="flex items-center gap-4 p-4 bg-white border border-slate-100 rounded-2xl hover:shadow-md transition-shadow group">
+                <div key={lesson.id} className="flex items-center gap-4 p-5 bg-white border border-slate-100 rounded-3xl hover:shadow-xl hover:shadow-slate-100/50 transition-all group relative">
                   <div className="cursor-grab text-slate-300 hover:text-slate-500">
                     <GripVertical size={20} />
                   </div>
-                  <div className="w-10 h-10 rounded-xl bg-orange-50 text-[#FF6B4A] flex items-center justify-center font-black">
+                  <div className="w-12 h-12 rounded-2xl bg-orange-50 text-[#FF6B4A] flex items-center justify-center font-black shadow-sm group-hover:scale-110 transition-transform">
                     {idx + 1}
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                    <h4 className="font-black text-slate-800 text-sm flex items-center gap-2">
                        {lesson.title}
-                       {lesson.isFree && <span className="bg-green-100 text-green-700 text-[9px] px-1.5 py-0.5 rounded uppercase tracking-wider">Preview</span>}
+                       {lesson.isFree && <span className="bg-green-100 text-green-700 text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider">Preview</span>}
                     </h4>
-                    <p className="text-[11px] text-slate-400 font-medium mt-1">Durasi: {lesson.duration} Menit</p>
+                    <div className="flex items-center gap-3 mt-1.5">
+                       <span className="text-[10px] text-slate-400 font-black flex items-center gap-1 uppercase">
+                          <Clock size={10} /> {lesson.duration} Menit
+                       </span>
+                       <span className="w-1 h-1 bg-slate-200 rounded-full" />
+                       <span className="text-[10px] text-slate-400 font-black flex items-center gap-1 uppercase">
+                          <Video size={10} /> Video
+                       </span>
+                    </div>
                   </div>
-                  <button onClick={() => handleDeleteLesson(lesson.id)} className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
-                    <Trash2 size={16} />
+                  <button 
+                    onClick={() => setConfirmDeleteLesson(lesson)} 
+                    className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all opacity-0 group-hover:opacity-100"
+                  >
+                    <Trash2 size={18} />
                   </button>
                 </div>
               ))}
             </div>
 
             {/* Section Kuis */}
-            <div className="mt-12 pt-8 border-t border-slate-100">
-              <div className="flex items-center justify-between mb-6">
+            <div className="mt-16 pt-12 border-t border-slate-50">
+              <div className="flex items-center justify-between mb-8">
                 <div>
                   <h3 className="text-xl font-black text-slate-800">Kuis Pelajaran 📝</h3>
                   <p className="text-xs font-bold text-slate-400 mt-1">Uji pemahaman siswa setelah materi selesai.</p>
@@ -327,31 +374,39 @@ export default function EditCoursePage() {
                     setSelectedLessonId(null);
                     setIsAddingQuiz(true);
                   }}
-                  className="bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white rounded-xl h-10 px-4 font-black transition-all flex items-center gap-2"
+                  className="bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white rounded-xl h-11 px-6 font-black transition-all flex items-center gap-2 shadow-sm border border-indigo-100"
                 >
-                  <Plus size={16} /> Tambah Kuis Umum
+                  <Plus size={18} /> Tambah Kuis Umum
                 </Button>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {quizzes.length === 0 && (
-                  <div className="md:col-span-2 text-center py-10 bg-slate-50 border border-dashed border-slate-200 rounded-2xl">
-                    <FileQuestion size={32} className="mx-auto text-slate-300 mb-2" />
-                    <p className="text-sm font-bold text-slate-400">Belum ada kuis untuk kelas ini.</p>
+                  <div className="md:col-span-2 text-center py-16 bg-slate-50 border border-dashed border-slate-200 rounded-[2rem]">
+                    <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+                      <FileQuestion size={28} className="text-slate-300" />
+                    </div>
+                    <p className="text-sm font-black text-slate-400">Belum Ada Kuis Aktif</p>
                   </div>
                 )}
                 {quizzes.map((quiz: any) => (
-                  <div key={quiz.id} className="p-5 bg-white border border-slate-100 rounded-3xl hover:shadow-lg transition-all flex items-center gap-4 group">
-                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black shrink-0">
+                  <div key={quiz.id} className="p-6 bg-white border border-slate-100 rounded-[2rem] hover:shadow-xl transition-all flex items-center gap-5 group border-b-4 border-b-indigo-50 hover:border-b-indigo-500">
+                    <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black shrink-0 shadow-sm transition-transform group-hover:rotate-12">
                       Q
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-bold text-slate-800 text-sm">{quiz.title}</h4>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">
-                        {quiz._count.questions} Pertanyaan • Lulus {quiz.passingScore}%
-                      </p>
+                      <h4 className="font-black text-slate-800 text-sm leading-tight">{quiz.title}</h4>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">
+                          {quiz._count.questions} Qs
+                        </span>
+                        <span className="w-1 h-1 bg-slate-200 rounded-full" />
+                        <span className="text-[10px] font-black text-green-500 uppercase tracking-widest">
+                          Lulus {quiz.passingScore}%
+                        </span>
+                      </div>
                     </div>
-                    <button className="p-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button className="p-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-50 rounded-xl">
                       <Trash2 size={16} />
                     </button>
                   </div>
@@ -374,6 +429,17 @@ export default function EditCoursePage() {
           }}
         />
       )}
+
+      {/* Delete Lesson Confirm */}
+      <ConfirmDialog
+        open={!!confirmDeleteLesson}
+        onClose={() => setConfirmDeleteLesson(null)}
+        onConfirm={handleDeleteLessonConfirmed}
+        variant="danger"
+        title="Hapus Materi?"
+        description={`Materi "${confirmDeleteLesson?.title}" akan dihapus secara permanen dari silabus kelas ini.`}
+        confirmLabel="Ya, Hapus Materi"
+      />
     </main>
   );
 }

@@ -98,6 +98,24 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
+    async sendResetPassword({ user, url }: { user: any; url: string }) {
+      const { sendEmail, resetPasswordEmailTemplate } = await import("@/lib/email");
+      const html = resetPasswordEmailTemplate(url, user.name || "Pengguna");
+      await sendEmail({
+        to: user.email,
+        subject: "Reset Password Akun Learnify",
+        html: html,
+      });
+    },
+    async sendVerificationEmail({ user, url }: { user: any; url: string }) {
+      const { sendEmail } = await import("@/lib/email");
+      // Kita bisa buat template baru atau pakai sederhana dulu
+      await sendEmail({
+        to: user.email,
+        subject: "Verifikasi Email Learnify",
+        html: `<p>Klik link berikut untuk verifikasi email Anda: <a href="${url}">${url}</a></p>`,
+      });
+    },
   },
 
   plugins: [
