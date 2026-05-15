@@ -23,9 +23,180 @@ import {
   GraduationCap,
   MessageSquare,
   ShieldCheck,
+  Send,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+
+// ─── Star Rating Picker ────────────────────────────────────────────────────────
+function StarPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const [hover, setHover] = useState(0);
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          onClick={() => onChange(star)}
+          onMouseEnter={() => setHover(star)}
+          onMouseLeave={() => setHover(0)}
+          className="transition-transform hover:scale-110"
+        >
+          <Star
+            size={28}
+            className={`transition-colors ${
+              star <= (hover || value) ? "text-yellow-400 fill-yellow-400" : "text-slate-200 fill-slate-200"
+            }`}
+          />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ─── Reviews Section ──────────────────────────────────────────────────────────
+function ReviewsSection({ courseSlug, isEnrolled }: { courseSlug: string; isEnrolled: boolean }) {
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [meta, setMeta] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/courses/${courseSlug}/reviews?limit=5`)
+      .then(res => res.json())
+      .then(data => {
+        setReviews(data.reviews || []);
+        setMeta(data.meta || null);
+      })
+      .finally(() => setIsLoading(false));
+  }, [courseSlug]);
+
+  const handleSubmitReview = async () => {
+    if (rating === 0) {
+      toast.error("Pilih bintang dulu", { description: "Rating wajib diisi (1-5 bintang)." });
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`/api/courses/${courseSlug}/reviews`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rating, comment }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal mengirim ulasan");
+
+      toast.success("Ulasan terkirim! 🎉", { description: "Terima kasih atas feedback-mu." });
+      setRating(0);
+      setComment("");
+      // Refresh reviews
+      const refreshed = await fetch(`/api/courses/${courseSlug}/reviews?limit=5`).then(r => r.json());
+      setReviews(refreshed.reviews || []);
+      setMeta(refreshed.meta || null);
+    } catch (error: any) {
+      toast.error("Gagal", { description: error.message });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const ratingLabels = ["", "Kurang", "Cukup", "Bagus", "Sangat Bagus", "Luar Biasa!"];
+
+  return (
+    <section className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+      <div className="flex items-center justify-between mb-8">
+        <h2 className="text-xl font-black text-slate-900 flex items-center gap-3">
+          <MessageSquare size={22} className="text-[#FF6B4A]" /> Ulasan Siswa
+        </h2>
+        {meta && (
+          <div className="flex items-center gap-2 bg-amber-50 px-4 py-2 rounded-2xl">
+            <Star size={16} fill="#FBBF24" className="text-yellow-400" />
+            <span className="font-black text-slate-800">{Number(meta.averageRating).toFixed(1)}</span>
+            <span className="text-slate-400 text-xs font-medium">({meta.reviewCount} ulasan)</span>
+          </div>
+        )}
+      </div>
+
+      {/* Write Review Form — only for enrolled students */}
+      {isEnrolled && (
+        <div className="bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-100 rounded-3xl p-6 mb-8">
+          <h3 className="font-black text-slate-800 mb-4">Bagikan Pengalamanmu</h3>
+          <div className="flex items-center gap-4 mb-4">
+            <StarPicker value={rating} onChange={setRating} />
+            {rating > 0 && (
+              <span className="text-sm font-bold text-amber-600 animate-in fade-in duration-200">
+                {ratingLabels[rating]}
+              </span>
+            )}
+          </div>
+          <textarea
+            value={comment}
+            onChange={e => setComment(e.target.value)}
+            rows={3}
+            placeholder="Ceritakan pengalamanmu mengikuti kursus ini..."
+            className="w-full px-4 py-3 bg-white border border-orange-100 rounded-2xl outline-none focus:border-[#FF6B4A] focus:ring-2 focus:ring-orange-50 transition-all text-sm font-medium resize-none mb-3"
+          />
+          <Button
+            onClick={handleSubmitReview}
+            disabled={isSubmitting}
+            className="bg-[#FF6B4A] hover:bg-[#e55a3d] text-white rounded-2xl h-11 px-6 font-black shadow-lg shadow-orange-100"
+          >
+            {isSubmitting ? <Loader2 size={16} className="animate-spin mr-2" /> : <Send size={16} className="mr-2" />}
+            Kirim Ulasan
+          </Button>
+        </div>
+      )}
+
+      {/* Review List */}
+      {isLoading ? (
+        <div className="flex justify-center py-10">
+          <Loader2 className="animate-spin text-slate-300" size={32} />
+        </div>
+      ) : reviews.length === 0 ? (
+        <div className="text-center py-10 text-slate-400">
+          <MessageSquare size={40} className="mx-auto mb-3 text-slate-200" />
+          <p className="font-bold">Belum ada ulasan. Jadilah yang pertama!</p>
+        </div>
+      ) : (
+        <div className="space-y-5">
+          {reviews.map((review: any) => (
+            <div key={review.id} className="flex gap-4 p-5 bg-slate-50 rounded-3xl hover:bg-slate-100 transition-colors">
+              <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-200 flex-shrink-0">
+                <img
+                  src={review.user.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${review.user.name}`}
+                  alt={review.user.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <p className="font-black text-sm text-slate-800">{review.user.name}</p>
+                  <div className="flex">
+                    {[1, 2, 3, 4, 5].map(s => (
+                      <Star
+                        key={s}
+                        size={12}
+                        className={s <= review.rating ? "text-yellow-400 fill-yellow-400" : "text-slate-200 fill-slate-200"}
+                      />
+                    ))}
+                  </div>
+                </div>
+                {review.comment && (
+                  <p className="text-sm text-slate-500 leading-relaxed">{review.comment}</p>
+                )}
+                <p className="text-[10px] text-slate-300 font-medium mt-2">
+                  {new Date(review.createdDate).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
 
 interface Lesson {
   id: number;
@@ -246,6 +417,9 @@ export default function StudentCourseDetail({ course }: { course: CourseDetail }
                 ))}
              </div>
           </section>
+
+          {/* Reviews */}
+          <ReviewsSection courseSlug={course.slug} isEnrolled={enrollmentStatus.isEnrolled} />
         </div>
 
         {/* Right Column: Purchase / Status Card */}

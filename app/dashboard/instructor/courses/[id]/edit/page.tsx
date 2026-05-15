@@ -128,6 +128,19 @@ export default function EditCoursePage() {
     }
   };
 
+  const handleDeleteQuiz = async (quizId: number) => {
+    if (!confirm("Hapus kuis ini?")) return;
+    try {
+      const res = await fetch(`/api/instructor/quizzes/${quizId}`, {
+        method: "DELETE"
+      });
+      if (!res.ok) throw new Error("Failed to delete quiz");
+      setQuizzes(quizzes.filter(q => q.id !== quizId));
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
   if (isLoading) return <div className="p-10 flex justify-center"><Loader2 className="animate-spin text-[#FF6B4A]" size={40} /></div>;
   if (error) return <div className="p-10 text-red-500">{error}</div>;
 
@@ -351,7 +364,7 @@ export default function EditCoursePage() {
                         {quiz._count.questions} Pertanyaan • Lulus {quiz.passingScore}%
                       </p>
                     </div>
-                    <button className="p-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => handleDeleteQuiz(quiz.id)} className="p-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Trash2 size={16} />
                     </button>
                   </div>

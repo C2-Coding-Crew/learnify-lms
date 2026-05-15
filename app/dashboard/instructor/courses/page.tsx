@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import InstructorHeader from "@/components/dashboard/instructor/header";
 import { Clock, BookOpen, Users, Plus, Edit, Eye, MoreVertical } from "lucide-react";
+import DeleteCourseButton from "@/components/dashboard/instructor/delete-course-button";
 
 export default async function InstructorCoursesPage() {
   const session = await auth.api.getSession({
@@ -50,7 +51,7 @@ export default async function InstructorCoursesPage() {
         actionButton={true}
       />
 
-      <div className="bg-white rounded-[2rem] shadow-sm border border-slate-50 p-8">
+      <div className="bg-white rounded-[2rem] shadow-sm border border-slate-50 p-6">
         {courses.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="w-24 h-24 bg-orange-50 text-[#FF6B4A] rounded-full flex items-center justify-center mb-6">
@@ -66,12 +67,12 @@ export default async function InstructorCoursesPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {courses.map((course) => (
               <div key={course.id} className="border border-slate-100 rounded-3xl overflow-hidden hover:shadow-xl hover:shadow-slate-100 transition-all duration-300 group bg-white flex flex-col">
-                <div className="h-48 bg-slate-100 relative overflow-hidden">
+                <div className="h-40 bg-slate-100 relative overflow-hidden">
                   {course.thumbnail ? (
                     <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-slate-300">
-                      <BookOpen size={40} />
+                      <BookOpen size={32} />
                     </div>
                   )}
                   <div className="absolute top-4 left-4">
@@ -92,16 +93,16 @@ export default async function InstructorCoursesPage() {
                   </div>
                 </div>
                 
-                <div className="p-6 flex-1 flex flex-col">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-[10px] font-black text-[#FF6B4A] bg-orange-50 px-2 py-1 rounded-md uppercase tracking-wider">
+                <div className="p-5 flex-1 flex flex-col">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-[9px] font-black text-[#FF6B4A] bg-orange-50 px-2 py-0.5 rounded-md uppercase tracking-wider">
                       {course.category?.name || 'Uncategorized'}
                     </span>
-                    <span className="text-[10px] font-black text-slate-500 bg-slate-50 px-2 py-1 rounded-md uppercase tracking-wider">
+                    <span className="text-[9px] font-black text-slate-500 bg-slate-50 px-2 py-0.5 rounded-md uppercase tracking-wider">
                       {course.level}
                     </span>
                   </div>
-                  <h3 className="font-black text-slate-800 text-lg leading-tight mb-2 line-clamp-2">
+                  <h3 className="font-black text-slate-800 text-base leading-tight mb-2 line-clamp-2">
                     {course.title}
                   </h3>
                   
@@ -128,6 +129,7 @@ export default async function InstructorCoursesPage() {
                   <Link href={`/dashboard/instructor/courses/${course.id}/edit`} className="flex-1 flex justify-center py-2.5 hover:bg-white rounded-xl text-slate-400 hover:text-blue-600 transition-colors">
                     <Edit size={18} />
                   </Link>
+                  <DeleteCourseButton courseId={course.id} courseTitle={course.title} />
                 </div>
               </div>
             ))}

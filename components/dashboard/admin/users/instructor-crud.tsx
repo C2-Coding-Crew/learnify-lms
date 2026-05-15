@@ -141,7 +141,7 @@ export default function InstructorCRUD({ initialData }: { initialData: Instructo
   };
 
   return (
-    <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
+    <div className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-slate-100">
       {/* Toolbar */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
         <div className="relative w-full md:w-96">
@@ -164,31 +164,31 @@ export default function InstructorCRUD({ initialData }: { initialData: Instructo
 
       {/* Tabel */}
       <div className="overflow-x-auto pb-4">
-        <table className="w-full text-sm whitespace-nowrap min-w-[1300px]">
+        <table className="w-full text-sm whitespace-nowrap min-w-[1100px]">
           <thead>
             <tr className="border-b border-slate-100">
-              <th className="text-left pb-4 pl-4 text-[11px] font-black text-slate-400 uppercase tracking-widest sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#f1f5f9]">
+              <th className="text-left pb-3 pl-3 text-[10px] font-black text-slate-400 uppercase tracking-widest sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#f1f5f9]">
                 Aksi
               </th>
-              <th className="text-left pb-4 pl-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+              <th className="text-left pb-3 pl-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 Profil Instruktur
               </th>
-              <th className="text-left pb-4 pl-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+              <th className="text-left pb-3 pl-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 Kursus / Siswa / Rating
               </th>
-              <th className="text-left pb-4 pl-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+              <th className="text-left pb-3 pl-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 Status
               </th>
-              <th className="text-left pb-4 pl-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+              <th className="text-left pb-3 pl-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 Created By
               </th>
-              <th className="text-left pb-4 pl-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+              <th className="text-left pb-3 pl-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 Created Date
               </th>
-              <th className="text-left pb-4 pl-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+              <th className="text-left pb-3 pl-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 Last Update By
               </th>
-              <th className="text-left pb-4 pl-4 pr-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+              <th className="text-left pb-3 pl-3 pr-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 Last Update Date
               </th>
             </tr>
@@ -204,59 +204,59 @@ export default function InstructorCRUD({ initialData }: { initialData: Instructo
               filteredInstructors.map((ins) => (
                 <tr key={ins.id} className="hover:bg-slate-50/50 transition-colors group">
                   {/* Aksi di kiri — sticky */}
-                  <td className="py-4 pl-4 pr-6 sticky left-0 bg-white group-hover:bg-slate-50 shadow-[1px_0_0_0_#f1f5f9] transition-colors z-10">
-                    <div className="flex items-center gap-2">
+                  <td className="py-3 pl-3 pr-4 sticky left-0 bg-white group-hover:bg-slate-50 shadow-[1px_0_0_0_#f1f5f9] transition-colors z-10">
+                    <div className="flex items-center gap-1.5">
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-8 w-8 rounded-lg text-blue-500 border-blue-100 hover:bg-blue-50"
+                        className="h-7 w-7 rounded-lg text-blue-500 border-blue-100 hover:bg-blue-50"
                         onClick={() => handleOpenEdit(ins)}
                       >
-                        <Edit2 className="w-4 h-4" />
+                        <Edit2 className="w-3.5 h-3.5" />
                       </Button>
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-8 w-8 rounded-lg text-red-500 border-red-100 hover:bg-red-50"
+                        className="h-7 w-7 rounded-lg text-red-500 border-red-100 hover:bg-red-50"
                         onClick={() => handleDelete(ins.id)}
                         disabled={loadingId === ins.id}
                       >
                         {loadingId === ins.id
-                          ? <Loader2 className="w-4 h-4 animate-spin" />
-                          : <Trash2 className="w-4 h-4" />
+                          ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          : <Trash2 className="w-3.5 h-3.5" />
                         }
                       </Button>
                     </div>
                   </td>
 
                   {/* Profil */}
-                  <td className="py-4 pl-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center font-black text-sm shrink-0">
+                  <td className="py-3 pl-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center font-black text-xs shrink-0">
                         {ins.name.charAt(0).toUpperCase()}
                       </div>
                       <div className="flex flex-col">
-                        <span className="font-black text-slate-800">{ins.name}</span>
-                        <span className="text-xs text-slate-400 font-medium">{ins.email}</span>
+                        <span className="font-black text-slate-800 text-xs">{ins.name}</span>
+                        <span className="text-[10px] text-slate-400 font-medium">{ins.email}</span>
                       </div>
                     </div>
                   </td>
 
                   {/* Stats */}
-                  <td className="py-4 pl-4">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-xs font-bold text-slate-600">
+                  <td className="py-3 pl-3">
+                    <div className="flex flex-col gap-0.5 text-[10px] font-bold">
+                      <span className="text-slate-600">
                         📚 {ins.courseCount} kursus · 👤 {ins.studentCount.toLocaleString("id-ID")} siswa
                       </span>
-                      <span className="text-xs font-bold text-yellow-500">
+                      <span className="text-yellow-500">
                         ⭐ {ins.avgRating > 0 ? ins.avgRating.toFixed(1) : "—"}
                       </span>
                     </div>
                   </td>
 
                   {/* Status */}
-                  <td className="py-4 pl-4">
-                    <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-md ${
+                  <td className="py-3 pl-3">
+                    <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${
                       ins.status === 1 ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500"
                     }`}>
                       {ins.status === 1 ? "Aktif" : "Non-Aktif"}
@@ -264,20 +264,20 @@ export default function InstructorCRUD({ initialData }: { initialData: Instructo
                   </td>
 
                   {/* 4 Field Standar */}
-                  <td className="py-4 pl-4">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold bg-slate-100 text-slate-600">
+                  <td className="py-3 pl-3">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600">
                       {ins.createdBy || "SYSTEM"}
                     </span>
                   </td>
-                  <td className="py-4 pl-4 text-slate-500 font-medium text-xs">
+                  <td className="py-3 pl-3 text-slate-500 font-medium text-[10px]">
                     {formatDate(ins.createdDate)}
                   </td>
-                  <td className="py-4 pl-4">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold bg-slate-100 text-slate-600">
+                  <td className="py-3 pl-3">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600">
                       {ins.lastUpdatedBy || "SYSTEM"}
                     </span>
                   </td>
-                  <td className="py-4 pl-4 pr-4 text-slate-500 font-medium text-xs">
+                  <td className="py-3 pl-3 pr-4 text-slate-500 font-medium text-[10px]">
                     {formatDate(ins.lastUpdatedDate)}
                   </td>
                 </tr>
