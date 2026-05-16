@@ -176,6 +176,7 @@ export async function POST(request: Request) {
       db.invoice.create({
         data: {
           userId: session.user.id,
+          courseId,              // ← fix: link invoice ke kursus
           invoiceNumber,
           totalAmount: finalPrice,
           couponId: validCoupon?.id,

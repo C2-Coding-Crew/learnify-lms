@@ -17,7 +17,12 @@ export default async function StudentPurchasesPage() {
     where: { userId: session.user.id, isDeleted: 0 },
     include: {
       course: {
-        include: { instructor: { select: { name: true } } }
+        // Sengaja tanpa filter isDeleted agar riwayat tetap tampil
+        // meski kursus sudah di-soft-delete oleh instruktur
+        include: {
+          instructor: { select: { name: true } },
+          category: { select: { name: true } },
+        }
       }
     },
     orderBy: { createdDate: "desc" }
@@ -80,12 +85,25 @@ export default async function StudentPurchasesPage() {
                       <p className="text-xs text-slate-400 font-medium mt-1">{formatDate(inv.createdDate as Date)}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="font-bold text-slate-700 max-w-[250px] truncate">
-                        {inv.course?.title || "Kursus Dihapus"}
-                      </p>
-                      <p className="text-xs text-slate-400 font-medium mt-1">
-                        Instruktur: {inv.course?.instructor?.name || "—"}
-                      </p>
+                      {inv.course ? (
+                        <>
+                          <div className="flex items-center gap-2 mb-1">
+                            {inv.course.category?.name && (
+                              <span className="text-[10px] font-black text-[#FF6B4A] bg-orange-50 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                                {inv.course.category.name}
+                              </span>
+                            )}
+                          </div>
+                          <p className="font-bold text-slate-700 max-w-[250px] truncate">
+                            {inv.course.title}
+                          </p>
+                          <p className="text-xs text-slate-400 font-medium mt-1">
+                            Instruktur: {inv.course.instructor?.name || "—"}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-xs text-slate-400 italic">Data kursus tidak tersedia</p>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <span className="font-black text-slate-700">
