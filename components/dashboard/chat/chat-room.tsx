@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Send, Paperclip, Smile, Loader2, User as UserIcon, FileText, Image as ImageIcon, Download, X } from "lucide-react";
+import { useToast } from "@/components/ui/toast-provider";
 
 interface Message {
   id: number;
@@ -27,6 +28,7 @@ interface ChatRoomProps {
 const COMMON_EMOJIS = ["😀", "😂", "🥰", "😍", "😎", "🤩", "🤔", "😮", "😴", "👍", "🔥", "🚀", "🎉", "💯", "👏", "🙌"];
 
 export default function ChatRoom({ courseId, courseTitle, currentUserId }: ChatRoomProps) {
+  const toast = useToast();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [newMessage, setNewMessage] = useState("");
@@ -137,9 +139,9 @@ export default function ChatRoom({ courseId, courseTitle, currentUserId }: ChatR
         setNewMessage("");
         setSelectedFile(null);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to send message:", err);
-      alert("Gagal mengirim pesan. Silakan coba lagi.");
+      toast.error("Gagal", "Gagal mengirim pesan. Silakan coba lagi.");
     } finally {
       setIsSending(false);
       setIsUploading(false);

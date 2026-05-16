@@ -424,7 +424,7 @@ export default function StudentDashboard({
 
             {/* Billing/Invoice Card */}
             <div 
-              onClick={() => router.push("/dashboard/student/billing")}
+              onClick={() => router.push("/dashboard/student/purchases")}
               className="bg-white p-5 rounded-[1.5rem] shadow-sm border border-slate-50 group hover:shadow-md transition-all cursor-pointer"
             >
               <div className="flex items-center justify-between mb-4">

@@ -40,16 +40,44 @@ export default async function LearnPage({ params, searchParams }: Props) {
 
   if (!course) redirect("/courses");
 
-  // 3. Cek enrollment — harus sudah enroll
+  // 3. Cek enrollment — harus sudah enroll DAN aktif/selesai (bukan pending_payment)
   const enrollment = await db.enrollment.findFirst({
     where: {
       userId: session.user.id,
       courseId: course.id,
       isDeleted: 0,
+      enrollmentStatus: { in: ["active", "completed"] },
     },
   });
 
   if (!enrollment) {
+    // Cek apakah ada enrollment pending_payment → arahkan ke checkout
+    const pendingEnrollment = await db.enrollment.findFirst({
+      where: {
+        userId: session.user.id,
+        courseId: course.id,
+        isDeleted: 0,
+        enrollmentStatus: "pending_payment",
+      },
+    });
+
+    if (pendingEnrollment) {
+      const pendingInvoice = await db.invoice.findFirst({
+        where: {
+          userId: session.user.id,
+          courseId: course.id,
+          invoiceStatus: "pending",
+          isDeleted: 0,
+        },
+        select: { invoiceNumber: true },
+        orderBy: { createdDate: "desc" },
+      });
+
+      if (pendingInvoice) {
+        redirect(`/checkout/${pendingInvoice.invoiceNumber}`);
+      }
+    }
+
     redirect(`/courses/${slug}`);
   }
 

@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { DollarSign, TrendingUp, ArrowUpRight, Download } from "lucide-react";
+import RevenueFilters from "@/components/dashboard/admin/revenues/revenue-filters";
+import TransactionTable from "@/components/dashboard/admin/revenues/transaction-table";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const fmt = (n: number) =>
@@ -13,33 +15,50 @@ const fmt = (n: number) =>
   }).format(n);
 
 // ── Data Fetcher ──────────────────────────────────────────────────────────────
-async function getRevenueData() {
+async function getRevenueData(startStr?: string, endStr?: string, page: number = 1, pageSize: number = 10) {
   const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  
+  let startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+  let endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+
+  if (startStr && endStr) {
+    startDate = new Date(startStr);
+    startDate.setHours(0, 0, 0, 0);
+    endDate = new Date(endStr);
+    endDate.setHours(23, 59, 59, 999);
+  }
+
+  // Base where clause for total and top courses (ignores date filters for all-time stats)
+  const baseWhere = { isDeleted: 0, invoiceStatus: "paid" };
+
+  // Filtered where clause for transactions and filtered revenue
+  const filterWhere = {
+    ...baseWhere,
+    createdDate: { gte: startDate, lte: endDate },
+  };
+
+  const skip = (page - 1) * pageSize;
 
   const [
     totalRevenueAgg,
-    thisMonthAgg,
+    filteredRevenueAgg,
     topCourses,
-    recentInvoices,
+    transactionsData,
+    totalTransactionsCount,
   ] = await Promise.all([
-    // Total revenue from paid invoices
+    // Total revenue ALL TIME
     db.invoice.aggregate({
-      where: { invoiceStatus: "paid", isDeleted: 0 },
+      where: baseWhere,
       _sum: { totalAmount: true },
     }),
 
-    // Revenue this month
+    // Revenue in filtered period
     db.invoice.aggregate({
-      where: {
-        invoiceStatus: "paid",
-        isDeleted: 0,
-        createdDate: { gte: startOfMonth },
-      },
+      where: filterWhere,
       _sum: { totalAmount: true },
     }),
 
-    // Top earning courses (by enrollment count × price as proxy)
+    // Top earning courses (all time)
     db.course.findMany({
       where: { isDeleted: 0, isPublished: true },
       select: {
@@ -52,19 +71,24 @@ async function getRevenueData() {
       take: 5,
     }),
 
-    // Recent paid invoices — Invoice has no direct Course relation, join via user
+    // Paginated transactions
     db.invoice.findMany({
-      where: { invoiceStatus: "paid", isDeleted: 0 },
+      where: filterWhere,
       include: {
         user: { select: { name: true, email: true } },
+        course: { include: { instructor: { select: { name: true } } } },
       },
       orderBy: { createdDate: "desc" },
-      take: 10,
+      skip,
+      take: pageSize,
     }),
+
+    // Total count for pagination
+    db.invoice.count({ where: filterWhere }),
   ]);
 
   const totalRevenue = Number(totalRevenueAgg._sum.totalAmount ?? 0);
-  const thisMonthRevenue = Number(thisMonthAgg._sum.totalAmount ?? 0);
+  const filteredRevenue = Number(filteredRevenueAgg._sum.totalAmount ?? 0);
   // Instructor payout estimate: 60% of total revenue
   const instructorPayouts = Math.round(totalRevenue * 0.6);
 
@@ -80,40 +104,57 @@ async function getRevenueData() {
     percent: Math.round((c._count.enrollments / maxEnrollments) * 100),
   }));
 
-  // Recent transactions
-  const transactions = recentInvoices.map((inv: any) => ({
+  // Full paginated transactions
+  const transactions = transactionsData.map((inv: any) => ({
     id: inv.id,
-    course: inv.invoiceNumber,
-    instructor: inv.user?.name ?? "—",
+    course: inv.course?.title || inv.invoiceNumber,
+    instructor: inv.course?.instructor?.name || "—",
+    studentName: inv.user?.name || "—",
     amount: fmt(Number(inv.totalAmount)),
     date: (inv.createdDate as Date).toLocaleDateString("id-ID", {
       day: "2-digit",
       month: "short",
       year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     }),
   }));
 
+  const totalPages = Math.ceil(totalTransactionsCount / pageSize);
+
   return {
     totalRevenue,
-    thisMonthRevenue,
+    filteredRevenue,
     instructorPayouts,
     topCoursesFormatted,
     transactions,
+    totalPages,
+    totalTransactionsCount,
   };
 }
 
 // ── Page Component ────────────────────────────────────────────────────────────
-export default async function AdminRevenuesPage() {
+export default async function AdminRevenuesPage(props: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }> | { [key: string]: string | string[] | undefined }
+}) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/auth/login");
 
+  // Next.js 15+ searchParams handling
+  const searchParams = await props.searchParams;
+  const start = typeof searchParams.start === "string" ? searchParams.start : undefined;
+  const end = typeof searchParams.end === "string" ? searchParams.end : undefined;
+  const page = typeof searchParams.page === "string" ? parseInt(searchParams.page, 10) : 1;
+
   const {
     totalRevenue,
-    thisMonthRevenue,
+    filteredRevenue,
     instructorPayouts,
     topCoursesFormatted,
     transactions,
-  } = await getRevenueData();
+    totalPages,
+    totalTransactionsCount,
+  } = await getRevenueData(start, end, page, 10);
 
   const stats = [
     {
@@ -124,8 +165,8 @@ export default async function AdminRevenuesPage() {
       bg: "bg-green-50",
     },
     {
-      label: "This Month",
-      value: fmt(thisMonthRevenue),
+      label: "Filtered Revenue",
+      value: fmt(filteredRevenue),
       icon: TrendingUp,
       color: "text-orange-600",
       bg: "bg-orange-50",
@@ -151,12 +192,12 @@ export default async function AdminRevenuesPage() {
             Live data dari Invoice DB
           </p>
         </div>
-        <button className="h-11 px-6 bg-orange-500 hover:bg-orange-600 text-white rounded-xl flex items-center gap-2 font-bold text-sm transition-colors shadow-lg shadow-orange-100">
-          <script dangerouslySetInnerHTML={{ __html: `
-            document.currentScript.parentElement.onclick = function() { window.print(); }
-          `}} />
-          <Download size={16} /> Export Report
-        </button>
+        <div className="flex items-center gap-3">
+          <RevenueFilters />
+          <button className="h-11 px-6 bg-orange-500 hover:bg-orange-600 text-white rounded-xl flex items-center gap-2 font-bold text-sm transition-colors shadow-lg shadow-orange-100" onClick="window.print()">
+            <Download size={16} /> Export Report
+          </button>
+        </div>
       </header>
 
       {/* Stats */}
@@ -220,38 +261,13 @@ export default async function AdminRevenuesPage() {
           )}
         </div>
 
-        {/* Recent Transactions */}
-        <div className="bg-white rounded-[2.5rem] shadow-sm border border-orange-50 p-8">
-          <h3 className="font-black text-[#2D2D2D] text-lg mb-6">
-            Recent Transactions
-          </h3>
-          {transactions.length === 0 ? (
-            <p className="text-center text-slate-400 text-sm py-10">
-              Belum ada transaksi.
-            </p>
-          ) : (
-            <div className="space-y-4">
-              {transactions.map((t) => (
-                <div
-                  key={t.id}
-                  className="flex items-center justify-between p-4 bg-orange-50/30 rounded-2xl hover:bg-orange-50/60 transition-colors"
-                >
-                  <div className="flex-1 min-w-0 mr-4">
-                    <p className="text-sm font-bold text-[#2D2D2D] truncate">
-                      {t.course}
-                    </p>
-                    <p className="text-[11px] text-slate-400 font-medium mt-0.5">
-                      {t.instructor} · {t.date}
-                    </p>
-                  </div>
-                  <span className="text-sm font-black text-green-600 shrink-0">
-                    {t.amount}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Full Transactions Table */}
+        <TransactionTable 
+          transactions={transactions} 
+          page={page} 
+          totalPages={totalPages} 
+          totalTransactions={totalTransactionsCount}
+        />
       </div>
     </main>
   );

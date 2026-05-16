@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   ShieldCheck,
@@ -9,18 +9,36 @@ import {
   CheckCircle,
   XCircle,
   Loader2,
-  BookOpen,
   ArrowLeft,
+  GraduationCap,
+  Sparkles,
+  Lock,
+  Tag,
+  PlayCircle,
+  AlertTriangle,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
+
+interface CourseInfo {
+  title: string;
+  slug?: string;
+  thumbnail?: string | null;
+  level: string;
+  price: number;
+  categoryName?: string;
+  instructorName?: string;
+  instructorImage?: string | null;
+}
 
 interface Invoice {
   id: number;
   invoiceNumber: string;
   totalAmount: number;
+  discountAmt?: number;
   invoiceStatus: string;
   dueDate: string;
-  courseName?: string;
+  course?: CourseInfo;
 }
 
 interface Props {
@@ -43,14 +61,64 @@ declare global {
   }
 }
 
+// ── Countdown Hook ────────────────────────────────────────────────────────────
+function useCountdown(targetDateStr: string) {
+  const calcRemaining = useCallback(() => {
+    const diff = new Date(targetDateStr).getTime() - Date.now();
+    if (diff <= 0) return { hours: 0, minutes: 0, seconds: 0, isExpired: true, totalMs: 0 };
+    const totalSeconds = Math.floor(diff / 1000);
+    return {
+      hours: Math.floor(totalSeconds / 3600),
+      minutes: Math.floor((totalSeconds % 3600) / 60),
+      seconds: totalSeconds % 60,
+      isExpired: false,
+      totalMs: diff,
+    };
+  }, [targetDateStr]);
+
+  const [countdown, setCountdown] = useState(calcRemaining);
+
+  useEffect(() => {
+    if (countdown.isExpired) return;
+    const interval = setInterval(() => {
+      const next = calcRemaining();
+      setCountdown(next);
+      if (next.isExpired) clearInterval(interval);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [calcRemaining, countdown.isExpired]);
+
+  return countdown;
+}
+
+// ── Urgency levels ─────────────────────────────────────────────────────────────
+function getUrgencyStyle(totalMs: number) {
+  const hours = totalMs / (1000 * 3600);
+  if (hours <= 1) return { bg: "bg-red-500", text: "text-red-600", border: "border-red-200", label: "Segera bayar!" };
+  if (hours <= 6) return { bg: "bg-orange-500", text: "text-orange-600", border: "border-orange-200", label: "Hampir habis" };
+  return { bg: "bg-amber-500", text: "text-amber-600", border: "border-amber-200", label: "Batas pembayaran" };
+}
+
+// ── Main Component ─────────────────────────────────────────────────────────────
 export default function CheckoutClient({ invoice }: Props) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [paymentStatus, setPaymentStatus] = useState<"idle" | "pending" | "success" | "failed">(
-    invoice.invoiceStatus === "paid" ? "success" : "idle"
+  const [paymentStatus, setPaymentStatus] = useState<"idle" | "pending" | "success" | "failed" | "expired">(
+    invoice.invoiceStatus === "paid" ? "success" :
+    invoice.invoiceStatus === "cancelled" ? "expired" : "idle"
   );
 
-  // Inject Midtrans Snap.js script
+  const countdown = useCountdown(invoice.dueDate);
+  const urgency = getUrgencyStyle(countdown.totalMs);
+
+  // Auto-set expired when countdown hits zero
+  useEffect(() => {
+    if (countdown.isExpired && paymentStatus === "idle") {
+      setPaymentStatus("expired");
+    }
+  }, [countdown.isExpired, paymentStatus]);
+
+  // Inject Midtrans Snap.js
   const clientKey = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY;
   const isProduction = process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true";
 
@@ -58,7 +126,6 @@ export default function CheckoutClient({ invoice }: Props) {
     if (!clientKey) return;
     const scriptId = "midtrans-snap";
     if (document.getElementById(scriptId)) return;
-
     const script = document.createElement("script");
     script.id = scriptId;
     script.src = isProduction
@@ -67,34 +134,28 @@ export default function CheckoutClient({ invoice }: Props) {
     script.setAttribute("data-client-key", clientKey);
     script.async = true;
     document.head.appendChild(script);
-
-    return () => {
-      const el = document.getElementById(scriptId);
-      if (el) el.remove();
-    };
+    return () => { document.getElementById(scriptId)?.remove(); };
   }, [clientKey, isProduction]);
 
   const formatIDR = (amount: number) =>
-    new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      maximumFractionDigits: 0,
-    }).format(amount);
+    new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(amount);
 
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString("id-ID", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+      weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit",
     });
 
+  const pad = (n: number) => String(n).padStart(2, "0");
+
   const handlePay = async () => {
+    if (countdown.isExpired) {
+      toast.error("Tagihan ini sudah kadaluarsa. Silakan buat pesanan baru.");
+      setPaymentStatus("expired");
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // 1. Dapatkan Snap token dari server
       const res = await fetch("/api/payment/midtrans", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -103,12 +164,19 @@ export default function CheckoutClient({ invoice }: Props) {
 
       if (!res.ok) {
         const err = await res.json();
+        // Handle expired response from server
+        if (res.status === 410 || err.code === "INVOICE_EXPIRED") {
+          setPaymentStatus("expired");
+          toast.error("Tagihan ini sudah kadaluarsa.", {
+            description: "Silakan kembali ke halaman kursus dan buat pesanan baru.",
+          });
+          return;
+        }
         throw new Error(err.error ?? "Gagal membuat token pembayaran");
       }
 
       const { snapToken } = await res.json();
 
-      // 2. Buka Midtrans Snap popup
       if (!window.snap) {
         throw new Error("Midtrans Snap.js belum dimuat. Coba refresh halaman.");
       }
@@ -118,7 +186,6 @@ export default function CheckoutClient({ invoice }: Props) {
           console.log("[Midtrans] Payment success:", result);
           setPaymentStatus("success");
           toast.success("🎉 Pembayaran berhasil! Kamu sekarang bisa mulai belajar.");
-          setTimeout(() => router.push("/dashboard/student"), 2000);
         },
         onPending: (result) => {
           console.log("[Midtrans] Payment pending:", result);
@@ -141,146 +208,264 @@ export default function CheckoutClient({ invoice }: Props) {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-[#FFFBF9] flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+  const course = invoice.course;
+  const isExpired = paymentStatus === "expired" || countdown.isExpired;
+  const isPaid = paymentStatus === "success";
+  const canPay = !isExpired && !isPaid && invoice.invoiceStatus !== "cancelled";
 
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
+  return (
+    <div className="min-h-screen bg-[#F8FAFC]">
+      {/* Top Navigation */}
+      <header className="bg-white border-b border-slate-200 py-4 px-6 md:px-12 sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
           <button
             onClick={() => router.back()}
-            className="p-2 rounded-xl bg-white border border-slate-100 hover:bg-slate-50 transition-colors"
+            className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-800 transition-colors"
           >
-            <ArrowLeft size={18} className="text-slate-600" />
+            <ArrowLeft size={16} /> Kembali
           </button>
-          <div>
-            <h1 className="text-xl font-black text-[#2D2D2D]">Pembayaran</h1>
-            <p className="text-xs text-slate-400 font-medium">Selesaikan pembayaran untuk mengakses kursus</p>
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="text-green-500 w-5 h-5" />
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Secure Checkout</span>
           </div>
         </div>
+      </header>
 
-        {/* Status Banner */}
-        {paymentStatus === "success" && (
-          <div className="mb-6 bg-green-50 border border-green-200 rounded-3xl p-5 flex items-center gap-4">
-            <div className="w-12 h-12 bg-green-500 rounded-2xl flex items-center justify-center flex-shrink-0">
-              <CheckCircle size={24} className="text-white" />
-            </div>
+      <main className="max-w-6xl mx-auto py-8 px-4 md:px-12 lg:py-16">
+        <div className="flex flex-col lg:flex-row gap-12">
+
+          {/* ── Left Column: Order Summary ── */}
+          <div className="flex-1 space-y-8">
             <div>
-              <p className="font-black text-green-800">Pembayaran Berhasil! 🎉</p>
-              <p className="text-sm text-green-600">Kamu sekarang bisa mengakses kursus ini.</p>
+              <h1 className="text-3xl lg:text-4xl font-black text-[#0F172A] tracking-tight mb-2">
+                Ringkasan Pesanan
+              </h1>
+              <p className="text-slate-500 font-medium">Periksa kembali detail kursus yang akan kamu beli.</p>
+            </div>
+
+            {course ? (
+              <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+                <div className="flex flex-col sm:flex-row gap-6">
+                  <div className="w-full sm:w-48 h-32 rounded-2xl bg-slate-100 overflow-hidden shrink-0 relative group">
+                    {course.thumbnail ? (
+                      <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-orange-50 text-orange-300">
+                        <GraduationCap size={40} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 flex flex-col justify-center">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase tracking-wider">{course.categoryName || "Kursus"}</span>
+                      <span className="px-2.5 py-1 rounded-md bg-orange-50 text-orange-600 text-[10px] font-black uppercase tracking-wider">{course.level}</span>
+                    </div>
+                    <h3 className="text-lg font-black text-[#0F172A] leading-tight mb-3">{course.title}</h3>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden border-2 border-white shadow-sm">
+                        <img src={course.instructorImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${course.instructorName}`} alt="Instructor" />
+                      </div>
+                      <span className="text-sm font-bold text-slate-600">Oleh {course.instructorName || "Instruktur Learnify"}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <hr className="my-6 border-slate-100" />
+
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center text-slate-500">
+                    <span className="font-medium text-sm">Harga Normal</span>
+                    <span className="font-bold">{formatIDR(course.price)}</span>
+                  </div>
+                  {(invoice.discountAmt ?? 0) > 0 && (
+                    <div className="flex justify-between items-center text-green-600 bg-green-50 px-3 py-2 rounded-lg">
+                      <span className="font-bold text-sm flex items-center gap-1.5"><Tag size={14} /> Diskon Kupon</span>
+                      <span className="font-black">-{formatIDR(invoice.discountAmt!)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center pt-3 border-t border-slate-100">
+                    <span className="font-black text-slate-800 text-lg">Total Tagihan</span>
+                    <span className="font-black text-2xl text-[#FF6B4A]">{formatIDR(invoice.totalAmount)}</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm text-center">
+                <p className="text-slate-500">Detail kursus tidak tersedia.</p>
+              </div>
+            )}
+
+            {/* Trust Badges */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-slate-50 rounded-2xl p-4 flex items-center gap-3 border border-slate-100">
+                <Lock className="text-slate-400 w-8 h-8" />
+                <div>
+                  <p className="font-bold text-slate-700 text-xs">Pembayaran Aman</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Enkripsi 256-bit SSL</p>
+                </div>
+              </div>
+              <div className="bg-slate-50 rounded-2xl p-4 flex items-center gap-3 border border-slate-100">
+                <Sparkles className="text-amber-500 w-8 h-8" />
+                <div>
+                  <p className="font-bold text-slate-700 text-xs">Akses Selamanya</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Termasuk pembaruan</p>
+                </div>
+              </div>
             </div>
           </div>
-        )}
 
-        {paymentStatus === "failed" && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-3xl p-5 flex items-center gap-4">
-            <div className="w-12 h-12 bg-red-500 rounded-2xl flex items-center justify-center flex-shrink-0">
-              <XCircle size={24} className="text-white" />
-            </div>
-            <div>
-              <p className="font-black text-red-800">Pembayaran Gagal</p>
-              <p className="text-sm text-red-600">Silakan coba lagi atau pilih metode pembayaran lain.</p>
-            </div>
-          </div>
-        )}
+          {/* ── Right Column: Payment Gateway ── */}
+          <div className="w-full lg:w-[420px]">
 
-        {paymentStatus === "pending" && (
-          <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-3xl p-5 flex items-center gap-4">
-            <div className="w-12 h-12 bg-yellow-500 rounded-2xl flex items-center justify-center flex-shrink-0">
-              <Clock size={24} className="text-white" />
-            </div>
-            <div>
-              <p className="font-black text-yellow-800">Menunggu Pembayaran</p>
-              <p className="text-sm text-yellow-600">Selesaikan pembayaran sebelum jatuh tempo.</p>
-            </div>
-          </div>
-        )}
+            {/* ── Countdown Timer ── */}
+            {canPay && (
+              <div className={`mb-6 rounded-3xl p-5 border ${urgency.border} bg-white shadow-sm`}>
+                <div className="flex items-center gap-2 mb-4">
+                  <Clock className={`w-4 h-4 ${urgency.text}`} />
+                  <span className={`text-xs font-black uppercase tracking-widest ${urgency.text}`}>
+                    {urgency.label}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 justify-center">
+                  {[{ val: countdown.hours, label: "Jam" }, { val: countdown.minutes, label: "Menit" }, { val: countdown.seconds, label: "Detik" }].map((item, i) => (
+                    <React.Fragment key={item.label}>
+                      <div className="text-center">
+                        <div className={`w-16 h-16 ${urgency.bg} rounded-2xl flex items-center justify-center shadow-lg`}>
+                          <span className="text-white font-black text-2xl tabular-nums">{pad(item.val)}</span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 font-bold mt-1.5 uppercase tracking-wider">{item.label}</p>
+                      </div>
+                      {i < 2 && <span className={`text-2xl font-black ${urgency.text} mb-5`}>:</span>}
+                    </React.Fragment>
+                  ))}
+                </div>
+                <p className="text-center text-[11px] text-slate-400 font-medium mt-4">
+                  Bayar sebelum: <strong>{formatDate(invoice.dueDate)}</strong>
+                </p>
+              </div>
+            )}
 
-        {/* Invoice Card */}
-        <div className="bg-white rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-100/50 overflow-hidden">
-          {/* Card Header */}
-          <div className="bg-gradient-to-r from-[#FF6B4A] to-orange-400 p-6 text-white">
-            <div className="flex items-center gap-3 mb-2">
-              <BookOpen size={20} />
-              <span className="text-sm font-bold opacity-80">Invoice Pembayaran</span>
-            </div>
-            <p className="font-black text-2xl">{formatIDR(Number(invoice.totalAmount))}</p>
-            <p className="text-white/70 text-xs mt-1">{invoice.invoiceNumber}</p>
-          </div>
+            {/* Status Banners */}
+            {isPaid && (
+              <div className="mb-6 bg-gradient-to-r from-green-500 to-emerald-600 rounded-3xl p-6 shadow-lg shadow-green-200 text-white">
+                <div className="flex items-center gap-4 mb-3">
+                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-md">
+                    <CheckCircle size={24} className="text-white" />
+                  </div>
+                  <div>
+                    <p className="font-black text-lg">Lunas! 🎉</p>
+                    <p className="text-green-100 text-xs font-medium">Terima kasih atas pembelian Anda.</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => router.push(course?.slug ? `/courses/${course.slug}/learn` : "/dashboard/student")}
+                  className="w-full py-3 bg-white text-green-700 hover:bg-green-50 rounded-xl font-black text-sm transition-colors mt-2 flex items-center justify-center gap-2"
+                >
+                  <PlayCircle size={18} /> Mulai Belajar Sekarang
+                </button>
+              </div>
+            )}
 
-          {/* Card Body */}
-          <div className="p-6 space-y-4">
-            <div className="flex justify-between text-sm">
-              <span className="text-slate-500 font-medium">Status Invoice</span>
-              <span className={`font-black capitalize ${
-                invoice.invoiceStatus === "paid" ? "text-green-600" :
-                invoice.invoiceStatus === "pending" ? "text-orange-500" :
-                "text-red-500"
-              }`}>
-                {invoice.invoiceStatus === "paid" ? "✓ Lunas" :
-                 invoice.invoiceStatus === "pending" ? "⏳ Belum Dibayar" : "✗ Dibatalkan"}
-              </span>
-            </div>
+            {isExpired && (
+              <div className="mb-6 bg-slate-50 border border-slate-200 rounded-3xl p-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-10 h-10 bg-slate-200 rounded-xl flex items-center justify-center shrink-0">
+                    <AlertTriangle size={20} className="text-slate-500" />
+                  </div>
+                  <div>
+                    <p className="font-black text-slate-800">Tagihan Kadaluarsa</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Batas pembayaran sudah terlewati.</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => router.push(course?.slug ? `/courses/${course.slug}` : "/courses")}
+                  className="w-full py-3 bg-[#FF6B4A] hover:bg-[#fa5a35] text-white rounded-xl font-black text-sm transition-colors flex items-center justify-center gap-2"
+                >
+                  <RefreshCw size={16} /> Buat Pesanan Baru
+                </button>
+              </div>
+            )}
 
-            <div className="flex justify-between text-sm">
-              <span className="text-slate-500 font-medium">Total Bayar</span>
-              <span className="font-black text-[#2D2D2D]">{formatIDR(Number(invoice.totalAmount))}</span>
-            </div>
+            {paymentStatus === "failed" && !isExpired && (
+              <div className="mb-6 bg-red-50 border border-red-200 rounded-3xl p-5 flex items-center gap-4">
+                <div className="w-12 h-12 bg-red-500 rounded-2xl flex items-center justify-center shrink-0">
+                  <XCircle size={24} className="text-white" />
+                </div>
+                <div>
+                  <p className="font-black text-red-800">Pembayaran Gagal</p>
+                  <p className="text-xs text-red-600 mt-0.5">Silakan coba lagi dengan metode lain.</p>
+                </div>
+              </div>
+            )}
 
-            <div className="flex justify-between text-sm">
-              <span className="text-slate-500 font-medium">Jatuh Tempo</span>
-              <span className="font-bold text-slate-700 text-right text-xs max-w-[180px]">
-                {formatDate(invoice.dueDate)}
-              </span>
-            </div>
-
-            <div className="border-t border-slate-50 pt-4">
-              <div className="flex items-center gap-2 text-xs text-slate-400 mb-6">
-                <ShieldCheck size={14} className="text-green-500" />
-                <span>Pembayaran aman & terenkripsi via Midtrans</span>
+            {/* Invoice Payment Card */}
+            <div className="bg-white rounded-[2rem] border border-slate-200 shadow-xl shadow-slate-200/40 overflow-hidden sticky top-24">
+              <div className={`p-8 text-white relative overflow-hidden ${isExpired ? "bg-slate-600" : "bg-[#100E2E]"}`}>
+                <div className="relative z-10">
+                  <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Total Pembayaran</p>
+                  <p className="font-black text-4xl mb-1">{formatIDR(invoice.totalAmount)}</p>
+                  <p className="text-slate-500 text-xs font-medium">No. Invoice: {invoice.invoiceNumber}</p>
+                </div>
+                <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/5 rounded-full blur-2xl" />
+                <div className="absolute -left-8 -bottom-8 w-24 h-24 bg-[#FF6B4A]/20 rounded-full blur-xl" />
               </div>
 
-              {invoice.invoiceStatus !== "paid" && paymentStatus !== "success" ? (
-                <button
-                  onClick={handlePay}
-                  disabled={isLoading || !clientKey}
-                  className="w-full h-14 bg-[#FF6B4A] hover:bg-[#fa5a35] text-white font-black rounded-2xl transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2 shadow-lg shadow-orange-200/50"
-                >
-                  {isLoading ? (
-                    <Loader2 size={20} className="animate-spin" />
-                  ) : (
-                    <>
-                      <CreditCard size={20} />
-                      Bayar Sekarang — {formatIDR(Number(invoice.totalAmount))}
-                    </>
-                  )}
-                </button>
-              ) : (
-                <button
-                  onClick={() => router.push("/dashboard/student")}
-                  className="w-full h-14 bg-green-600 hover:bg-green-700 text-white font-black rounded-2xl transition-all flex items-center justify-center gap-2"
-                >
-                  <CheckCircle size={20} />
-                  Menuju Dashboard
-                </button>
-              )}
+              <div className="p-8">
+                <div className="space-y-4 mb-8">
+                  <div>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Status</p>
+                    <p className={`text-sm font-black ${isPaid ? "text-green-600" : isExpired ? "text-slate-500" : "text-orange-500"}`}>
+                      {isPaid ? "✓ LUNAS" : isExpired ? "✗ KADALUARSA" : "⏳ MENUNGGU PEMBAYARAN"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Batas Pembayaran</p>
+                    <p className={`text-sm font-bold ${isExpired ? "text-red-500 line-through" : "text-slate-700"}`}>
+                      {formatDate(invoice.dueDate)}
+                    </p>
+                  </div>
+                </div>
 
-              {!clientKey && (
-                <p className="text-center text-xs text-red-500 mt-3">
-                  ⚠️ Midtrans Client Key belum dikonfigurasi di environment
-                </p>
-              )}
+                {canPay && (
+                  <button
+                    onClick={handlePay}
+                    disabled={isLoading || !clientKey}
+                    className="w-full h-14 bg-[#FF6B4A] hover:bg-[#fa5a35] text-white font-black rounded-2xl transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-orange-200/50"
+                  >
+                    {isLoading ? <Loader2 size={20} className="animate-spin" /> : <><CreditCard size={20} /> Bayar via Midtrans</>}
+                  </button>
+                )}
+
+                {isPaid && !isExpired && (
+                  <button
+                    onClick={() => router.push("/dashboard/student/purchases")}
+                    className="w-full h-14 bg-slate-100 hover:bg-slate-200 text-slate-600 font-black rounded-2xl transition-all flex items-center justify-center gap-2"
+                  >
+                    Lihat Riwayat Pembelian
+                  </button>
+                )}
+
+                {isExpired && (
+                  <button
+                    onClick={() => router.push(course?.slug ? `/courses/${course.slug}` : "/courses")}
+                    className="w-full h-14 bg-slate-200 hover:bg-slate-300 text-slate-600 font-black rounded-2xl transition-all flex items-center justify-center gap-2"
+                  >
+                    <RefreshCw size={18} /> Kembali ke Halaman Kursus
+                  </button>
+                )}
+
+                {!clientKey && canPay && (
+                  <div className="mt-4 p-3 bg-red-50 rounded-xl border border-red-100">
+                    <p className="text-center text-[10px] font-bold text-red-600">
+                      ⚠️ Midtrans Client Key belum dikonfigurasi di environment (.env).
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-
-          {/* Footer */}
-          <div className="bg-slate-50 px-6 py-4">
-            <p className="text-[11px] text-slate-400 text-center font-medium">
-              Didukung berbagai metode: Transfer Bank, QRIS, GoPay, OVO, dll.
-            </p>
-          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

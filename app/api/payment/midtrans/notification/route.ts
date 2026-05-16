@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { sendEmail, paymentSuccessEmailTemplate } from "@/lib/email";
 
 const COMPANY = "LEARNIFY";
 
@@ -64,6 +65,10 @@ export async function POST(request: Request) {
   // 3. Ambil invoice
   const invoice = await db.invoice.findUnique({
     where: { invoiceNumber: order_id },
+    include: {
+      user: true,
+      course: true,
+    }
   });
 
   if (!invoice) {
@@ -133,6 +138,29 @@ export async function POST(request: Request) {
           lastUpdatedDate: new Date(),
         },
       });
+    }
+
+    // Send async payment success email notification
+    if (invoice.user && invoice.course) {
+      const fmtAmount = new Intl.NumberFormat("id-ID", {
+        style: "currency",
+        currency: "IDR",
+        maximumFractionDigits: 0,
+      }).format(Number(invoice.totalAmount));
+
+      const courseUrl = `${process.env.NEXT_PUBLIC_APP_URL}/courses/${invoice.course.slug}/learn`;
+
+      sendEmail({
+        to: invoice.user.email,
+        subject: `Pembayaran Berhasil: ${invoice.course.title}`,
+        html: paymentSuccessEmailTemplate(
+          invoice.user.name,
+          invoice.course.title,
+          invoice.invoiceNumber,
+          fmtAmount,
+          courseUrl
+        )
+      }).catch(err => console.error("Failed to send payment success email:", err));
     }
   }
 

@@ -161,13 +161,22 @@ export default function CourseDetailClient({ course }: { course: CourseDetail })
       return;
     }
 
-    // 2. Sudah enroll → tampilkan notif & arahkan ke halaman belajar
+    // 2. Sudah enroll (aktif/selesai) → tampilkan notif & arahkan ke halaman belajar
     if (enrollmentStatus.isEnrolled) {
       toast.info("Kamu sudah terdaftar di kursus ini! Mengarahkan ke halaman belajar...", {
         description: "Klik \"Lanjut Belajar\" untuk melanjutkan progresmu.",
         duration: 3000,
       });
       setTimeout(() => router.push(`/courses/${course.slug}/learn`), 1500);
+      return;
+    }
+
+    // 2b. Enrollment pending_payment → arahkan ke checkout
+    if ((enrollmentStatus as any).isPendingPayment && (enrollmentStatus as any).pendingInvoiceNumber) {
+      toast.info("Kamu sudah memesan kursus ini. Mengarahkan ke halaman pembayaran...", {
+        duration: 3000,
+      });
+      setTimeout(() => router.push(`/checkout/${(enrollmentStatus as any).pendingInvoiceNumber}`), 1000);
       return;
     }
 
@@ -185,12 +194,25 @@ export default function CourseDetailClient({ course }: { course: CourseDetail })
       if (!res.ok) {
         // 409 = sudah enroll (race condition / request ganda)
         if (res.status === 409) {
-          setEnrollmentStatus({ isEnrolled: true, enrollment: data.enrollment });
-          toast.info("Kamu sudah terdaftar di kursus ini!", {
-            description: "Mengarahkan ke halaman belajar...",
-            duration: 3000,
-          });
-          setTimeout(() => router.push(`/courses/${course.slug}/learn`), 1500);
+          const enrollment = data.enrollment;
+          if (enrollment?.enrollmentStatus === "pending_payment") {
+            // Redirect ke checkout
+            const invoiceRes = await fetch(`/api/courses/${course.slug}/enrollment-status`);
+            const invoiceData = await invoiceRes.json();
+            if (invoiceData.pendingInvoiceNumber) {
+              toast.info("Tagihan sudah ada. Mengarahkan ke pembayaran...");
+              router.push(`/checkout/${invoiceData.pendingInvoiceNumber}`);
+            } else {
+              toast.info("Kamu sudah memesan kursus ini.");
+            }
+          } else {
+            setEnrollmentStatus({ isEnrolled: true, enrollment });
+            toast.info("Kamu sudah terdaftar di kursus ini!", {
+              description: "Mengarahkan ke halaman belajar...",
+              duration: 3000,
+            });
+            setTimeout(() => router.push(`/courses/${course.slug}/learn`), 1500);
+          }
           return;
         }
         throw new Error(data.error ?? "Gagal mendaftar kursus");
@@ -202,7 +224,7 @@ export default function CourseDetailClient({ course }: { course: CourseDetail })
         setEnrollmentStatus({ isEnrolled: true, enrollment: data.enrollment });
         setTimeout(() => router.push(data.redirectUrl), 1000);
       } else {
-        // Paid course: ke halaman checkout
+        // Paid course: ke halaman checkout (JANGAN set isEnrolled = true)
         toast.info("Invoice berhasil dibuat. Melanjutkan ke pembayaran...");
         router.push(data.redirectUrl);
       }
