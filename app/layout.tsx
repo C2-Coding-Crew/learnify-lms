@@ -17,6 +17,8 @@ export const metadata: Metadata = {
   description: "Platform belajar online terbaik dengan ribuan materi eksklusif dari mentor terpilih.",
 };
 
+import { ToastProvider } from "@/components/ui/toast-provider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -27,7 +29,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <ToastProvider>
+          {children}
+        </ToastProvider>
       </body>
     </html>
   );

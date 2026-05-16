@@ -98,7 +98,7 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
-    async sendResetPassword({ user, url }) {
+    async sendResetPassword({ user, url }: { user: any; url: string }) {
       const { sendEmail, resetPasswordEmailTemplate } = await import("@/lib/email");
       const html = resetPasswordEmailTemplate(url, user.name || "Pengguna");
       await sendEmail({
@@ -107,7 +107,7 @@ export const auth = betterAuth({
         html: html,
       });
     },
-    async sendVerificationEmail({ user, url }) {
+    async sendVerificationEmail({ user, url }: { user: any; url: string }) {
       const { sendEmail } = await import("@/lib/email");
       // Kita bisa buat template baru atau pakai sederhana dulu
       await sendEmail({

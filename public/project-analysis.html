@@ -379,15 +379,15 @@
 
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-value">20</div>
+                <div class="stat-value">21</div>
                 <div class="stat-label">Fitur Selesai</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value">1</div>
+                <div class="stat-value">0</div>
                 <div class="stat-label">Sedang Proses</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value">1</div>
+                <div class="stat-value">0</div>
                 <div class="stat-label">Belum Dimulai</div>
             </div>
             <div class="stat-card">
@@ -399,10 +399,10 @@
         <div class="progress-container">
             <div class="progress-header">
                 <h3 class="progress-title">Overall Completion Status</h3>
-                <span class="progress-percentage">95%</span>
+                <span class="progress-percentage">100%</span>
             </div>
             <div class="progress-track">
-                <div class="progress-fill" style="width: 95%;"></div>
+                <div class="progress-fill" style="width: 100%;"></div>
             </div>
         </div>
 
@@ -445,13 +445,13 @@
             <div class="feature-card">
                 <div class="feature-header">
                     <h3 class="feature-title">Student Dashboard</h3>
-                    <span class="badge badge-warning"><i data-lucide="clock" style="width: 14px; height: 14px;"></i> Proses</span>
+                    <span class="badge badge-success"><i data-lucide="check-circle" style="width: 14px; height: 14px;"></i> Selesai</span>
                 </div>
                 <div class="feature-meta">app/dashboard/student/page.tsx</div>
                 <ul class="feature-list">
                     <li>Nama user dari session nyata, logout berfungsi</li>
                     <li>Data enrollment & progress di-fetch dari database</li>
-                    <li style="color: var(--warning);">Todo list belum persisten ke database</li>
+                    <li>Todo list sudah persisten ke database via Prisma API</li>
                 </ul>
             </div>
 
@@ -489,12 +489,12 @@
             <div class="feature-card">
                 <div class="feature-header">
                     <h3 class="feature-title">Halaman Belajar (/learn)</h3>
-                    <span class="badge badge-warning"><i data-lucide="clock" style="width: 14px; height: 14px;"></i> Proses</span>
+                    <span class="badge badge-success"><i data-lucide="check-circle" style="width: 14px; height: 14px;"></i> Selesai</span>
                 </div>
                 <div class="feature-meta">Halaman Detail Kursus</div>
                 <ul class="feature-list">
                     <li>Lock/unlock lesson berdasarkan progress</li>
-                    <li style="color: var(--warning);">Video placeholder (iframe siap, butuh URL video nyata)</li>
+                    <li>Custom Video Player terintegrasi dengan URL nyata</li>
                 </ul>
             </div>
         </div>
@@ -547,12 +547,12 @@
             <div class="feature-card">
                 <div class="feature-header">
                     <h3 class="feature-title">Sistem Pembayaran</h3>
-                    <span class="badge badge-danger"><i data-lucide="x-circle" style="width: 14px; height: 14px;"></i> Belum</span>
+                    <span class="badge badge-success"><i data-lucide="check-circle" style="width: 14px; height: 14px;"></i> Selesai</span>
                 </div>
                 <div class="feature-meta">Midtrans Integration</div>
                 <ul class="feature-list">
-                    <li>Schema Invoice + Transaction sudah siap</li>
-                    <li style="color: var(--danger);">Integrasi Midtrans belum dikerjakan</li>
+                    <li>Schema Invoice + Transaction terimplementasi</li>
+                    <li>Integrasi Midtrans Snap API & Webhook Notification siap pakai</li>
                 </ul>
             </div>
         </div>
@@ -563,35 +563,35 @@
         </div>
 
         <div class="roadmap-container">
-            <div class="roadmap-item roadmap-high">
+            <div class="roadmap-item roadmap-low">
                 <div class="roadmap-icon"><i data-lucide="shield-check"></i></div>
                 <div class="roadmap-content">
-                    <h3>PRIORITAS 1 — Admin Approval System (Kursus)</h3>
-                    <p>Instruktur sudah bisa mendaftar dan membuat kursus, tapi statusnya masih draft. Perlu UI di Admin Dashboard untuk review & publish kursus (mengubah isPublished = true).</p>
+                    <h3>SELESAI — Admin Approval System (Kursus)</h3>
+                    <p>Instruktur dapat mengajukan kursus, dan Admin memiliki UI Dashboard khusus untuk review & publish kursus.</p>
                 </div>
             </div>
 
-            <div class="roadmap-item roadmap-med">
+            <div class="roadmap-item roadmap-low">
                 <div class="roadmap-icon"><i data-lucide="credit-card"></i></div>
                 <div class="roadmap-content">
-                    <h3>PRIORITAS 2 — Sistem Pembayaran (Midtrans)</h3>
-                    <p>Integrasikan Midtrans Snap UI untuk pendaftaran kursus premium. Siapkan webhook handler POST /api/payment/midtrans/notification.</p>
+                    <h3>SELESAI — Sistem Pembayaran (Midtrans)</h3>
+                    <p>Midtrans Snap API diintegrasikan untuk checkout, dan webhook handler menangani pembaruan status transaksi secara otomatis.</p>
                 </div>
             </div>
 
-            <div class="roadmap-item roadmap-med">
+            <div class="roadmap-item roadmap-low">
                 <div class="roadmap-icon"><i data-lucide="video"></i></div>
                 <div class="roadmap-content">
-                    <h3>PRIORITAS 3 — Video Player (YouTube/Cloudinary)</h3>
-                    <p>Isi videoUrl pada tabel Lesson dengan URL iframe nyata. (Opsional) Build fitur upload video dari dashboard instructor ke Cloudinary.</p>
+                    <h3>SELESAI — Video Player (Custom/YouTube)</h3>
+                    <p>Custom Video Player di halaman Learn terintegrasi dan mendeteksi URL video dari instruktur secara seamless.</p>
                 </div>
             </div>
 
             <div class="roadmap-item roadmap-low">
                 <div class="roadmap-icon"><i data-lucide="sparkles"></i></div>
                 <div class="roadmap-content">
-                    <h3>PRIORITAS 4 — Polish UI & Deploy</h3>
-                    <p>Navbar active state, perbaiki Todo list dashboard student agar persisten ke database, dan bersiap deploy ke Vercel.</p>
+                    <h3>SELESAI — Polish UI & Deploy</h3>
+                    <p>Todo list student sudah tersimpan di database dan UI telah dimaksimalkan untuk production siap di deploy.</p>
                 </div>
             </div>
         </div>

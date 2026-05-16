@@ -5,6 +5,7 @@ import AdminSidebar from "./sidebar";
 import { authClient } from "@/lib/auth-client";
 import { ShieldCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast-provider";
 import QRCodeLib from 'qrcode';
 
 export default function AdminLayoutContent({ 
@@ -16,6 +17,7 @@ export default function AdminLayoutContent({
   userName: string;
   pendingCount?: number;
 }) {
+  const toast = useToast();
   const [show2FAModal, setShow2FAModal] = useState(false);
   const [qrCodeImage, setQrCodeImage] = useState("");
   const [twoFactorCode, setTwoFactorCode] = useState("");
@@ -32,11 +34,11 @@ export default function AdminLayoutContent({
         setShow2FAModal(true);
       } else {
         console.error(error);
-        alert("Gagal mengambil data 2FA.");
+        toast.error("Gagal", "Gagal mengambil data 2FA.");
       }
     } catch (err) {
       console.error(err);
-      alert("Terjadi kesalahan sistem.");
+      toast.error("Error", "Terjadi kesalahan sistem.");
     }
   };
 
@@ -47,16 +49,16 @@ export default function AdminLayoutContent({
       });
 
       if (data) {
-        alert("Mantap Zi! 2FA Berhasil Aktif.");
+        toast.success("Berhasil", "Mantap Zi! 2FA Berhasil Aktif.");
         setShow2FAModal(false);
         setTwoFactorCode("");
       } else {
         console.error(error);
-        alert("Kode salah atau kadaluwarsa!");
+        toast.error("Gagal", "Kode salah atau kadaluwarsa!");
       }
     } catch (err) {
       console.error(err);
-      alert("Gagal verifikasi.");
+      toast.error("Gagal", "Gagal verifikasi.");
     }
   };
 

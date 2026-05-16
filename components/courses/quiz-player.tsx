@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { CheckCircle2, ChevronRight, Loader2, Trophy, XCircle, AlertCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast-provider";
 
 interface Option {
   id: number;
@@ -31,6 +32,7 @@ interface QuizPlayerProps {
 }
 
 export default function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
+  const toast = useToast();
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
@@ -88,63 +90,62 @@ export default function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerPr
       if (!res.ok) throw new Error("Gagal mengirim kuis");
       const data = await res.json();
       setResult(data);
-    } catch (err) {
-      alert("Terjadi kesalahan saat mengirim jawaban.");
+    } catch (err: any) {
+      toast.error("Gagal Mengirim", "Terjadi kesalahan saat mengirim jawaban kuis.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (isLoading) return <div className="p-20 flex justify-center"><Loader2 className="animate-spin text-[#FF6B4A]" size={40} /></div>;
-  if (!quiz) return <div className="p-20 text-center text-white/50">Kuis tidak ditemukan.</div>;
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 bg-white z-[100] flex items-center justify-center">
+        <Loader2 className="animate-spin text-[#FF6B4A]" size={40} />
+      </div>
+    );
+  }
+
+  if (!quiz) return null;
 
   if (result) {
     return (
-      <div className="max-w-2xl mx-auto p-8 bg-[#1A1A2E] rounded-[2.5rem] border border-white/5 text-center space-y-8 animate-in fade-in zoom-in duration-500">
-        <div className={`w-24 h-24 rounded-full mx-auto flex items-center justify-center ${result.isPassed ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>
-          {result.isPassed ? <Trophy size={48} /> : <XCircle size={48} />}
-        </div>
-
-        <div>
-          <h2 className="text-3xl font-black text-white">
-            {result.isPassed ? "Selamat! Kamu Lulus! 🎉" : "Yah, Belum Lulus 😢"}
-          </h2>
-          <p className="text-white/40 font-medium mt-2">
-            Skor kamu: <span className={`font-black ${result.isPassed ? 'text-green-500' : 'text-red-500'}`}>{Math.round(result.score)}%</span> (Minimal {quiz.passingScore}%)
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="p-6 bg-white/5 rounded-3xl">
-            <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">Benar</p>
-            <p className="text-2xl font-black text-white mt-1">{result.correctAnswersCount}</p>
+      <div className="fixed inset-0 bg-white z-[100] overflow-y-auto flex flex-col items-center p-8 md:p-20">
+        <div className="max-w-[600px] w-full text-center space-y-8 animate-in fade-in zoom-in duration-500">
+          <div className={`w-24 h-24 mx-auto rounded-3xl flex items-center justify-center shadow-lg ${result.isPassed ? 'bg-green-50 text-green-500' : 'bg-red-50 text-red-500'}`}>
+             {result.isPassed ? <Trophy size={48} /> : <XCircle size={48} />}
           </div>
-          <div className="p-6 bg-white/5 rounded-3xl">
-            <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">Total Soal</p>
-            <p className="text-2xl font-black text-white mt-1">{result.totalQuestions}</p>
+          
+          <div>
+            <h2 className="text-4xl font-black text-slate-900 tracking-tight">
+              {result.isPassed ? "Selamat! Kamu Lulus 🎉" : "Yah, Belum Berhasil 😢"}
+            </h2>
+            <p className="text-slate-400 font-bold mt-2">
+              {result.isPassed ? "Kamu telah menyelesaikan kuis ini dengan baik." : "Jangan menyerah! Pelajari kembali materinya dan coba lagi."}
+            </p>
           </div>
-        </div>
 
-        <div className="pt-4 flex gap-3">
-          {!result.isPassed && (
+          <div className="grid grid-cols-2 gap-4">
+             <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Skor Kamu</p>
+                <p className="text-4xl font-black text-slate-800">{result.score}%</p>
+             </div>
+             <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Benar</p>
+                <p className="text-4xl font-black text-slate-800">{result.correctAnswersCount}/{result.totalQuestions}</p>
+             </div>
+          </div>
+
+          <div className="pt-8">
             <Button 
               onClick={() => {
-                setResult(null);
-                setCurrentQuestionIndex(0);
-                setAnswers({});
+                onComplete({ score: result.score, isPassed: result.isPassed });
+                onClose();
               }}
-              variant="outline"
-              className="flex-1 rounded-2xl h-12 font-black border-white/10 hover:bg-white/5"
+              className="bg-[#FF6B4A] hover:bg-[#e55a3d] text-white rounded-[2rem] h-16 px-12 font-black shadow-xl shadow-orange-100 transition-all active:scale-95"
             >
-              Coba Lagi
+              Lanjutkan Belajar
             </Button>
-          )}
-          <Button 
-            onClick={() => onComplete({ score: result.score, isPassed: result.isPassed })}
-            className="flex-1 bg-[#FF6B4A] hover:bg-[#fa5a35] text-white rounded-2xl h-12 font-black shadow-lg shadow-orange-950/20"
-          >
-            Selesai
-          </Button>
+          </div>
         </div>
       </div>
     );
@@ -154,106 +155,87 @@ export default function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerPr
   const progress = ((currentQuestionIndex + 1) / quiz.questions.length) * 100;
 
   return (
-    <div className="max-w-3xl mx-auto p-4 md:p-8 space-y-8 animate-in slide-in-from-bottom-4 duration-500">
-      {/* Progress */}
-      <div className="space-y-3">
-        <div className="flex justify-between items-end">
+    <div className="fixed inset-0 bg-[#F8F9FB] z-[100] flex flex-col">
+      {/* Header */}
+      <div className="bg-white border-b border-slate-100 px-8 h-20 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 bg-orange-50 text-[#FF6B4A] rounded-xl flex items-center justify-center font-black">Q</div>
           <div>
-            <h3 className="text-xs font-black text-[#FF6B4A] uppercase tracking-widest">Pertanyaan {currentQuestionIndex + 1} / {quiz.questions.length}</h3>
-            <h2 className="text-lg font-bold text-white mt-1 line-clamp-1">{quiz.title}</h2>
-          </div>
-          <div className="text-[10px] font-bold text-white/30">
-            {Math.round(progress)}%
+            <h3 className="font-black text-slate-900 text-sm tracking-tight line-clamp-1">{quiz.title}</h3>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pertanyaan {currentQuestionIndex + 1} dari {quiz.questions.length}</p>
           </div>
         </div>
-        <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-gradient-to-r from-[#FF6B4A] to-orange-400 rounded-full transition-all duration-500"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
+        <button onClick={onClose} className="p-2 text-slate-300 hover:text-red-500 transition-colors">
+          <XCircle size={24} />
+        </button>
       </div>
 
-      {/* Question Card */}
-      <div className="bg-[#1A1A2E] rounded-[2.5rem] border border-white/5 p-8 md:p-12 shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-8 opacity-5">
-           <HelpCircle size={120} className="text-white" />
-        </div>
+      {/* Progress Bar */}
+      <div className="h-1.5 w-full bg-slate-100 shrink-0">
+        <div 
+          className="h-full bg-[#FF6B4A] transition-all duration-500" 
+          style={{ width: `${progress}%` }}
+        />
+      </div>
 
-        <h4 className="text-xl md:text-2xl font-black text-white leading-tight relative z-10">
-          {currentQuestion.content}
-        </h4>
+      {/* Question Content */}
+      <div className="flex-1 overflow-y-auto p-8 md:p-20 flex justify-center">
+        <div className="max-w-[800px] w-full space-y-12">
+          <div className="space-y-6">
+            <div className="flex items-center gap-3 text-orange-500 font-black text-xs uppercase tracking-widest">
+              <AlertCircle size={16} /> Pilih Jawaban Terbaik
+            </div>
+            <h2 className="text-2xl md:text-3xl font-black text-slate-900 leading-tight">
+              {currentQuestion.content}
+            </h2>
+          </div>
 
-        <div className="mt-12 space-y-4 relative z-10">
-          {currentQuestion.options.map((option) => {
-            const isSelected = answers[currentQuestion.id] === option.id;
-            return (
+          <div className="grid grid-cols-1 gap-4">
+            {currentQuestion.options.map((option) => (
               <button
                 key={option.id}
                 onClick={() => handleSelectOption(currentQuestion.id, option.id)}
-                className={`w-full p-5 md:p-6 rounded-3xl border-2 text-left transition-all flex items-center justify-between group ${
-                  isSelected 
-                    ? "bg-[#FF6B4A]/10 border-[#FF6B4A] shadow-lg shadow-orange-950/20" 
-                    : "bg-white/5 border-transparent hover:bg-white/10"
+                className={`p-6 rounded-[2rem] border-2 text-left transition-all group flex items-center gap-4 ${
+                  answers[currentQuestion.id] === option.id
+                    ? "bg-orange-50 border-[#FF6B4A] shadow-md shadow-orange-100"
+                    : "bg-white border-slate-100 hover:border-orange-200"
                 }`}
               >
-                <span className={`font-bold text-sm md:text-base ${isSelected ? "text-white" : "text-white/60 group-hover:text-white"}`}>
+                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                  answers[currentQuestion.id] === option.id
+                    ? "bg-[#FF6B4A] border-[#FF6B4A] text-white"
+                    : "bg-white border-slate-200 group-hover:border-orange-300"
+                }`}>
+                  {answers[currentQuestion.id] === option.id && <CheckCircle2 size={14} />}
+                </div>
+                <span className={`text-[15px] font-bold ${
+                  answers[currentQuestion.id] === option.id ? "text-slate-900" : "text-slate-600"
+                }`}>
                   {option.content}
                 </span>
-                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? "bg-[#FF6B4A] border-[#FF6B4A]" : "border-white/10"}`}>
-                  {isSelected && <div className="w-2 h-2 bg-white rounded-full" />}
-                </div>
               </button>
-            );
-          })}
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex justify-between items-center pt-4">
-        <Button 
-          variant="outline" 
-          onClick={onClose}
-          className="rounded-2xl h-12 px-6 font-black border-white/10 hover:bg-white/5 text-white/50"
-        >
-          Keluar
-        </Button>
-        <Button 
-          onClick={handleNext}
-          disabled={!answers[currentQuestion.id] || isSubmitting}
-          className="bg-white hover:bg-slate-100 text-[#0F0F1A] rounded-2xl h-12 px-10 font-black shadow-xl shadow-black/20 flex items-center gap-2"
-        >
-          {isSubmitting ? (
-            <Loader2 size={20} className="animate-spin" />
-          ) : (
-            <>
-              {currentQuestionIndex === quiz.questions.length - 1 ? "Kirim Jawaban" : "Lanjut"}
-              <ChevronRight size={20} />
-            </>
-          )}
-        </Button>
+      {/* Footer Actions */}
+      <div className="bg-white border-t border-slate-100 p-8 flex justify-center shrink-0">
+        <div className="max-w-[800px] w-full flex justify-end">
+          <Button
+            onClick={handleNext}
+            disabled={!answers[currentQuestion.id] || isSubmitting}
+            className="bg-[#FF6B4A] hover:bg-[#e55a3d] text-white rounded-[1.5rem] h-14 px-10 font-black shadow-lg shadow-orange-100 transition-all disabled:opacity-50 group"
+          >
+            {isSubmitting ? (
+              <Loader2 className="animate-spin mr-2" />
+            ) : (
+              currentQuestionIndex === quiz.questions.length - 1 ? "Selesaikan Kuis" : "Pertanyaan Selanjutnya"
+            )}
+            {!isSubmitting && <ChevronRight className="ml-2 group-hover:translate-x-1 transition-transform" />}
+          </Button>
+        </div>
       </div>
     </div>
-  );
-}
-
-function HelpCircle(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-      <path d="M12 17h.01" />
-    </svg>
   );
 }
