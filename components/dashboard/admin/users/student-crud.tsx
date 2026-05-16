@@ -5,14 +5,8 @@ import { useRouter } from "next/navigation";
 import { Plus, Edit2, Trash2, Search, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetFooter,
-} from "@/components/ui/sheet";
+import { Modal } from "@/components/ui/modal";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface StudentRow {
   id: string;
@@ -33,6 +27,7 @@ export default function StudentCRUD({ initialData }: { initialData: StudentRow[]
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   // Form State
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -110,9 +105,9 @@ export default function StudentCRUD({ initialData }: { initialData: StudentRow[]
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Yakin ingin menonaktifkan akun siswa ini?")) return;
-    
+  const handleDeleteConfirmed = async () => {
+    if (!confirmDeleteId) return;
+    const id = confirmDeleteId;
     setLoadingId(id);
     try {
       const res = await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
@@ -121,8 +116,10 @@ export default function StudentCRUD({ initialData }: { initialData: StudentRow[]
       toast.success("Berhasil", { description: "Siswa telah dinonaktifkan" });
       setStudents(students.filter(s => s.id !== id));
       router.refresh();
+      setConfirmDeleteId(null);
     } catch (error: any) {
       toast.error("Gagal", { description: error.message });
+      setConfirmDeleteId(null);
     } finally {
       setLoadingId(null);
     }
@@ -213,7 +210,7 @@ export default function StudentCRUD({ initialData }: { initialData: StudentRow[]
                         variant="outline"
                         size="icon"
                         className="h-8 w-8 rounded-lg text-red-500 border-red-100 hover:bg-red-50"
-                        onClick={() => handleDelete(student.id)}
+                        onClick={() => setConfirmDeleteId(student.id)}
                         disabled={loadingId === student.id}
                       >
                         {loadingId === student.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
@@ -266,73 +263,82 @@ export default function StudentCRUD({ initialData }: { initialData: StudentRow[]
         </table>
       </div>
 
-      {/* Slide-out Form (Sheet) */}
-      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent className="bg-white border-l-slate-100 sm:max-w-md w-[90vw]">
-          <SheetHeader className="mb-6">
-            <SheetTitle className="text-2xl font-black text-slate-800">
-              {isEditing ? "Edit Siswa" : "Tambah Siswa Baru"}
-            </SheetTitle>
-            <SheetDescription className="text-slate-500">
-              {isEditing ? "Ubah data profil siswa di bawah ini." : "Buat akun siswa secara manual tanpa password. (Siswa dapat login menggunakan akun Google)"}
-            </SheetDescription>
-          </SheetHeader>
-
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-700">Nama Lengkap</label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#FF6B4A] focus:ring-2 focus:ring-orange-50 transition-all text-sm font-medium"
-                placeholder="Contoh: John Doe"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-700">Email Utama</label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#FF6B4A] focus:ring-2 focus:ring-orange-50 transition-all text-sm font-medium text-slate-500"
-                placeholder="john@example.com"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-700">Status Akun</label>
-              <select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: Number(e.target.value) })}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#FF6B4A] focus:ring-2 focus:ring-orange-50 transition-all text-sm font-medium"
-              >
-                <option value={1}>Aktif (Diizinkan Login)</option>
-                <option value={0}>Non-Aktif (Diblokir)</option>
-              </select>
-            </div>
+      {/* Modal PopUp Form */}
+      <Modal
+        open={isSheetOpen}
+        onClose={() => setIsSheetOpen(false)}
+        title={isEditing ? "Edit Siswa" : "Tambah Siswa Baru"}
+        description={
+          isEditing
+            ? "Ubah data profil siswa di bawah ini."
+            : "Buat akun siswa secara manual tanpa password. (Siswa dapat login menggunakan akun Google)"
+        }
+      >
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-700">Nama Lengkap</label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#FF6B4A] focus:ring-2 focus:ring-orange-50 transition-all text-sm font-medium"
+              placeholder="Contoh: John Doe"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-700">Email Utama</label>
+            <input
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#FF6B4A] focus:ring-2 focus:ring-orange-50 transition-all text-sm font-medium text-slate-500"
+              placeholder="john@example.com"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-700">Status Akun</label>
+            <select
+              value={formData.status}
+              onChange={(e) => setFormData({ ...formData, status: Number(e.target.value) })}
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#FF6B4A] focus:ring-2 focus:ring-orange-50 transition-all text-sm font-medium"
+            >
+              <option value={1}>Aktif (Diizinkan Login)</option>
+              <option value={0}>Non-Aktif (Diblokir)</option>
+            </select>
           </div>
 
-          <SheetFooter className="mt-8">
+          <div className="pt-4 flex gap-3">
             <Button
               variant="outline"
               onClick={() => setIsSheetOpen(false)}
-              className="rounded-xl font-bold"
+              className="flex-1 rounded-xl font-bold h-12"
             >
               Batal
             </Button>
             <Button
               onClick={handleSave}
               disabled={isLoading}
-              className="bg-[#FF6B4A] hover:bg-[#E55A3B] text-white rounded-xl font-bold shadow-lg shadow-orange-500/20"
+              className="flex-1 h-12 bg-[#FF6B4A] hover:bg-[#E55A3B] text-white rounded-xl font-bold shadow-lg shadow-orange-500/20"
             >
               {isLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
               Simpan Data
             </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmDeleteId !== null}
+        onClose={() => setConfirmDeleteId(null)}
+        onConfirm={handleDeleteConfirmed}
+        title="Nonaktifkan Akun Siswa"
+        description="Apakah Anda yakin ingin menonaktifkan akun siswa ini? Mereka tidak akan bisa login ke platform."
+        variant="warning"
+        isLoading={loadingId !== null && loadingId === confirmDeleteId}
+      />
     </div>
   );
 }
