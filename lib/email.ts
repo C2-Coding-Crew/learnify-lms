@@ -234,3 +234,108 @@ export function twoFactorOtpEmailTemplate(otp: string, userName: string): string
 </html>
   `.trim();
 }
+
+// ── Invoice Pending Email Template ─────────────────────────────────────────────
+export function invoicePendingEmailTemplate(userName: string, courseName: string, invoiceNumber: string, amount: string, checkoutUrl: string): string {
+  return `
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tagihan Menunggu Pembayaran — Learnify</title>
+</head>
+<body style="margin:0;padding:0;background:#F0F2F8;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F0F2F8;padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:24px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+          <tr>
+            <td style="background:#100E2E;padding:32px 40px;text-align:center;">
+              <span style="color:white;font-size:22px;font-weight:800;letter-spacing:-0.5px;">Learnify<span style="color:#FF6B4A;">.</span></span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:40px 40px 32px;">
+              <h1 style="margin:0 0 12px;font-size:24px;font-weight:800;color:#0F172A;">Menunggu Pembayaran ⏳</h1>
+              <p style="margin:0 0 24px;font-size:15px;color:#64748B;line-height:1.6;">
+                Halo <strong style="color:#0F172A;">${userName}</strong>, terima kasih telah memesan kursus di Learnify. Silakan selesaikan pembayaran agar Anda bisa mulai belajar!
+              </p>
+              <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:20px;margin-bottom:24px;">
+                <p style="margin:0 0 8px;font-size:13px;color:#64748B;">No. Invoice: <strong style="color:#0F172A;">${invoiceNumber}</strong></p>
+                <p style="margin:0 0 8px;font-size:13px;color:#64748B;">Kursus: <strong style="color:#0F172A;">${courseName}</strong></p>
+                <p style="margin:0;font-size:13px;color:#64748B;">Total Tagihan: <strong style="color:#16A34A;font-size:16px;">${amount}</strong></p>
+              </div>
+              <table cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+                <tr>
+                  <td style="background:#FF6B4A;border-radius:12px;padding:14px 32px;">
+                    <a href="${checkoutUrl}" style="color:white;font-size:15px;font-weight:700;text-decoration:none;display:block;">Bayar Sekarang →</a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:0;font-size:12px;color:#94A3B8;line-height:1.6;">
+                Jika tombol di atas tidak berfungsi, buka link ini:<br/>
+                <a href="${checkoutUrl}" style="color:#FF6B4A;word-break:break-all;">${checkoutUrl}</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim();
+}
+
+// ── Payment Success Email Template ───────────────────────────────────────────
+export function paymentSuccessEmailTemplate(userName: string, courseName: string, invoiceNumber: string, amount: string, courseUrl: string): string {
+  return `
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pembayaran Berhasil — Learnify</title>
+</head>
+<body style="margin:0;padding:0;background:#F0F2F8;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F0F2F8;padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:24px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+          <tr>
+            <td style="background:#16A34A;padding:32px 40px;text-align:center;">
+              <span style="color:white;font-size:22px;font-weight:800;letter-spacing:-0.5px;">Learnify<span style="color:#BBF7D0;">.</span></span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:40px 40px 32px;">
+              <h1 style="margin:0 0 12px;font-size:24px;font-weight:800;color:#0F172A;">Pembayaran Berhasil! 🎉</h1>
+              <p style="margin:0 0 24px;font-size:15px;color:#64748B;line-height:1.6;">
+                Halo <strong style="color:#0F172A;">${userName}</strong>, pembayaran Anda untuk kursus di bawah ini telah kami terima. Selamat belajar!
+              </p>
+              <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;padding:20px;margin-bottom:24px;">
+                <p style="margin:0 0 8px;font-size:13px;color:#166534;">No. Invoice: <strong style="color:#14532D;">${invoiceNumber}</strong></p>
+                <p style="margin:0 0 8px;font-size:13px;color:#166534;">Kursus: <strong style="color:#14532D;">${courseName}</strong></p>
+                <p style="margin:0;font-size:13px;color:#166534;">Nominal Lunas: <strong style="color:#16A34A;font-size:16px;">${amount}</strong></p>
+              </div>
+              <table cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+                <tr>
+                  <td style="background:#16A34A;border-radius:12px;padding:14px 32px;">
+                    <a href="${courseUrl}" style="color:white;font-size:15px;font-weight:700;text-decoration:none;display:block;">Mulai Belajar Sekarang →</a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:0;font-size:12px;color:#94A3B8;line-height:1.6;">
+                Anda juga dapat mengunduh Invoice (PDF) secara mandiri melalui menu <strong>Riwayat Pembelian</strong> di Dashboard Siswa.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim();
+}
