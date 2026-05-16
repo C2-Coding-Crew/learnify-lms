@@ -26,12 +26,14 @@ export async function GET(
     return NextResponse.json({ isEnrolled: false, enrollment: null });
   }
 
+  // Query active/completed enrollment AND wishlist in parallel
   const [enrollment, wishlist] = await Promise.all([
     db.enrollment.findFirst({
       where: {
         userId: session.user.id,
         courseId: course.id,
         isDeleted: 0,
+        enrollmentStatus: { in: ["active", "completed"] },
       },
       select: {
         id: true,
@@ -46,6 +48,31 @@ export async function GET(
       where: { userId_courseId: { userId: session.user.id, courseId: course.id } }
     })
   ]);
+
+  // Separately check for pending_payment enrollment
+  const pendingEnrollment = !enrollment ? await db.enrollment.findFirst({
+    where: {
+      userId: session.user.id,
+      courseId: course.id,
+      isDeleted: 0,
+      enrollmentStatus: "pending_payment",
+    },
+  }) : null;
+
+  // Find the pending invoice for this course (if any)
+  let pendingInvoice = null;
+  if (pendingEnrollment) {
+    pendingInvoice = await db.invoice.findFirst({
+      where: {
+        userId: session.user.id,
+        courseId: course.id,
+        invoiceStatus: "pending",
+        isDeleted: 0,
+      },
+      select: { invoiceNumber: true },
+      orderBy: { createdDate: "desc" },
+    });
+  }
 
   let enrollmentData = enrollment;
 
@@ -69,8 +96,13 @@ export async function GET(
     };
   }
 
+  // isEnrolled = true ONLY for active/completed enrollments
+  const isEnrolled = !!enrollmentData;
+
   return NextResponse.json({
-    isEnrolled: !!enrollmentData,
+    isEnrolled,
+    isPendingPayment: !!pendingEnrollment,
+    pendingInvoiceNumber: pendingInvoice?.invoiceNumber || null,
     isWishlisted: wishlist ? wishlist.isDeleted === 0 : false,
     enrollment: enrollmentData
       ? {
