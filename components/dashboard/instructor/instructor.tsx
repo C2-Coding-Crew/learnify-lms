@@ -8,8 +8,11 @@ import {
   ShieldCheck,
   Star,
   MessageSquare,
+  Megaphone,
+  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BookOpenCheck } from "lucide-react";
 import {
   ComposedChart,
   Line,
@@ -169,6 +172,27 @@ export default function InstructorDashboard({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* ── Main Column ── */}
         <div className="lg:col-span-2 space-y-8">
+          {/* Quick Actions */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { label: "Announcement", icon: Megaphone, color: "text-blue-600", bg: "bg-blue-50", href: "/dashboard/instructor/announcements" },
+              { label: "Reviews", icon: Star, color: "text-yellow-600", bg: "bg-yellow-50", href: "/dashboard/instructor/reviews" },
+              { label: "Analytics", icon: TrendingUp, color: "text-green-600", bg: "bg-green-50", href: "/dashboard/instructor/analytics" },
+              { label: "Assignments", icon: BookOpenCheck, color: "text-purple-600", bg: "bg-purple-50", href: "/dashboard/instructor/assignments" },
+            ].map((action, i) => (
+              <button 
+                key={i}
+                onClick={() => router.push(action.href)}
+                className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-slate-200 transition-all flex items-center gap-3 group"
+              >
+                <div className={`w-9 h-9 rounded-xl ${action.bg} ${action.color} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
+                  <action.icon size={16} />
+                </div>
+                <span className="text-[10px] font-black text-slate-600 uppercase tracking-tight text-left leading-tight">{action.label}</span>
+              </button>
+            ))}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Monthly Earnings Chart */}
             <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-50">

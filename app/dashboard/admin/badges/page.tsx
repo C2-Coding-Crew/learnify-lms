@@ -7,23 +7,14 @@ import {
   Search, 
   Edit2, 
   Trash2, 
-  Image as ImageIcon,
-  Star,
-  Settings,
   Loader2,
-  Lock,
-  Zap
+  Zap,
+  Calendar
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetFooter,
-} from "@/components/ui/sheet";
+import { useToast } from "@/components/ui/toast-provider";
+import { Modal } from "@/components/ui/modal";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -35,6 +26,9 @@ export default function AdminBadgesPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [loadingId, setLoadingId] = useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const toast = useToast();
   
   const [formData, setFormData] = useState({
     id: 0,
@@ -54,7 +48,7 @@ export default function AdminBadgesPage() {
         setBadges(json);
       } else {
         setBadges([]);
-        if (json.error) toast.error(json.error);
+        if (json.error) toast.error("Gagal", json.error);
       }
     } catch (err) {
       console.error(err);
@@ -90,7 +84,7 @@ export default function AdminBadgesPage() {
 
   const handleSave = async () => {
     if (!formData.name || !formData.criteria) {
-      toast.error("Harap lengkapi nama dan kriteria.");
+      toast.error("Validasi Gagal", "Harap lengkapi nama dan kriteria.");
       return;
     }
 
@@ -107,26 +101,42 @@ export default function AdminBadgesPage() {
       
       if (!res.ok) throw new Error("Gagal menyimpan badge");
       
-      toast.success(isEditing ? "Badge diperbarui" : "Badge ditambahkan");
+      toast.success("Berhasil", isEditing ? "Badge diperbarui" : "Badge ditambahkan");
       setIsSheetOpen(false);
       fetchData();
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error("Gagal", err.message);
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Hapus badge ini?")) return;
+  const handleDeleteConfirmed = async () => {
+    if (confirmDeleteId === null) return;
+    const id = confirmDeleteId;
+    setLoadingId(id);
     try {
       const res = await fetch(`/api/admin/badges/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Gagal menghapus badge");
-      toast.success("Badge dihapus");
+      toast.success("Berhasil", "Badge telah dihapus");
+      setConfirmDeleteId(null);
       fetchData();
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error("Gagal", err.message);
+      setConfirmDeleteId(null);
+    } finally {
+      setLoadingId(null);
     }
+  };
+
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString("id-ID", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   const filtered = badges.filter(b => b.name.toLowerCase().includes(search.toLowerCase()));
@@ -152,13 +162,13 @@ export default function AdminBadgesPage() {
 
       <div className="bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-sm">
         <div className="relative w-full md:w-96 mb-8">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
           <input 
             type="text" 
             placeholder="Cari nama badge..." 
             value={search}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
-            className="w-full pl-12 pr-4 h-12 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-200 transition-all"
+            className="w-full pl-11 pr-4 h-12 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-100 transition-all"
           />
         </div>
 
@@ -167,151 +177,209 @@ export default function AdminBadgesPage() {
         ) : filtered.length === 0 ? (
           <div className="py-20 text-center flex flex-col items-center">
              <Award size={48} className="text-slate-100 mb-2" />
-             <p className="text-slate-400 font-bold">Belum ada badge.</p>
+             <p className="text-slate-400 font-bold">Belum ada lencana.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filtered.map(b => (
-              <div 
-                key={b.id} 
-                className="bg-white rounded-[2rem] border border-slate-100 p-6 hover:shadow-xl hover:shadow-indigo-100/50 transition-all group relative overflow-hidden"
-              >
-                <div className="flex items-start justify-between mb-6">
-                   <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center p-2 group-hover:scale-110 transition-transform shadow-inner">
-                      <img 
-                        src={b.imageUrl || `https://api.dicebear.com/7.x/shapes/svg?seed=${b.criteria}`} 
-                        alt={b.name}
-                        className="w-full h-full object-contain"
-                      />
-                   </div>
-                   <div className="flex gap-1">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => handleOpenEdit(b)}
-                        className="h-8 w-8 rounded-lg text-slate-300 hover:text-indigo-600 hover:bg-indigo-50"
-                      >
-                        <Edit2 size={14} />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => handleDelete(b.id)}
-                        className="h-8 w-8 rounded-lg text-slate-300 hover:text-red-600 hover:bg-red-50"
-                      >
-                        <Trash2 size={14} />
-                      </Button>
-                   </div>
-                </div>
+          <div className="overflow-x-auto pb-4">
+             <table className="w-full text-sm whitespace-nowrap min-w-[1300px]">
+               <thead>
+                 <tr className="text-[11px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                    <th className="text-left pb-4 pl-4 sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#f1f5f9]">Aksi</th>
+                    <th className="text-left pb-4 pl-4">Lencana Utama</th>
+                    <th className="text-left pb-4 pl-4">Poin & Kriteria</th>
+                    <th className="text-left pb-4 pl-4">Status</th>
+                    <th className="text-left pb-4 pl-4">Created By</th>
+                    <th className="text-left pb-4 pl-4">Created Date</th>
+                    <th className="text-left pb-4 pl-4">Last Update By</th>
+                    <th className="text-left pb-4 pl-4 pr-4">Last Update Date</th>
+                 </tr>
+               </thead>
+               <tbody className="divide-y divide-slate-50">
+                 {filtered.map(b => (
+                   <tr key={b.id} className="group hover:bg-slate-50 transition-colors">
+                     {/* Aksi di kiri — sticky */}
+                     <td className="py-4 pl-4 pr-6 sticky left-0 bg-white group-hover:bg-slate-50 shadow-[1px_0_0_0_#f1f5f9] transition-colors z-10">
+                        <div className="flex items-center gap-2">
+                           <Button 
+                            variant="outline" 
+                            size="icon" 
+                            onClick={() => handleOpenEdit(b)}
+                            className="h-8 w-8 rounded-lg text-blue-500 border-blue-100 hover:bg-blue-50"
+                           >
+                             <Edit2 size={14} />
+                           </Button>
+                           <Button 
+                            variant="outline" 
+                            size="icon" 
+                            onClick={() => setConfirmDeleteId(b.id)}
+                            disabled={loadingId === b.id}
+                            className="h-8 w-8 rounded-lg text-red-500 border-red-100 hover:bg-red-50"
+                           >
+                             {loadingId === b.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                           </Button>
+                        </div>
+                     </td>
 
-                <h3 className="font-black text-slate-800 mb-1">{b.name}</h3>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-3">{b.criteria}</p>
-                <p className="text-xs text-slate-500 font-medium line-clamp-2 leading-relaxed mb-4 min-h-[32px]">
-                  {b.description}
-                </p>
+                     <td className="py-4 pl-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center p-1.5 shrink-0">
+                            <img 
+                              src={b.imageUrl || `https://api.dicebear.com/7.x/shapes/svg?seed=${b.criteria}`} 
+                              alt={b.name}
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="font-black text-slate-800">{b.name}</span>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{b.criteria}</span>
+                          </div>
+                        </div>
+                     </td>
 
-                <div className="pt-4 border-t border-slate-50 flex items-center justify-between">
-                   <div className="flex items-center gap-1.5 font-black text-indigo-600 text-xs">
-                      <Zap size={14} fill="currentColor" /> {b.pointsRequired} Pts
-                   </div>
-                   <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wider ${b.status === 1 ? 'bg-green-50 text-green-600' : 'bg-slate-100 text-slate-400'}`}>
-                      {b.status === 1 ? 'Aktif' : 'Nonaktif'}
-                   </span>
-                </div>
-              </div>
-            ))}
+                     <td className="py-4 pl-4">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-1.5 font-black text-indigo-600 text-xs">
+                            <Zap size={12} fill="currentColor" /> {b.pointsRequired} Pts
+                          </div>
+                          <p className="text-[10px] text-slate-400 font-medium truncate max-w-[200px]">
+                            {b.description}
+                          </p>
+                        </div>
+                     </td>
+
+                     <td className="py-4 pl-4">
+                        {b.status === 1 ? (
+                          <span className="bg-green-50 text-green-600 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider border border-green-100">Aktif</span>
+                        ) : (
+                          <span className="bg-slate-100 text-slate-400 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider border border-slate-200">Nonaktif</span>
+                        )}
+                     </td>
+
+                     {/* 4 Field Standar */}
+                     <td className="py-4 pl-4">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600">
+                          {b.createdBy || "SYSTEM"}
+                        </span>
+                     </td>
+                     <td className="py-4 pl-4 text-slate-500 font-medium text-[10px]">
+                        {formatDate(b.createdDate)}
+                     </td>
+                     <td className="py-4 pl-4">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600">
+                          {b.lastUpdatedBy || "SYSTEM"}
+                        </span>
+                     </td>
+                     <td className="py-4 pl-4 pr-4 text-slate-500 font-medium text-[10px]">
+                        {formatDate(b.lastUpdatedDate)}
+                     </td>
+                   </tr>
+                 ))}
+               </tbody>
+             </table>
           </div>
         )}
       </div>
 
-      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent className="bg-white border-none sm:max-w-md w-[90vw] p-8 overflow-y-auto">
-          <SheetHeader className="mb-8">
-            <SheetTitle className="text-2xl font-black text-slate-800">
-              {isEditing ? "Edit Badge" : "Badge Baru"}
-            </SheetTitle>
-            <SheetDescription className="text-slate-400 font-medium">
-              Tentukan nama, kriteria, dan desain pencapaian.
-            </SheetDescription>
-          </SheetHeader>
-
-          <div className="space-y-6">
+      <Modal
+        open={isSheetOpen}
+        onClose={() => setIsSheetOpen(false)}
+        title={isEditing ? "Edit Lencana" : "Buat Lencana Baru"}
+        description="Konfigurasi detail lencana pencapaian sistem."
+      >
+        <div className="space-y-6">
+           <div className="space-y-2">
+             <Label className="text-xs font-bold text-slate-700 uppercase tracking-widest">Nama Badge</Label>
+             <Input 
+              placeholder="CONTOH: Pembelajar Gigih" 
+              value={formData.name} 
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, name: e.target.value})}
+              className="h-12 rounded-xl border-slate-100 font-bold"
+             />
+           </div>
+           
+           <div className="grid grid-cols-2 gap-4">
              <div className="space-y-2">
-               <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Nama Badge</Label>
+               <Label className="text-xs font-bold text-slate-700 uppercase tracking-widest">Kriteria Logic</Label>
                <Input 
-                placeholder="CONTOH: Pembelajar Gigih" 
-                value={formData.name} 
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, name: e.target.value})}
-                className="h-12 rounded-xl border-slate-100"
-               />
-             </div>
-             
-             <div className="space-y-2">
-               <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Kriteria Sistem (Logic Key)</Label>
-               <Input 
-                placeholder="CONTOH: STREAK_7_DAYS, QUIZ_SCORE_100" 
+                placeholder="QUIZ_SCORE_100" 
                 value={formData.criteria} 
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, criteria: e.target.value})}
-                className="h-12 rounded-xl border-slate-100 font-mono text-xs"
+                className="h-12 rounded-xl border-slate-100 font-mono text-xs font-bold"
                />
              </div>
-
              <div className="space-y-2">
-               <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">URL Gambar (Opsional)</Label>
+               <Label className="text-xs font-bold text-slate-700 uppercase tracking-widest">Poin Dibutuhkan</Label>
                <Input 
-                placeholder="https://example.com/badge.png" 
-                value={formData.imageUrl} 
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, imageUrl: e.target.value})}
-                className="h-12 rounded-xl border-slate-100"
-               />
-             </div>
-
-             <div className="space-y-2">
-               <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Poin Dibutuhkan</Label>
-               <Input 
-                type="number"
-                placeholder="0" 
+                type="number" 
+                placeholder="100" 
                 value={formData.pointsRequired} 
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, pointsRequired: e.target.value})}
-                className="h-12 rounded-xl border-slate-100"
+                className="h-12 rounded-xl border-slate-100 font-bold"
                />
              </div>
+           </div>
 
-             <div className="space-y-2">
-               <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Deskripsi</Label>
-               <Textarea 
-                placeholder="Jelaskan bagaimana cara mendapatkan badge ini..." 
-                value={formData.description} 
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({...formData, description: e.target.value})}
-                className="rounded-xl border-slate-100 resize-none h-24"
-               />
-             </div>
+           <div className="space-y-2">
+             <Label className="text-xs font-bold text-slate-700 uppercase tracking-widest">URL Gambar (Opsional)</Label>
+             <Input 
+              placeholder="https://example.com/badge.png" 
+              value={formData.imageUrl} 
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, imageUrl: e.target.value})}
+              className="h-12 rounded-xl border-slate-100 text-xs"
+             />
+           </div>
 
-             <div className="space-y-2">
-               <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Status</Label>
-               <select 
-                value={formData.status} 
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({...formData, status: Number(e.target.value)})}
-                className="w-full h-12 rounded-xl border border-slate-100 px-3 bg-white text-sm font-medium outline-none"
-               >
-                 <option value={1}>Aktif (Bisa Didapat)</option>
-                 <option value={0}>Nonaktif (Hidden)</option>
-               </select>
-             </div>
-          </div>
+           <div className="space-y-2">
+             <Label className="text-xs font-bold text-slate-700 uppercase tracking-widest">Deskripsi</Label>
+             <Textarea 
+              placeholder="Jelaskan cara mendapatkan badge ini..." 
+              value={formData.description} 
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({...formData, description: e.target.value})}
+              className="rounded-xl border-slate-100 resize-none h-20 text-sm"
+             />
+           </div>
 
-          <SheetFooter className="mt-10 pb-10">
-            <Button 
-              onClick={handleSave} 
-              disabled={isSaving}
-              className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black shadow-lg shadow-indigo-100"
-            >
-              {isSaving ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
-              Simpan Badge
-            </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+           <div className="space-y-2">
+             <Label className="text-xs font-bold text-slate-700 uppercase tracking-widest">Status</Label>
+             <select 
+              value={formData.status} 
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({...formData, status: Number(e.target.value)})}
+              className="w-full h-12 rounded-xl border border-slate-100 px-3 bg-slate-50 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-100"
+             >
+               <option value={1}>Aktif (Bisa Didapat)</option>
+               <option value={0}>Nonaktif (Tersembunyi)</option>
+             </select>
+           </div>
+
+           <div className="pt-4 flex gap-3">
+             <Button 
+               variant="outline"
+               onClick={() => setIsSheetOpen(false)}
+               className="flex-1 h-12 rounded-xl font-bold"
+             >
+               Batal
+             </Button>
+             <Button 
+               onClick={handleSave} 
+               disabled={isSaving}
+               className="flex-1 h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black shadow-lg shadow-indigo-500/20"
+             >
+               {isSaving ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
+               Simpan Lencana
+             </Button>
+           </div>
+        </div>
+      </Modal>
+
+      <ConfirmDialog
+        open={confirmDeleteId !== null}
+        onClose={() => setConfirmDeleteId(null)}
+        onConfirm={handleDeleteConfirmed}
+        title="Hapus Lencana"
+        description="Apakah Anda yakin ingin menghapus lencana ini? Siswa yang sudah memilikinya mungkin akan kehilangan pencapaian ini."
+        variant="danger"
+        isLoading={loadingId !== null && loadingId === confirmDeleteId}
+      />
     </main>
   );
 }

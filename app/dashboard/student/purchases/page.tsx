@@ -3,7 +3,8 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import DownloadInvoiceButton from "@/components/dashboard/student/download-invoice-button";
-import { Receipt, AlertCircle, CheckCircle2, Clock } from "lucide-react";
+import DeletePurchaseButton from "@/components/dashboard/student/delete-purchase-button";
+import { Receipt, AlertCircle, CheckCircle2, Clock, Trash2 } from "lucide-react";
 
 export const metadata = {
   title: "Riwayat Pembelian | Learnify",
@@ -17,8 +18,6 @@ export default async function StudentPurchasesPage() {
     where: { userId: session.user.id, isDeleted: 0 },
     include: {
       course: {
-        // Sengaja tanpa filter isDeleted agar riwayat tetap tampil
-        // meski kursus sudah di-soft-delete oleh instruktur
         include: {
           instructor: { select: { name: true } },
           category: { select: { name: true } },
@@ -63,6 +62,7 @@ export default async function StudentPurchasesPage() {
           <table className="w-full text-sm text-left">
             <thead className="bg-slate-50 text-slate-500 text-[11px] uppercase font-black tracking-wider border-b border-slate-100">
               <tr>
+                <th className="px-4 py-4 w-[50px] text-center"></th>
                 <th className="px-6 py-4">No. Invoice & Tanggal</th>
                 <th className="px-6 py-4">Kursus</th>
                 <th className="px-6 py-4">Total Nominal</th>
@@ -73,13 +73,22 @@ export default async function StudentPurchasesPage() {
             <tbody className="divide-y divide-slate-100">
               {invoices.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-10 text-center">
+                  <td colSpan={6} className="px-6 py-10 text-center">
                     <p className="text-slate-400 font-medium">Belum ada riwayat pembelian.</p>
                   </td>
                 </tr>
               ) : (
                 invoices.map((inv) => (
                   <tr key={inv.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-4 py-4 text-center">
+                      {inv.invoiceStatus !== "paid" ? (
+                        <DeletePurchaseButton id={inv.id} />
+                      ) : (
+                        <div className="w-8 h-8 flex items-center justify-center opacity-20">
+                          <Trash2 size={16} className="text-slate-300 cursor-not-allowed" />
+                        </div>
+                      )}
+                    </td>
                     <td className="px-6 py-4">
                       <p className="font-bold text-[#2D2D2D]">{inv.invoiceNumber}</p>
                       <p className="text-xs text-slate-400 font-medium mt-1">{formatDate(inv.createdDate as Date)}</p>

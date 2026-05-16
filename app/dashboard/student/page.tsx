@@ -46,6 +46,7 @@ async function getStudentDashboardData(userId: string) {
   let allUsersByPoints: any[] = [];
   let allBadges: any[] = [];
   let userBadges: any[] = [];
+  let recommendedCourses: any[] = [];
 
   try {
     [
@@ -108,6 +109,20 @@ async function getStudentDashboardData(userId: string) {
         where: { userId, isDeleted: 0 },
         include: { badge: true },
         orderBy: { earnedAt: "desc" },
+      }),
+      db.course.findMany({
+        where: { 
+          isPublished: true, 
+          status: 1, 
+          isDeleted: 0,
+          enrollments: { none: { userId } }
+        },
+        orderBy: [
+          { isPopular: "desc" },
+          { createdDate: "desc" }
+        ],
+        take: 3,
+        include: { category: true }
       }),
     ]);
   } catch (error) {
@@ -202,7 +217,14 @@ async function getStudentDashboardData(userId: string) {
     })),
     userStats,
     allBadges,
-    userBadges
+    userBadges,
+    recommendedCourses: recommendedCourses.map(c => ({
+      id: c.id,
+      title: c.title,
+      slug: c.slug,
+      categoryName: c.category.name,
+      thumbnail: c.thumbnail
+    }))
   };
 }
 
@@ -230,7 +252,7 @@ export default async function StudentPage() {
     );
   }
 
-  const { enrolledCourses, weeklyHours, avgProgress, todos, pendingInvoices, certificates, userStats, allBadges, userBadges } =
+  const { enrolledCourses, weeklyHours, avgProgress, todos, pendingInvoices, certificates, userStats, allBadges, userBadges, recommendedCourses } =
     dashboardData;
 
   return (
@@ -254,6 +276,7 @@ export default async function StudentPage() {
       userStats={userStats}
       allBadges={allBadges}
       userBadges={userBadges}
+      recommendedCourses={recommendedCourses}
     />
   );
 }

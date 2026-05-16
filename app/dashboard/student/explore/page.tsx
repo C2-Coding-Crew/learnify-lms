@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { Search, Filter, BookOpen, Clock, Star, ArrowRight, Zap, Users, LayoutGrid, List, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { ExploreFilters } from "@/components/dashboard/student/explore/explore-filters";
 
 const formatPrice = (price: number | string) => {
   const num = Number(price);
@@ -31,16 +32,37 @@ const getLevelColor = (level: string) => {
   }
 };
 
-export default async function ExploreCoursesPage() {
+export default async function ExploreCoursesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; cat?: string }>;
+}) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/auth/login");
 
-  // Ambil semua kursus yang sudah dipublish
+  const { q, cat } = await searchParams;
+
+  // Ambil kategori untuk filter
+  const categories = await db.category.findMany({
+    where: { isDeleted: 0, status: 1 },
+    orderBy: { name: "asc" },
+  });
+
+  // Ambil semua kursus yang sudah dipublish dengan filter
   const courses = await db.course.findMany({
     where: { 
       isPublished: true, 
       isDeleted: 0,
-      status: 1 
+      status: 1,
+      ...(q ? {
+        OR: [
+          { title: { contains: q, mode: 'insensitive' } },
+          { description: { contains: q, mode: 'insensitive' } },
+        ]
+      } : {}),
+      ...(cat ? {
+        category: { slug: cat }
+      } : {})
     },
     include: {
       category: true,
@@ -55,38 +77,28 @@ export default async function ExploreCoursesPage() {
   return (
     <main className="flex-1 p-6 md:p-10 max-w-[1400px] mx-auto w-full font-sans">
       <header className="mb-10">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Eksplorasi Kursus 🚀</h1>
-            <p className="text-slate-500 text-sm mt-2 font-medium">
-              Temukan ribuan materi belajar berkualitas untuk meningkatkan skill kamu.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-             <div className="relative group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#FF6B4A] transition-colors" size={18} />
-                <input 
-                  type="text" 
-                  placeholder="Cari kelas apa hari ini?" 
-                  className="pl-12 pr-6 py-3.5 bg-white border border-slate-100 rounded-2xl text-sm w-full md:w-[350px] outline-none focus:ring-4 focus:ring-orange-50 shadow-sm transition-all"
-                />
-             </div>
-             <Button variant="outline" className="h-full px-5 py-3.5 rounded-2xl border-slate-100 text-slate-500 font-bold hover:bg-slate-50">
-                <Filter size={18} className="mr-2" /> Filter
-             </Button>
-          </div>
-        </div>
+        <ExploreFilters categories={categories} />
       </header>
 
       {/* Course Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
         {courses.length === 0 ? (
-          <div className="col-span-full py-20 text-center">
-            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <BookOpen size={32} className="text-slate-300" />
+          <div className="col-span-full py-32 text-center bg-white rounded-[3rem] border border-slate-50">
+            <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Search size={40} className="text-slate-200" />
             </div>
-            <h3 className="text-lg font-bold text-slate-800">Belum ada kursus tersedia</h3>
-            <p className="text-slate-400 text-sm mt-1">Silakan kembali lagi nanti untuk melihat update terbaru.</p>
+            <h3 className="text-xl font-black text-slate-800">Kelas tidak ditemukan</h3>
+            <p className="text-slate-400 text-sm mt-2 font-medium max-w-xs mx-auto">
+              Maaf, kami tidak menemukan hasil yang cocok dengan kata kunci "{q}". Cobalah kata kunci lain.
+            </p>
+            <Link href="/dashboard/student/explore">
+              <Button 
+                variant="outline" 
+                className="mt-8 rounded-xl font-bold px-8 h-12"
+              >
+                Reset Pencarian
+              </Button>
+            </Link>
           </div>
         ) : (
           courses.map((course) => (
@@ -126,7 +138,7 @@ export default async function ExploreCoursesPage() {
                     {course.rating.toFixed(1)}{" "}
                     <span className="text-slate-300 font-medium">({course.reviewCount})</span>
                   </span>
-                  <span className="ml-auto text-[10px] text-slate-400 flex items-center gap-1">
+                  <span className="ml-auto text-[10px] text-slate-400 flex items-center gap-1 font-bold">
                     <Users size={10} /> {course._count.enrollments}
                   </span>
                 </div>
@@ -158,7 +170,7 @@ export default async function ExploreCoursesPage() {
 
                   <div className="pt-4 border-t border-slate-50 flex items-center justify-between">
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Investasi</span>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Investasi</span>
                       <span className={`text-lg font-black ${Number(course.price) === 0 ? "text-green-600" : "text-slate-900"}`}>
                         {formatPrice(Number(course.price))}
                       </span>

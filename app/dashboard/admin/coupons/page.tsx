@@ -11,20 +11,11 @@ import {
   Percent, 
   Users,
   Loader2,
-  MoreVertical,
-  CheckCircle,
-  XCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetFooter,
-} from "@/components/ui/sheet";
+import { useToast } from "@/components/ui/toast-provider";
+import { Modal } from "@/components/ui/modal";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -35,6 +26,9 @@ export default function AdminCouponsPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [loadingId, setLoadingId] = useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const toast = useToast();
   
   const [formData, setFormData] = useState({
     id: 0,
@@ -53,7 +47,7 @@ export default function AdminCouponsPage() {
         setCoupons(json);
       } else {
         setCoupons([]);
-        if (json.error) toast.error(json.error);
+        if (json.error) toast.error("Gagal", json.error);
       }
     } catch (err) {
       console.error(err);
@@ -88,7 +82,7 @@ export default function AdminCouponsPage() {
 
   const handleSave = async () => {
     if (!formData.code || !formData.discountPercent || !formData.validUntil) {
-      toast.error("Harap lengkapi semua field wajib.");
+      toast.error("Validasi Gagal", "Harap lengkapi semua field wajib.");
       return;
     }
 
@@ -105,26 +99,42 @@ export default function AdminCouponsPage() {
       
       if (!res.ok) throw new Error("Gagal menyimpan kupon");
       
-      toast.success(isEditing ? "Kupon diperbarui" : "Kupon ditambahkan");
+      toast.success("Berhasil", isEditing ? "Kupon diperbarui" : "Kupon ditambahkan");
       setIsSheetOpen(false);
       fetchData();
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error("Gagal", err.message);
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Hapus kupon ini?")) return;
+  const handleDeleteConfirmed = async () => {
+    if (confirmDeleteId === null) return;
+    const id = confirmDeleteId;
+    setLoadingId(id);
     try {
       const res = await fetch(`/api/admin/coupons/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Gagal menghapus kupon");
-      toast.success("Kupon dihapus");
+      toast.success("Berhasil", "Kupon telah dihapus");
+      setConfirmDeleteId(null);
       fetchData();
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error("Gagal", err.message);
+      setConfirmDeleteId(null);
+    } finally {
+      setLoadingId(null);
     }
+  };
+
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString("id-ID", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   const filtered = coupons.filter(c => c.code.toLowerCase().includes(search.toLowerCase()));
@@ -148,15 +158,15 @@ export default function AdminCouponsPage() {
         </Button>
       </header>
 
-      <div className="bg-white rounded-[2.5rem] border border-slate-100 p-6 shadow-sm">
+      <div className="bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-sm">
         <div className="relative w-full md:w-96 mb-8">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
           <input 
             type="text" 
             placeholder="Cari kode kupon..." 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 pr-4 h-12 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-medium outline-none focus:ring-2 focus:ring-orange-200 transition-all"
+            className="w-full pl-11 pr-4 h-12 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-medium outline-none focus:ring-2 focus:ring-orange-200 transition-all"
           />
         </div>
 
@@ -168,22 +178,48 @@ export default function AdminCouponsPage() {
              <p className="text-slate-400 font-bold">Belum ada kupon.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-             <table className="w-full">
+          <div className="overflow-x-auto pb-4">
+             <table className="w-full text-sm whitespace-nowrap min-w-[1200px]">
                <thead>
-                 <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50">
-                    <th className="text-left pb-3 pl-4">Kode Kupon</th>
-                    <th className="text-left pb-3">Diskon</th>
-                    <th className="text-left pb-3">Penggunaan</th>
-                    <th className="text-left pb-3">Berlaku S/D</th>
-                    <th className="text-center pb-3">Status</th>
-                    <th className="text-right pb-3 pr-4">Aksi</th>
+                 <tr className="text-[11px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                    <th className="text-left pb-4 pl-4 sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#f1f5f9]">Aksi</th>
+                    <th className="text-left pb-4 pl-4">Kode Kupon</th>
+                    <th className="text-left pb-4 pl-4">Diskon & Penggunaan</th>
+                    <th className="text-left pb-4 pl-4">Berlaku S/D</th>
+                    <th className="text-left pb-4 pl-4">Status</th>
+                    <th className="text-left pb-4 pl-4">Created By</th>
+                    <th className="text-left pb-4 pl-4">Created Date</th>
+                    <th className="text-left pb-4 pl-4">Last Update By</th>
+                    <th className="text-left pb-4 pl-4 pr-4">Last Update Date</th>
                  </tr>
                </thead>
                <tbody className="divide-y divide-slate-50">
                  {filtered.map(c => (
                    <tr key={c.id} className="group hover:bg-slate-50 transition-colors">
-                     <td className="py-3.5 pl-4">
+                     {/* Aksi di kiri — sticky */}
+                     <td className="py-4 pl-4 pr-6 sticky left-0 bg-white group-hover:bg-slate-50 shadow-[1px_0_0_0_#f1f5f9] transition-colors z-10">
+                        <div className="flex items-center gap-2">
+                           <Button 
+                            variant="outline" 
+                            size="icon" 
+                            onClick={() => handleOpenEdit(c)}
+                            className="h-8 w-8 rounded-lg text-blue-500 border-blue-100 hover:bg-blue-50"
+                           >
+                             <Edit2 size={14} />
+                           </Button>
+                           <Button 
+                            variant="outline" 
+                            size="icon" 
+                            onClick={() => setConfirmDeleteId(c.id)}
+                            disabled={loadingId === c.id}
+                            className="h-8 w-8 rounded-lg text-red-500 border-red-100 hover:bg-red-50"
+                           >
+                             {loadingId === c.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                           </Button>
+                        </div>
+                     </td>
+
+                     <td className="py-4 pl-4">
                         <div className="flex items-center gap-2.5">
                           <div className="w-9 h-9 bg-orange-50 text-[#FF6B4A] rounded-xl flex items-center justify-center font-black text-xs uppercase shrink-0">
                             <Tag size={14} />
@@ -191,55 +227,48 @@ export default function AdminCouponsPage() {
                           <p className="font-black text-slate-800 uppercase tracking-wider text-xs">{c.code}</p>
                         </div>
                      </td>
-                     <td className="py-3.5 text-xs">
-                        <div className="flex items-center gap-1.5 font-bold text-green-600">
-                          <Percent size={12} /> {c.discountPercent}% OFF
+
+                     <td className="py-4 pl-4">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-1.5 font-bold text-green-600 text-xs">
+                            <Percent size={12} /> {c.discountPercent}% OFF
+                          </div>
+                          <div className="flex items-center gap-1.5 text-slate-400 font-bold text-[10px] uppercase tracking-tight">
+                            <Users size={10} /> {c.usedCount} / {c.maxUses} TERPAKAI
+                          </div>
                         </div>
                      </td>
-                     <td className="py-3.5">
-                        <div className="flex items-center gap-1.5 text-slate-600 font-medium text-[10px]">
-                          <Users size={12} /> {c.usedCount} / {c.maxUses}
-                        </div>
-                        <div className="w-20 h-1 bg-slate-100 rounded-full mt-1.5 overflow-hidden">
-                           <div 
-                            className="h-full bg-orange-400" 
-                            style={{ width: `${Math.min(100, (c.usedCount / c.maxUses) * 100)}%` }} 
-                           />
+
+                     <td className="py-4 pl-4">
+                        <div className="flex items-center gap-1.5 text-slate-500 font-medium text-xs">
+                          <Calendar size={14} className="text-slate-300" /> {new Date(c.validUntil).toLocaleDateString("id-ID", { day:'2-digit', month:'short', year:'numeric' })}
                         </div>
                      </td>
-                     <td className="py-3.5">
-                        <div className="flex items-center gap-1.5 text-slate-500 font-medium text-[10px]">
-                          <Calendar size={12} /> {new Date(c.validUntil).toLocaleDateString("id-ID", { day:'2-digit', month:'short', year:'numeric' })}
-                        </div>
+
+                     <td className="py-4 pl-4">
+                        {c.status === 1 ? (
+                          <span className="bg-green-50 text-green-600 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider border border-green-100">Aktif</span>
+                        ) : (
+                          <span className="bg-slate-100 text-slate-400 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider border border-slate-200">Nonaktif</span>
+                        )}
                      </td>
-                     <td className="py-3.5">
-                        <div className="flex justify-center">
-                          {c.status === 1 ? (
-                            <span className="bg-green-50 text-green-600 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wider border border-green-100">Aktif</span>
-                          ) : (
-                            <span className="bg-slate-100 text-slate-400 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wider border border-slate-200">Nonaktif</span>
-                          )}
-                        </div>
+
+                     {/* 4 Field Standar */}
+                     <td className="py-4 pl-4">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600">
+                          {c.createdBy || "SYSTEM"}
+                        </span>
                      </td>
-                     <td className="py-3.5 text-right pr-4">
-                        <div className="flex items-center justify-end gap-1.5">
-                           <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => handleOpenEdit(c)}
-                            className="h-7 w-7 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50"
-                           >
-                             <Edit2 size={14} />
-                           </Button>
-                           <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => handleDelete(c.id)}
-                            className="h-7 w-7 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50"
-                           >
-                             <Trash2 size={14} />
-                           </Button>
-                        </div>
+                     <td className="py-4 pl-4 text-slate-500 font-medium text-[10px]">
+                        {formatDate(c.createdDate)}
+                     </td>
+                     <td className="py-4 pl-4">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600">
+                          {c.lastUpdatedBy || "SYSTEM"}
+                        </span>
+                     </td>
+                     <td className="py-4 pl-4 pr-4 text-slate-500 font-medium text-[10px]">
+                        {formatDate(c.lastUpdatedDate)}
                      </td>
                    </tr>
                  ))}
@@ -249,86 +278,97 @@ export default function AdminCouponsPage() {
         )}
       </div>
 
-      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent className="bg-white border-none sm:max-w-md w-[90vw] p-8">
-          <SheetHeader className="mb-8">
-            <SheetTitle className="text-2xl font-black text-slate-800">
-              {isEditing ? "Edit Kupon" : "Kupon Baru"}
-            </SheetTitle>
-            <SheetDescription className="text-slate-400 font-medium">
-              Konfigurasi detail diskon dan masa berlaku kupon.
-            </SheetDescription>
-          </SheetHeader>
-
-          <div className="space-y-6">
+      <Modal
+        open={isSheetOpen}
+        onClose={() => setIsSheetOpen(false)}
+        title={isEditing ? "Edit Kupon" : "Buat Kupon Baru"}
+        description="Konfigurasi detail diskon dan masa berlaku kupon."
+      >
+        <div className="space-y-6">
+           <div className="space-y-2">
+             <Label className="text-xs font-bold text-slate-700 uppercase tracking-widest">Kode Kupon</Label>
+             <Input 
+              placeholder="CONTOH: DISKON50" 
+              value={formData.code} 
+              onChange={e => setFormData({...formData, code: e.target.value})}
+              className="h-12 rounded-xl border-slate-100 uppercase font-bold"
+             />
+           </div>
+           
+           <div className="grid grid-cols-2 gap-4">
              <div className="space-y-2">
-               <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Kode Kupon</Label>
+               <Label className="text-xs font-bold text-slate-700 uppercase tracking-widest">Persen Diskon (%)</Label>
                <Input 
-                placeholder="CONTOH: DISKON50" 
-                value={formData.code} 
-                onChange={e => setFormData({...formData, code: e.target.value})}
-                className="h-12 rounded-xl border-slate-100 uppercase"
+                type="number" 
+                placeholder="50" 
+                value={formData.discountPercent} 
+                onChange={e => setFormData({...formData, discountPercent: e.target.value})}
+                className="h-12 rounded-xl border-slate-100 font-bold"
                />
              </div>
-             
-             <div className="grid grid-cols-2 gap-4">
-               <div className="space-y-2">
-                 <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Persen Diskon (%)</Label>
-                 <Input 
-                  type="number" 
-                  placeholder="50" 
-                  value={formData.discountPercent} 
-                  onChange={e => setFormData({...formData, discountPercent: e.target.value})}
-                  className="h-12 rounded-xl border-slate-100"
-                 />
-               </div>
-               <div className="space-y-2">
-                 <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Maks Penggunaan</Label>
-                 <Input 
-                  type="number" 
-                  placeholder="100" 
-                  value={formData.maxUses} 
-                  onChange={e => setFormData({...formData, maxUses: e.target.value})}
-                  className="h-12 rounded-xl border-slate-100"
-                 />
-               </div>
-             </div>
-
              <div className="space-y-2">
-               <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Berlaku Sampai</Label>
+               <Label className="text-xs font-bold text-slate-700 uppercase tracking-widest">Maks Penggunaan</Label>
                <Input 
-                type="date" 
-                value={formData.validUntil} 
-                onChange={e => setFormData({...formData, validUntil: e.target.value})}
-                className="h-12 rounded-xl border-slate-100"
+                type="number" 
+                placeholder="100" 
+                value={formData.maxUses} 
+                onChange={e => setFormData({...formData, maxUses: e.target.value})}
+                className="h-12 rounded-xl border-slate-100 font-bold"
                />
              </div>
+           </div>
 
-             <div className="space-y-2">
-               <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Status</Label>
-               <select 
-                value={formData.status} 
-                onChange={e => setFormData({...formData, status: Number(e.target.value)})}
-                className="w-full h-12 rounded-xl border border-slate-100 px-3 bg-white text-sm font-medium outline-none"
-               >
-                 <option value={1}>Aktif (Dapat Digunakan)</option>
-                 <option value={0}>Nonaktif (Ditangguhkan)</option>
-               </select>
-             </div>
-          </div>
+           <div className="space-y-2">
+             <Label className="text-xs font-bold text-slate-700 uppercase tracking-widest">Berlaku Sampai</Label>
+             <Input 
+              type="date" 
+              value={formData.validUntil} 
+              onChange={e => setFormData({...formData, validUntil: e.target.value})}
+              className="h-12 rounded-xl border-slate-100 font-bold"
+             />
+           </div>
 
-          <SheetFooter className="mt-10">
-            <Button 
-              onClick={handleSave} 
-              disabled={isSaving}
-              className="w-full h-12 bg-[#FF6B4A] hover:bg-[#fa5a35] text-white rounded-xl font-black shadow-lg shadow-orange-100"
-            >
-              {isSaving ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
-              Simpan Kupon
-            </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+           <div className="space-y-2">
+             <Label className="text-xs font-bold text-slate-700 uppercase tracking-widest">Status</Label>
+             <select 
+              value={formData.status} 
+              onChange={e => setFormData({...formData, status: Number(e.target.value)})}
+              className="w-full h-12 rounded-xl border border-slate-100 px-3 bg-slate-50 text-sm font-bold outline-none focus:ring-2 focus:ring-orange-100"
+             >
+               <option value={1}>Aktif (Dapat Digunakan)</option>
+               <option value={0}>Nonaktif (Ditangguhkan)</option>
+             </select>
+           </div>
+
+           <div className="pt-4 flex gap-3">
+             <Button 
+               variant="outline"
+               onClick={() => setIsSheetOpen(false)}
+               className="flex-1 h-12 rounded-xl font-bold"
+             >
+               Batal
+             </Button>
+             <Button 
+               onClick={handleSave} 
+               disabled={isSaving}
+               className="flex-1 h-12 bg-[#FF6B4A] hover:bg-[#fa5a35] text-white rounded-xl font-black shadow-lg shadow-orange-500/20"
+             >
+               {isSaving ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
+               Simpan Kupon
+             </Button>
+           </div>
+        </div>
+      </Modal>
+
+      <ConfirmDialog
+        open={confirmDeleteId !== null}
+        onClose={() => setConfirmDeleteId(null)}
+        onConfirm={handleDeleteConfirmed}
+        title="Hapus Kupon"
+        description="Apakah Anda yakin ingin menghapus kupon ini? Kode ini tidak akan bisa digunakan lagi."
+        variant="danger"
+        isLoading={loadingId !== null && loadingId === confirmDeleteId}
+      />
     </main>
   );
 }

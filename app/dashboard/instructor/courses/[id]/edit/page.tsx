@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save, Loader2, Video, Plus, Trash2, GripVertical, CheckCircle2, FileQuestion, Type, Clock, Globe } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Video, Plus, Trash2, GripVertical, CheckCircle2, FileQuestion, Type, Clock, Globe, FileText, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { QuizBuilder } from "@/components/dashboard/instructor/quiz-builder";
 import { useToast } from "@/components/ui/toast-provider";
@@ -23,10 +23,15 @@ export default function EditCoursePage() {
   const [course, setCourse] = useState<any>(null);
   const [lessons, setLessons] = useState<any[]>([]);
   const [quizzes, setQuizzes] = useState<any[]>([]);
+  const [assignments, setAssignments] = useState<any[]>([]);
 
   // Quiz Builder State
   const [isAddingQuiz, setIsAddingQuiz] = useState(false);
   const [selectedLessonId, setSelectedLessonId] = useState<number | null>(null);
+
+  // Assignment State
+  const [isAddingAssignment, setIsAddingAssignment] = useState(false);
+  const [newAssignment, setNewAssignment] = useState({ title: "", description: "", dueDate: "" });
 
   // Add Lesson State
   const [isAddingLesson, setIsAddingLesson] = useState(false);
@@ -39,14 +44,16 @@ export default function EditCoursePage() {
     Promise.all([
       fetch(`/api/instructor/courses/${courseId}`).then(res => res.json()),
       fetch(`/api/instructor/courses/${courseId}/quizzes`).then(res => res.json()),
+      fetch(`/api/instructor/courses/${courseId}/assignments`).then(res => res.json()),
       fetch("/api/categories").then(res => res.json())
-    ]).then(([courseData, quizData, catData]) => {
+    ]).then(([courseData, quizData, assignmentData, catData]) => {
       if (courseData.error) {
         setError(courseData.error);
       } else {
         setCourse(courseData);
         setLessons(courseData.lessons || []);
         setQuizzes(quizData || []);
+        setAssignments(assignmentData || []);
       }
       setCategories(catData);
       setIsLoading(false);
@@ -146,8 +153,45 @@ export default function EditCoursePage() {
       });
       if (!res.ok) throw new Error("Failed to delete quiz");
       setQuizzes(quizzes.filter(q => q.id !== quizId));
+      toast.success("Kuis Dihapus", "Kuis telah dihapus dari kursus.");
     } catch (err: any) {
-      alert(err.message);
+      toast.error("Gagal", err.message);
+    }
+  };
+
+  const handleAddAssignment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    try {
+      const res = await fetch(`/api/instructor/courses/${courseId}/assignments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newAssignment)
+      });
+      if (!res.ok) throw new Error("Failed to add assignment");
+      const added = await res.json();
+      setAssignments([added, ...assignments]);
+      setIsAddingAssignment(false);
+      setNewAssignment({ title: "", description: "", dueDate: "" });
+      toast.success("Tugas Ditambahkan", `"${added.title}" berhasil dibuat.`);
+    } catch (err: any) {
+      toast.error("Gagal", err.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteAssignment = async (id: number) => {
+    if (!confirm("Hapus tugas ini?")) return;
+    try {
+      const res = await fetch(`/api/instructor/assignments/${id}`, {
+        method: "DELETE"
+      });
+      if (!res.ok) throw new Error("Failed to delete assignment");
+      setAssignments(assignments.filter(a => a.id !== id));
+      toast.success("Tugas Dihapus", "Penugasan telah dihapus.");
+    } catch (err: any) {
+      toast.error("Gagal", err.message);
     }
   };
 
@@ -421,6 +465,87 @@ export default function EditCoursePage() {
                     </div>
                     <button 
                       onClick={() => handleDeleteQuiz(quiz.id)} 
+                      className="p-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-50 rounded-xl"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Section Tugas (Assignments) */}
+            <div className="mt-16 pt-12 border-t border-slate-50">
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h3 className="text-xl font-black text-slate-800">Penugasan (Assignments) 📝</h3>
+                  <p className="text-xs font-bold text-slate-400 mt-1">Berikan tugas proyek atau latihan praktis.</p>
+                </div>
+                {!isAddingAssignment && (
+                  <Button 
+                    onClick={() => setIsAddingAssignment(true)}
+                    className="bg-orange-50 hover:bg-[#FF6B4A] text-[#FF6B4A] hover:text-white rounded-xl h-11 px-6 font-black transition-all flex items-center gap-2 shadow-sm border border-orange-100"
+                  >
+                    <Plus size={18} /> Tambah Tugas
+                  </Button>
+                )}
+              </div>
+
+              {/* Form Tambah Tugas */}
+              {isAddingAssignment && (
+                <form onSubmit={handleAddAssignment} className="bg-slate-50 border border-slate-100 rounded-[2rem] p-8 mb-8 space-y-6 shadow-inner">
+                  <h4 className="text-sm font-black text-slate-800 flex items-center gap-2 uppercase tracking-widest">
+                    <FileText size={16} className="text-[#FF6B4A]" /> Tugas Baru
+                  </h4>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Judul Tugas</label>
+                      <input type="text" required value={newAssignment.title} onChange={e => setNewAssignment({...newAssignment, title: e.target.value})} placeholder="Contoh: Proyek Akhir Desain UI/UX" className="w-full h-12 bg-white border border-slate-200 rounded-xl px-4 text-sm font-bold outline-none focus:ring-4 focus:ring-orange-50 transition-all" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Deadline</label>
+                      <input type="date" required value={newAssignment.dueDate} onChange={e => setNewAssignment({...newAssignment, dueDate: e.target.value})} className="w-full h-12 bg-white border border-slate-200 rounded-xl px-4 text-sm font-bold outline-none focus:ring-4 focus:ring-orange-50 transition-all" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Deskripsi & Instruksi</label>
+                      <textarea rows={4} value={newAssignment.description} onChange={e => setNewAssignment({...newAssignment, description: e.target.value})} placeholder="Jelaskan instruksi tugas secara detail..." className="w-full bg-white border border-slate-200 rounded-xl p-4 text-sm font-medium outline-none focus:ring-4 focus:ring-orange-50 transition-all resize-none" />
+                    </div>
+                  </div>
+                  <div className="flex gap-3 pt-2">
+                    <Button type="button" onClick={() => setIsAddingAssignment(false)} variant="ghost" className="h-12 px-6 rounded-xl font-black text-slate-400">Batal</Button>
+                    <Button type="submit" disabled={isSaving} className="h-12 bg-[#FF6B4A] hover:bg-[#e55a3d] text-white rounded-xl px-8 font-black shadow-lg shadow-orange-100">Buat Tugas</Button>
+                  </div>
+                </form>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {assignments.length === 0 && !isAddingAssignment && (
+                  <div className="md:col-span-2 text-center py-16 bg-slate-50 border border-dashed border-slate-200 rounded-[2rem]">
+                    <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+                      <FileText size={28} className="text-slate-300" />
+                    </div>
+                    <p className="text-sm font-black text-slate-400">Belum Ada Tugas</p>
+                  </div>
+                )}
+                {assignments.map((assignment: any) => (
+                  <div key={assignment.id} className="p-6 bg-white border border-slate-100 rounded-[2rem] hover:shadow-xl transition-all flex items-center gap-5 group border-b-4 border-b-orange-50 hover:border-b-orange-500">
+                    <div className="w-14 h-14 rounded-2xl bg-orange-50 text-[#FF6B4A] flex items-center justify-center font-black shrink-0 shadow-sm transition-transform group-hover:scale-110">
+                      <FileText size={24} />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-black text-slate-800 text-sm leading-tight">{assignment.title}</h4>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                          <Calendar size={10} /> {new Date(assignment.dueDate).toLocaleDateString("id-ID", { day:'2-digit', month:'short' })}
+                        </span>
+                        <span className="w-1 h-1 bg-slate-200 rounded-full" />
+                        <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">
+                          Tugas Proyek
+                        </span>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => handleDeleteAssignment(assignment.id)} 
                       className="p-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-50 rounded-xl"
                     >
                       <Trash2 size={16} />

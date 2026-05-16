@@ -20,7 +20,7 @@ export default async function LearnPage({ params, searchParams }: Props) {
   }
 
   // 2. Ambil kursus
-  const course = await db.course.findUnique({
+  const course = await (db as any).course.findUnique({
     where: { slug, isDeleted: 0, isPublished: true },
     include: {
       category: { select: { name: true, slug: true } },
@@ -34,9 +34,13 @@ export default async function LearnPage({ params, searchParams }: Props) {
         include: {
           _count: { select: { questions: true } }
         }
+      },
+      announcements: {
+        where: { isDeleted: 0, status: 1 },
+        orderBy: { createdDate: "desc" }
       }
     },
-  });
+  }) as any;
 
   if (!course) redirect("/courses");
 
@@ -100,7 +104,7 @@ export default async function LearnPage({ params, searchParams }: Props) {
 
   // 5. Tentukan lesson aktif
   const lessonId = lessonIdStr ? parseInt(lessonIdStr) : course.lessons[0]?.id;
-  const activeLesson = course.lessons.find((l) => l.id === lessonId) ?? course.lessons[0];
+  const activeLesson = course.lessons.find((l: any) => l.id === lessonId) ?? course.lessons[0];
 
   const completedCount = progressRecords.filter((p) => p.isCompleted).length;
   const progressPercent = course.lessons.length > 0
@@ -116,7 +120,7 @@ export default async function LearnPage({ params, searchParams }: Props) {
         totalLessons: course.totalLessons,
         category: course.category,
         instructor: course.instructor,
-        lessons: course.lessons.map((l) => ({
+        lessons: course.lessons.map((l: any) => ({
           id: l.id,
           title: l.title,
           duration: l.duration,
@@ -125,13 +129,19 @@ export default async function LearnPage({ params, searchParams }: Props) {
           description: l.description,
           videoUrl: l.videoUrl,
         })),
-        quizzes: course.quizzes.map(q => ({
+        quizzes: course.quizzes.map((q: any) => ({
           id: q.id,
           lessonId: q.lessonId,
           title: q.title,
           description: q.description,
           questionCount: q._count.questions,
           passingScore: q.passingScore
+        })),
+        announcements: course.announcements.map((a: any) => ({
+          id: a.id,
+          title: a.title,
+          content: a.content,
+          createdDate: a.createdDate.toISOString()
         }))
       }}
       activeLessonId={activeLesson?.id ?? null}

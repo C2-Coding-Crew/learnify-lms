@@ -42,6 +42,14 @@ interface Course {
   active: boolean;
 }
 
+interface RecommendedCourse {
+  id: number;
+  title: string;
+  slug: string;
+  categoryName: string;
+  thumbnail: string | null;
+}
+
 interface StudentDashboardProps {
   /** User ID — used as localStorage namespace key */
   userId: string;
@@ -60,6 +68,7 @@ interface StudentDashboardProps {
   userStats?: { points: number; streak: number; rank: number | string };
   allBadges?: any[];
   userBadges?: any[];
+  recommendedCourses?: RecommendedCourse[];
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -98,6 +107,7 @@ export default function StudentDashboard({
   userStats = { points: 0, streak: 0, rank: "-" },
   allBadges = [],
   userBadges = [],
+  recommendedCourses = [],
 }: StudentDashboardProps) {
   const router = useRouter();
   const today = new Date();
@@ -771,37 +781,35 @@ export default function StudentDashboard({
             </div>
             
             <div className="space-y-4 relative z-10">
-              <div 
-                onClick={() => router.push("/dashboard/student/explore/advanced-ui-animations")}
-                className="p-4 rounded-2xl bg-white border border-slate-100 hover:border-orange-200 hover:shadow-xl hover:shadow-orange-100/20 transition-all cursor-pointer group/item flex items-center gap-4"
-              >
-                <div className="w-14 h-14 bg-gradient-to-br from-orange-50 to-white rounded-xl flex items-center justify-center text-[#FF6B4A] shadow-inner group-hover/item:scale-105 transition-transform">
-                  <Sparkles size={24} fill="currentColor" className="opacity-80" />
+              {recommendedCourses.length === 0 ? (
+                <div className="text-center py-6">
+                  <Sparkles className="w-8 h-8 text-slate-100 mx-auto mb-2" />
+                  <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest">Belum ada rekomendasi</p>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-black text-slate-800 line-clamp-1 group-hover/item:text-[#FF6B4A] transition-colors">Advanced UI Animations</p>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Trending in UI/UX</p>
-                </div>
-                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover/item:bg-[#FF6B4A] group-hover/item:text-white transition-all">
-                  <ChevronRight size={14} />
-                </div>
-              </div>
-
-              <div 
-                onClick={() => router.push("/dashboard/student/explore/react-design-patterns")}
-                className="p-4 rounded-2xl bg-white border border-slate-100 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-100/20 transition-all cursor-pointer group/item flex items-center gap-4"
-              >
-                <div className="w-14 h-14 bg-gradient-to-br from-indigo-50 to-white rounded-xl flex items-center justify-center text-indigo-500 shadow-inner group-hover/item:scale-105 transition-transform">
-                  <BookOpen size={24} fill="currentColor" className="opacity-80" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-black text-slate-800 line-clamp-1 group-hover/item:text-indigo-600 transition-colors">React Design Patterns</p>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">New Curriculum</p>
-                </div>
-                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover/item:bg-indigo-500 group-hover/item:text-white transition-all">
-                  <ChevronRight size={14} />
-                </div>
-              </div>
+              ) : (
+                recommendedCourses.map((c, idx) => (
+                  <div 
+                    key={c.id}
+                    onClick={() => router.push(`/courses/${c.slug}`)}
+                    className="p-4 rounded-2xl bg-white border border-slate-100 hover:border-orange-200 hover:shadow-xl hover:shadow-orange-100/20 transition-all cursor-pointer group/item flex items-center gap-4"
+                  >
+                    <div className={`w-14 h-14 rounded-xl flex items-center justify-center shadow-inner group-hover/item:scale-105 transition-transform overflow-hidden ${idx % 2 === 0 ? 'bg-orange-50 text-[#FF6B4A]' : 'bg-indigo-50 text-indigo-500'}`}>
+                      {c.thumbnail ? (
+                        <img src={c.thumbnail} alt={c.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <Sparkles size={24} fill="currentColor" className="opacity-80" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-black text-slate-800 line-clamp-1 group-hover/item:text-[#FF6B4A] transition-colors">{c.title}</p>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{c.categoryName}</p>
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover/item:bg-[#FF6B4A] group-hover/item:text-white transition-all">
+                      <ChevronRight size={14} />
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
 
             <Button 

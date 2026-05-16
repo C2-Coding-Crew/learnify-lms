@@ -57,7 +57,7 @@ export default function InstructorCRUD({ initialData }: { initialData: Instructo
 
   const handleSave = async () => {
     if (!formData.name || !formData.email) {
-      toast.error("Validasi Gagal", { description: "Nama dan Email wajib diisi." });
+      toast.error("Validasi Gagal", "Nama dan Email wajib diisi.");
       return;
     }
 
@@ -79,7 +79,7 @@ export default function InstructorCRUD({ initialData }: { initialData: Instructo
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal menyimpan data");
 
-      toast.success("Berhasil", { description: `Instruktur berhasil ${isEditing ? "diperbarui" : "ditambahkan"}` });
+      toast.success("Berhasil", `Instruktur berhasil ${isEditing ? "diperbarui" : "ditambahkan"}`);
       setIsSheetOpen(false);
       router.refresh();
 
@@ -104,7 +104,7 @@ export default function InstructorCRUD({ initialData }: { initialData: Instructo
         ]);
       }
     } catch (error: any) {
-      toast.error("Gagal", { description: error.message });
+      toast.error("Gagal", error.message);
     } finally {
       setIsLoading(false);
     }
@@ -118,12 +118,12 @@ export default function InstructorCRUD({ initialData }: { initialData: Instructo
       const res = await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Gagal menonaktifkan instruktur");
 
-      toast.success("Berhasil", { description: "Instruktur telah dinonaktifkan" });
+      toast.success("Berhasil", "Instruktur telah dinonaktifkan");
       setInstructors(instructors.filter(ins => ins.id !== id));
       router.refresh();
       setConfirmDeleteId(null);
     } catch (error: any) {
-      toast.error("Gagal", { description: error.message });
+      toast.error("Gagal", error.message);
       setConfirmDeleteId(null);
     } finally {
       setLoadingId(null);

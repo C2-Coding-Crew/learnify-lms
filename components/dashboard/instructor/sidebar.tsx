@@ -15,6 +15,9 @@ import {
   FileText,
   Plus,
   User,
+  Star,
+  Megaphone,
+  Coins,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -26,10 +29,13 @@ const NAV_ITEMS = [
   { name: "Dashboard",      href: "/dashboard/instructor",              icon: LayoutDashboard },
   { name: "My Courses",     href: "/dashboard/instructor/courses",      icon: BookOpenCheck },
   { name: "Students",       href: "/dashboard/instructor/students",     icon: Users },
-  { name: "Assignments",    href: "/dashboard/instructor/assignments",   icon: FileText },
-  { name: "Financial",      href: "/dashboard/instructor/financial",     icon: TrendingUp },
-  { name: "Live Sessions",  href: "/dashboard/instructor/live",         icon: Video },
+  { name: "Assignments",    href: "/dashboard/instructor/assignments",  icon: FileText },
+  { name: "Reviews",        href: "/dashboard/instructor/reviews",      icon: Star },
   { name: "Discussions",    href: "/dashboard/instructor/messages",     icon: MessageSquare },
+  { name: "Announcements",  href: "/dashboard/instructor/announcements",icon: Megaphone },
+  { name: "Analytics",      href: "/dashboard/instructor/analytics",    icon: TrendingUp },
+  { name: "Financial",      href: "/dashboard/instructor/financial",     icon: Coins },
+  { name: "Live Sessions",  href: "/dashboard/instructor/live",         icon: Video },
   { name: "Profile",        href: "/dashboard/settings/profile",        icon: User },
   { name: "Security",       href: "/dashboard/settings/security",       icon: Settings },
 ] as const;

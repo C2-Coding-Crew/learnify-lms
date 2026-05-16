@@ -39,7 +39,7 @@ export default async function StudentDiscussionsPage() {
   const courses = enrollments.map(enr => enr.course);
 
   return (
-    <main className="flex-1 p-6 md:p-10 max-w-[1600px] mx-auto w-full h-screen flex flex-col bg-[#FDFDFD]">
+    <main className="flex-1 p-6 md:p-10 max-w-[1600px] mx-auto w-full h-screen flex flex-col bg-[#FDFDFD] overflow-hidden">
       <div className="mb-10">
         <h1 className="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
           Group Discussions 💬
@@ -52,6 +52,7 @@ export default async function StudentDiscussionsPage() {
       <MessagesClient 
         courses={courses} 
         currentUserId={session.user.id} 
+        userRoleId={(session.user as any).roleId}
       />
     </main>
   );

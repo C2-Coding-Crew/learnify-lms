@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Edit2, Trash2, Search, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { useToast } from "@/components/ui/toast-provider";
 import { Modal } from "@/components/ui/modal";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
@@ -23,6 +23,7 @@ interface StudentRow {
 
 export default function StudentCRUD({ initialData }: { initialData: StudentRow[] }) {
   const router = useRouter();
+  const toast = useToast();
   const [students, setStudents] = useState<StudentRow[]>(initialData);
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -53,7 +54,7 @@ export default function StudentCRUD({ initialData }: { initialData: StudentRow[]
 
   const handleSave = async () => {
     if (!formData.name || !formData.email) {
-      toast.error("Validasi Gagal", { description: "Nama dan Email wajib diisi." });
+      toast.error("Validasi Gagal", "Nama dan Email wajib diisi.");
       return;
     }
 
@@ -75,7 +76,7 @@ export default function StudentCRUD({ initialData }: { initialData: StudentRow[]
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal menyimpan data");
 
-      toast.success("Berhasil", { description: `Siswa berhasil ${isEditing ? "diperbarui" : "ditambahkan"}` });
+      toast.success("Berhasil", `Siswa berhasil ${isEditing ? "diperbarui" : "ditambahkan"}`);
       setIsSheetOpen(false);
       router.refresh(); 
 
@@ -99,7 +100,7 @@ export default function StudentCRUD({ initialData }: { initialData: StudentRow[]
         ]);
       }
     } catch (error: any) {
-      toast.error("Gagal", { description: error.message });
+      toast.error("Gagal", error.message);
     } finally {
       setIsLoading(false);
     }
@@ -113,12 +114,12 @@ export default function StudentCRUD({ initialData }: { initialData: StudentRow[]
       const res = await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Gagal menonaktifkan siswa");
       
-      toast.success("Berhasil", { description: "Siswa telah dinonaktifkan" });
+      toast.success("Berhasil", "Siswa telah dinonaktifkan");
       setStudents(students.filter(s => s.id !== id));
       router.refresh();
       setConfirmDeleteId(null);
     } catch (error: any) {
-      toast.error("Gagal", { description: error.message });
+      toast.error("Gagal", error.message);
       setConfirmDeleteId(null);
     } finally {
       setLoadingId(null);
