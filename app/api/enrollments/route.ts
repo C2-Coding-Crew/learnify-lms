@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { headers } from "next/headers";
+import { sendEmail, invoicePendingEmailTemplate } from "@/lib/email";
 
 const COMPANY = "LEARNIFY";
 const SYSTEM  = "SYSTEM";
@@ -214,6 +215,28 @@ export async function POST(request: Request) {
         })
       ] : []),
     ]);
+
+    // Format currency
+    const fmtAmount = new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      maximumFractionDigits: 0,
+    }).format(finalPrice);
+
+    const checkoutUrl = `${process.env.NEXT_PUBLIC_APP_URL}/checkout/${invoice.invoiceNumber}`;
+
+    // Send async email notification
+    sendEmail({
+      to: session.user.email,
+      subject: `Tagihan Menunggu Pembayaran: ${course.title}`,
+      html: invoicePendingEmailTemplate(
+        session.user.name,
+        course.title,
+        invoice.invoiceNumber,
+        fmtAmount,
+        checkoutUrl
+      )
+    }).catch(err => console.error("Failed to send pending invoice email:", err));
 
     return NextResponse.json(
       {
