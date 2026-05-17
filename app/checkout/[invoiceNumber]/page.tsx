@@ -34,6 +34,12 @@ export default async function CheckoutPage({ params }: Props) {
       isDeleted: 0,
     },
     include: {
+      course: {
+        include: {
+          instructor: { select: { name: true, image: true } },
+          category: { select: { name: true } }
+        }
+      },
       transactions: {
         select: { transactionStatus: true, paymentType: true },
         orderBy: { createdDate: "desc" },
@@ -50,8 +56,19 @@ export default async function CheckoutPage({ params }: Props) {
         id: invoice.id,
         invoiceNumber: invoice.invoiceNumber,
         totalAmount: Number(invoice.totalAmount),
+        discountAmt: Number(invoice.discountAmt),
         invoiceStatus: invoice.invoiceStatus,
         dueDate: invoice.dueDate.toISOString(),
+        course: invoice.course ? {
+          title: invoice.course.title,
+          slug: invoice.course.slug,
+          thumbnail: invoice.course.thumbnail,
+          level: invoice.course.level,
+          price: Number(invoice.course.price),
+          categoryName: invoice.course.category?.name,
+          instructorName: invoice.course.instructor?.name,
+          instructorImage: invoice.course.instructor?.image
+        } : undefined
       }}
     />
   );

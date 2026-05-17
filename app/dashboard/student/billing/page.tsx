@@ -117,6 +117,9 @@ export default async function BillingPage() {
                                         <td className="py-5 text-right">
                                             {inv.invoiceStatus === "paid" ? (
                                                 <button className="h-9 px-4 bg-slate-50 text-slate-600 rounded-xl font-bold text-[10px] hover:bg-slate-100 transition-colors flex items-center gap-1.5 ml-auto">
+                                                    <script dangerouslySetInnerHTML={{ __html: `
+                                                      document.currentScript.parentElement.onclick = function() { window.print(); }
+                                                    `}} />
                                                     <Download size={12} /> Receipt
                                                 </button>
                                             ) : inv.invoiceStatus === "pending" ? (

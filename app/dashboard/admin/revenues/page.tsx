@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { DollarSign, TrendingUp, ArrowUpRight } from "lucide-react";
+import { DollarSign, TrendingUp, ArrowUpRight, Download } from "lucide-react";
 import RevenueFilters from "@/components/dashboard/admin/revenues/revenue-filters";
 import TransactionTable from "@/components/dashboard/admin/revenues/transaction-table";
 
@@ -192,7 +192,15 @@ export default async function AdminRevenuesPage(props: {
             Live data dari Invoice DB
           </p>
         </div>
-        <RevenueFilters />
+        <div className="flex items-center gap-3">
+          <RevenueFilters />
+          <button className="h-11 px-6 bg-orange-500 hover:bg-orange-600 text-white rounded-xl flex items-center gap-2 font-bold text-sm transition-colors shadow-lg shadow-orange-100">
+            <script dangerouslySetInnerHTML={{ __html: `
+              document.currentScript.parentElement.onclick = function() { window.print(); }
+            `}} />
+            <Download size={16} /> Export Report
+          </button>
+        </div>
       </header>
 
       {/* Stats */}

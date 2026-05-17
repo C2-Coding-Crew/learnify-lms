@@ -15,7 +15,8 @@ import {
   Menu,
   X,
   FileQuestion,
-  Award
+  Award,
+  Megaphone,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,12 @@ interface Course {
     description: string | null;
     questionCount: number;
     passingScore: number;
+  }[];
+  announcements: {
+    id: number;
+    title: string;
+    content: string;
+    createdDate: string;
   }[];
 }
 
@@ -371,6 +378,36 @@ export default function LearnPageClient({
               </button>
             </div>
           </div>
+
+          {/* Announcements Section */}
+          {course.announcements.length > 0 && (
+            <div className="max-w-4xl mx-auto px-6 pb-12">
+              <div className="pt-8 border-t border-white/5">
+                <div className="flex items-center gap-2 mb-6">
+                  <div className="w-8 h-8 bg-[#FF6B4A]/10 text-[#FF6B4A] rounded-lg flex items-center justify-center">
+                    <Megaphone size={16} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-white text-base">Pengumuman 📢</h3>
+                  </div>
+                </div>
+
+                <div className="grid gap-3">
+                  {course.announcements.map((ann) => (
+                    <div key={ann.id} className="bg-white/[0.03] border border-white/5 p-4 rounded-2xl hover:bg-white/[0.05] transition-all">
+                      <div className="flex justify-between items-start gap-4 mb-2">
+                        <h4 className="font-bold text-sm text-white/90 leading-tight">{ann.title}</h4>
+                        <span className="text-[9px] font-black text-white/20 uppercase tracking-widest whitespace-nowrap">
+                          {new Date(ann.createdDate).toLocaleDateString("id-ID", { day: 'numeric', month: 'short' })}
+                        </span>
+                      </div>
+                      <p className="text-xs text-white/50 leading-relaxed whitespace-pre-wrap">{ann.content}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </div>

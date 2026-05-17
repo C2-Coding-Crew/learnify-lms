@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Send, Paperclip, Smile, Loader2, User as UserIcon, FileText, Image as ImageIcon, Download, X } from "lucide-react";
+import { Send, Paperclip, Smile, Loader2, User as UserIcon, FileText, Image as ImageIcon, Download, X, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/toast-provider";
 
 interface Message {
@@ -23,11 +23,12 @@ interface ChatRoomProps {
   courseId: number;
   courseTitle: string;
   currentUserId: string;
+  userRoleId: number;
 }
 
 const COMMON_EMOJIS = ["😀", "😂", "🥰", "😍", "😎", "🤩", "🤔", "😮", "😴", "👍", "🔥", "🚀", "🎉", "💯", "👏", "🙌"];
 
-export default function ChatRoom({ courseId, courseTitle, currentUserId }: ChatRoomProps) {
+export default function ChatRoom({ courseId, courseTitle, currentUserId, userRoleId }: ChatRoomProps) {
   const toast = useToast();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -63,7 +64,15 @@ export default function ChatRoom({ courseId, courseTitle, currentUserId }: ChatR
     
     eventSource.onmessage = (event) => {
       try {
-        const newMsg = JSON.parse(event.data);
+        const data = JSON.parse(event.data);
+        
+        // Handle deletion
+        if (data.type === "delete") {
+          setMessages((prev) => prev.filter(m => m.id !== data.id));
+          return;
+        }
+
+        const newMsg = data as Message;
         setMessages((prev) => {
           // Prevent duplicates if we already received it from our own POST or initial fetch
           if (prev.some(m => m.id === newMsg.id)) return prev;
@@ -148,6 +157,27 @@ export default function ChatRoom({ courseId, courseTitle, currentUserId }: ChatR
     }
   };
 
+  const handleDeleteMessage = async (messageId: number) => {
+    if (!window.confirm("Apakah Anda yakin ingin menghapus pesan ini?")) return;
+
+    try {
+      const res = await fetch(`/api/discussions/${messageId}`, {
+        method: "DELETE"
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        setMessages((prev) => prev.filter(m => m.id !== messageId));
+        toast.success("Terhapus", "Pesan berhasil dihapus.");
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (err: any) {
+      console.error("Failed to delete message:", err);
+      toast.error("Gagal", err.message || "Gagal menghapus pesan.");
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setSelectedFile(e.target.files[0]);
@@ -197,7 +227,7 @@ export default function ChatRoom({ courseId, courseTitle, currentUserId }: ChatR
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-white relative h-full">
+    <div className="flex-1 flex flex-col bg-white relative h-full overflow-hidden">
       {/* Chat Header */}
       <div className="h-20 border-b border-slate-100 flex items-center justify-between px-8 bg-white z-10 shrink-0">
         <div className="flex items-center gap-4">
@@ -216,7 +246,7 @@ export default function ChatRoom({ courseId, courseTitle, currentUserId }: ChatR
       {/* Chat Messages */}
       <div 
         ref={scrollRef}
-        className="flex-1 p-8 overflow-y-auto flex flex-col gap-6 bg-[#F8F9FB]"
+        className="grow p-8 overflow-y-auto flex flex-col gap-6 bg-[#F8F9FB] h-0"
       >
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-300">
@@ -233,19 +263,38 @@ export default function ChatRoom({ courseId, courseTitle, currentUserId }: ChatR
                 }`}>
                   {msg.user.name.charAt(0)}
                 </div>
-                <div className={`p-4 rounded-2xl shadow-sm border ${
+                <div className={`p-4 rounded-2xl shadow-sm border relative group/msg ${
                   isMe 
                     ? 'bg-[#FF6B4A] text-white border-transparent rounded-tr-sm' 
                     : 'bg-white text-slate-600 border-slate-100 rounded-tl-sm'
                 }`}>
-                  {!isMe && (
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="text-[10px] font-black text-[#FF6B4A] uppercase tracking-wider">{msg.user.name}</p>
-                      <span className="text-[9px] bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded font-bold uppercase">
-                        {msg.user.roleId === 3 ? 'Student' : msg.user.roleId === 2 ? 'Instructor' : 'Admin'}
-                      </span>
-                    </div>
+                  {/* Delete Button (Visible to author or instructor/admin) */}
+                  {(isMe || userRoleId === 1 || userRoleId === 2) && (
+                    <button 
+                      onClick={() => handleDeleteMessage(msg.id)}
+                      className={`absolute top-2 opacity-0 group-hover/msg:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-black/10 text-white/50 hover:text-white ${isMe ? 'right-full mr-2' : 'left-full ml-2 text-slate-300 hover:text-red-500 hover:bg-red-50'}`}
+                      title="Hapus Pesan"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   )}
+
+                  <div className="flex items-center gap-2 mb-1">
+                    {!isMe ? (
+                      <>
+                        <p className="text-[10px] font-black text-[#FF6B4A] uppercase tracking-wider">{msg.user.name}</p>
+                        <span className="text-[9px] bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded font-bold uppercase">
+                          {msg.user.roleId === 3 ? 'Student' : msg.user.roleId === 2 ? 'Instructor' : 'Admin'}
+                        </span>
+                      </>
+                    ) : (
+                      userRoleId === 2 && (
+                        <span className="text-[9px] bg-white/20 text-white px-1.5 py-0.5 rounded font-bold uppercase">
+                          Instructor
+                        </span>
+                      )
+                    )}
+                  </div>
                   {msg.message && <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.message}</p>}
                   {msg.fileUrl && renderFilePreview(msg.fileUrl, msg.fileType)}
                   <span className={`text-[10px] font-bold mt-2 block ${isMe ? 'text-white/70 text-right' : 'text-slate-300'}`}>

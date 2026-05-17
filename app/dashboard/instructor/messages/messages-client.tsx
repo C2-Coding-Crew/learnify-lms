@@ -13,9 +13,10 @@ interface Course {
 interface MessagesClientProps {
   courses: Course[];
   currentUserId: string;
+  userRoleId: number;
 }
 
-export default function MessagesClient({ courses, currentUserId }: MessagesClientProps) {
+export default function MessagesClient({ courses, currentUserId, userRoleId }: MessagesClientProps) {
   const [activeCourseId, setActiveCourseId] = useState<number | null>(
     courses.length > 0 ? courses[0].id : null
   );
@@ -23,7 +24,7 @@ export default function MessagesClient({ courses, currentUserId }: MessagesClien
   const activeCourse = courses.find(c => c.id === activeCourseId);
 
   return (
-    <div className="flex-1 bg-white rounded-[2rem] shadow-sm border border-slate-50 flex overflow-hidden min-h-[600px] mb-10">
+    <div className="w-full bg-white rounded-[2rem] shadow-sm border border-slate-50 flex overflow-hidden h-[calc(100vh-280px)] min-h-[500px]">
       {/* Left Sidebar: Courses */}
       <div className="w-80 border-r border-slate-100 flex flex-col bg-slate-50/30 shrink-0">
         <div className="p-6 border-b border-slate-100">
@@ -37,7 +38,7 @@ export default function MessagesClient({ courses, currentUserId }: MessagesClien
             />
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto">
+        <div className="grow h-0 overflow-y-auto">
           {courses.length === 0 ? (
             <div className="p-10 text-center text-slate-400 text-xs font-bold">
               No courses found. Create a course to start discussions.
@@ -69,18 +70,21 @@ export default function MessagesClient({ courses, currentUserId }: MessagesClien
       </div>
 
       {/* Right Content: Active Chat */}
-      {activeCourse ? (
-        <ChatRoom 
-          courseId={activeCourse.id}
-          courseTitle={activeCourse.title}
-          currentUserId={currentUserId}
-        />
-      ) : (
-        <div className="flex-1 flex flex-col items-center justify-center text-slate-300 gap-4 bg-[#F8F9FB]">
-          <MessageSquare size={64} className="opacity-10" />
-          <p className="font-black text-sm uppercase tracking-widest opacity-30">Select a course to start chatting</p>
-        </div>
-      )}
+      <div className="flex-1 flex flex-col min-h-0 bg-white">
+        {activeCourse ? (
+          <ChatRoom 
+            courseId={activeCourse.id}
+            courseTitle={activeCourse.title}
+            currentUserId={currentUserId}
+            userRoleId={userRoleId}
+          />
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center text-slate-300 gap-4 bg-[#F8F9FB]">
+            <MessageSquare size={64} className="opacity-10" />
+            <p className="font-black text-sm uppercase tracking-widest opacity-30">Select a course to start chatting</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -7,8 +7,6 @@ import {
   ShieldCheck,
   Clock,
   BookOpen,
-  DollarSign,
-  User,
   Tag,
   AlertCircle,
 } from "lucide-react";
@@ -57,10 +55,10 @@ export default async function CourseApprovalsPage() {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
         <div>
           <h1 className="text-3xl font-black text-[#2D2D2D] tracking-tight flex items-center gap-3">
-            Course Approvals
+            Course Approvals 🛡️
             {pendingCount > 0 && (
               <span className="text-sm font-black bg-orange-500 text-white px-3 py-1 rounded-full shadow-lg shadow-orange-200">
-                {pendingCount} pending
+                {pendingCount}
               </span>
             )}
           </h1>
@@ -70,196 +68,140 @@ export default async function CourseApprovalsPage() {
         </div>
 
         {/* Summary bar */}
-        <div className="flex items-center gap-3 bg-white border border-orange-50 rounded-2xl px-5 py-3 shadow-sm">
+        <div className="flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-5 py-3 shadow-sm">
           <div className="w-2 h-2 rounded-full bg-orange-400 animate-pulse" />
           <span className="text-sm font-black text-slate-600">
             {pendingCount === 0
-              ? "Tidak ada kursus pending"
-              : `${pendingCount} kursus menunggu persetujuan`}
+              ? "Semua bersih!"
+              : `${pendingCount} menunggu approval`}
           </span>
         </div>
       </header>
 
-      {/* ── Empty State ── */}
-      {pendingCount === 0 ? (
-        <div className="bg-white rounded-[2.5rem] shadow-sm border border-orange-50 p-16 text-center flex flex-col items-center justify-center gap-4">
-          <div className="w-20 h-20 bg-green-50 text-green-500 rounded-3xl flex items-center justify-center">
-            <ShieldCheck size={40} />
-          </div>
-          <div>
-            <h4 className="text-xl font-black text-slate-700">All Caught Up! 🎉</h4>
-            <p className="text-sm text-slate-400 mt-2 font-medium">
-              Semua kursus sudah diproses. Tidak ada yang menunggu persetujuan.
-            </p>
-          </div>
-        </div>
-      ) : (
-        /* ── Course Cards ── */
-        <div className="space-y-6">
-          {pendingCourses.map((course) => {
-            const totalLessons = course.lessons.length;
-            const freeLessons = course.lessons.filter((l) => l.isFree).length;
-            const isFree = Number(course.price) === 0;
-            const levelColor =
-              LEVEL_COLOR[course.level?.toLowerCase()] ?? "bg-slate-50 text-slate-500";
-
-            return (
-              <div
-                key={course.id}
-                className="bg-white rounded-[2rem] border border-orange-50 shadow-sm hover:shadow-lg hover:shadow-orange-50 transition-all duration-300 overflow-hidden"
-              >
-                <div className="flex flex-col lg:flex-row">
-                  {/* Thumbnail */}
-                  <div className="lg:w-64 h-48 lg:h-auto bg-gradient-to-br from-orange-100 to-orange-50 flex-shrink-0 flex items-center justify-center relative">
-                    {course.thumbnail ? (
-                      <img
-                        src={course.thumbnail}
-                        alt={course.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center gap-2 text-orange-300">
-                        <BookOpen size={40} />
-                        <span className="text-xs font-bold">No Thumbnail</span>
+      {/* ── Table List ── */}
+      <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left whitespace-nowrap">
+            <thead className="bg-slate-50 text-slate-500 text-[10px] uppercase font-black tracking-widest border-b border-slate-100">
+              <tr>
+                <th className="px-6 py-5 w-[180px] sticky left-0 bg-slate-50 z-10 shadow-[1px_0_0_0_#f1f5f9]">Aksi</th>
+                <th className="px-6 py-5">Info Kursus</th>
+                <th className="px-6 py-5">Kategori & Level</th>
+                <th className="px-6 py-5">Instruktur</th>
+                <th className="px-6 py-5">Harga</th>
+                <th className="px-6 py-5">Materi</th>
+                <th className="px-6 py-5 pr-10">Tgl Pengajuan</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {pendingCount === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-20 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-16 h-16 bg-green-50 text-green-500 rounded-3xl flex items-center justify-center">
+                        <ShieldCheck size={32} />
                       </div>
-                    )}
-                    {/* Pending badge */}
-                    <div className="absolute top-3 left-3 bg-orange-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-lg">
-                      Pending Review
+                      <div>
+                        <h4 className="text-base font-black text-slate-700">All Caught Up! 🎉</h4>
+                        <p className="text-xs text-slate-400 mt-1 font-medium">Semua kursus sudah diproses.</p>
+                      </div>
                     </div>
-                  </div>
+                  </td>
+                </tr>
+              ) : (
+                pendingCourses.map((course) => {
+                  const totalLessons = course.lessons.length;
+                  const isFree = Number(course.price) === 0;
+                  const levelColor = LEVEL_COLOR[course.level?.toLowerCase()] ?? "bg-slate-50 text-slate-500";
 
-                  {/* Content */}
-                  <div className="flex-1 p-6 lg:p-8">
-                    <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4 mb-4">
-                      <div className="flex-1">
-                        {/* Category & Level */}
-                        <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          <span className="flex items-center gap-1 text-[10px] font-black bg-orange-50 text-orange-600 px-3 py-1 rounded-full uppercase tracking-wider">
+                  return (
+                    <tr key={course.id} className="group hover:bg-slate-50/50 transition-colors">
+                      {/* Actions */}
+                      <td className="px-6 py-5 sticky left-0 bg-white group-hover:bg-slate-50/50 z-10 shadow-[1px_0_0_0_#f1f5f9] transition-colors">
+                        <ApprovalButtons
+                          courseId={course.id}
+                          courseTitle={course.title}
+                        />
+                      </td>
+
+                      {/* Course Info */}
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-4">
+                          <div className="w-14 h-10 bg-slate-100 rounded-lg overflow-hidden shrink-0 border border-slate-200">
+                            {course.thumbnail ? (
+                              <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                <BookOpen size={16} />
+                              </div>
+                            )}
+                          </div>
+                          <div className="max-w-[300px]">
+                            <p className="font-black text-slate-800 truncate mb-0.5">{course.title}</p>
+                            <p className="text-[10px] text-slate-400 font-bold truncate">ID: {course.id} • {course.slug || "No-Slug"}</p>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Category & Level */}
+                      <td className="px-6 py-5">
+                        <div className="flex flex-col gap-1.5">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-black text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md uppercase tracking-wider w-fit">
                             <Tag size={10} />
                             {course.category.name}
                           </span>
-                          <span
-                            className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider ${levelColor}`}
-                          >
+                          <span className={`inline-flex text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider w-fit ${levelColor}`}>
                             {course.level}
                           </span>
-                          {isFree && (
-                            <span className="text-[10px] font-black bg-green-50 text-green-600 px-3 py-1 rounded-full uppercase tracking-wider">
-                              Free
+                        </div>
+                      </td>
+
+                      {/* Instructor */}
+                      <td className="px-6 py-5">
+                        <div className="flex flex-col">
+                          <span className="text-xs font-black text-slate-700">{course.instructor.name}</span>
+                          <span className="text-[10px] text-slate-400 font-bold">{course.instructor.email}</span>
+                        </div>
+                      </td>
+
+                      {/* Price */}
+                      <td className="px-6 py-5">
+                        <span className={`text-sm font-black ${isFree ? "text-green-600" : "text-orange-600"}`}>
+                          {isFree ? "GRATIS" : fmtIDR(Number(course.price))}
+                        </span>
+                      </td>
+
+                      {/* Lessons */}
+                      <td className="px-6 py-5">
+                        <div className="flex flex-col">
+                          <span className={`text-xs font-black ${totalLessons === 0 ? "text-red-500" : "text-slate-700"}`}>
+                            {totalLessons} Lessons
+                          </span>
+                          {totalLessons === 0 && (
+                            <span className="text-[9px] text-red-400 font-bold flex items-center gap-1">
+                              <AlertCircle size={10} /> No Content
                             </span>
                           )}
                         </div>
-                        <h3 className="text-lg font-black text-[#2D2D2D] leading-tight mb-1">
-                          {course.title}
-                        </h3>
-                        <p className="text-slate-500 text-sm font-medium line-clamp-2 leading-relaxed">
-                          {course.description || "Tidak ada deskripsi."}
-                        </p>
-                      </div>
+                      </td>
 
-                      {/* Price */}
-                      <div className="shrink-0 text-right">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                          Harga
-                        </p>
-                        <p className="text-xl font-black text-orange-600">
-                          {isFree ? "Gratis" : fmtIDR(Number(course.price))}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Stats row */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-                      <div className="flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2">
-                        <User size={14} className="text-slate-400 shrink-0" />
-                        <div>
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">
-                            Instructor
-                          </p>
-                          <p className="text-xs font-black text-slate-700 truncate max-w-[100px]">
-                            {course.instructor.name}
-                          </p>
+                      {/* Date */}
+                      <td className="px-6 py-5 pr-10">
+                        <div className="flex items-center gap-2 text-slate-500">
+                          <Clock size={14} className="text-slate-300" />
+                          <span className="text-xs font-bold">
+                            {(course.createdDate as Date).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}
+                          </span>
                         </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2">
-                        <BookOpen size={14} className="text-slate-400 shrink-0" />
-                        <div>
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">
-                            Lessons
-                          </p>
-                          <p className="text-xs font-black text-slate-700">
-                            {totalLessons} total · {freeLessons} free
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2">
-                        <Clock size={14} className="text-slate-400 shrink-0" />
-                        <div>
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">
-                            Durasi
-                          </p>
-                          <p className="text-xs font-black text-slate-700">
-                            {course.totalMinutes > 0
-                              ? `${Math.floor(course.totalMinutes / 60)}j ${course.totalMinutes % 60}m`
-                              : "—"}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2">
-                        <DollarSign size={14} className="text-slate-400 shrink-0" />
-                        <div>
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">
-                            Submitted
-                          </p>
-                          <p className="text-xs font-black text-slate-700">
-                            {(course.createdDate as Date).toLocaleDateString(
-                              "id-ID",
-                              { day: "2-digit", month: "short", year: "numeric" }
-                            )}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Warning if no lessons */}
-                    {totalLessons === 0 && (
-                      <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-100 rounded-xl px-4 py-3 mb-4">
-                        <AlertCircle size={16} className="text-yellow-600 shrink-0" />
-                        <p className="text-xs font-bold text-yellow-700">
-                          Kursus ini belum memiliki lesson. Pertimbangkan untuk
-                          menolak sampai konten ditambahkan.
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Instructor email */}
-                    <div className="flex items-center gap-2 mb-6">
-                      <span className="text-[11px] text-slate-400 font-medium">
-                        Diajukan oleh:
-                      </span>
-                      <span className="text-[11px] font-black text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md">
-                        {course.instructor.email}
-                      </span>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex items-center justify-end pt-4 border-t border-slate-50">
-                      <ApprovalButtons
-                        courseId={course.id}
-                        courseTitle={course.title}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
     </main>
   );
 }

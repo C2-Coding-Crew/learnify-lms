@@ -3,7 +3,8 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import InstructorHeader from "@/components/dashboard/instructor/header";
-import { Search, Filter, MoreVertical, GraduationCap, ArrowUpRight } from "lucide-react";
+import { Search, Filter, GraduationCap, ArrowUpRight } from "lucide-react";
+import StudentActionButtons from "@/components/dashboard/instructor/student-action-buttons";
 
 export default async function InstructorStudentsPage() {
   const session = await auth.api.getSession({
@@ -15,7 +16,7 @@ export default async function InstructorStudentsPage() {
   }
 
   const roleId = (session.user as any).roleId;
-  if (roleId !== 2) {
+  if (Number(roleId) !== 2) {
     redirect("/dashboard");
   }
 
@@ -110,7 +111,7 @@ export default async function InstructorStudentsPage() {
         ))}
       </div>
 
-      <div className="bg-white rounded-[2rem] shadow-sm border border-slate-50 p-8">
+      <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-50 p-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <h3 className="font-black text-slate-800 text-lg">Student Roster</h3>
           <div className="flex items-center gap-3">
@@ -132,17 +133,24 @@ export default async function InstructorStudentsPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-100">
-                <th className="pb-4 font-black text-[11px] uppercase tracking-widest text-slate-400">Student Name</th>
+                <th className="pb-4 pl-4 font-black text-[11px] uppercase tracking-widest text-slate-400 sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#f1f5f9]">Aksi</th>
+                <th className="pb-4 pl-4 font-black text-[11px] uppercase tracking-widest text-slate-400">Student Name</th>
                 <th className="pb-4 font-black text-[11px] uppercase tracking-widest text-slate-400">Enrolled Course</th>
                 <th className="pb-4 font-black text-[11px] uppercase tracking-widest text-slate-400">Progress</th>
                 <th className="pb-4 font-black text-[11px] uppercase tracking-widest text-slate-400">Enrolled Date</th>
-                <th className="pb-4"></th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-50">
               {students.map((student) => (
                 <tr key={student.id} className="border-b border-slate-50 last:border-none group hover:bg-slate-50/50 transition-colors">
-                  <td className="py-4">
+                  <td className="py-4 pl-4 sticky left-0 bg-white group-hover:bg-slate-50 z-10 shadow-[1px_0_0_0_#f1f5f9] transition-colors">
+                    <StudentActionButtons 
+                      enrollmentId={student.id} 
+                      studentName={student.name} 
+                      studentEmail={student.email} 
+                    />
+                  </td>
+                  <td className="py-4 pl-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-orange-100 text-[#FF6B4A] rounded-xl flex items-center justify-center font-black text-sm">
                         {student.name.charAt(0)}
@@ -171,11 +179,6 @@ export default async function InstructorStudentsPage() {
                   </td>
                   <td className="py-4">
                     <span className="text-xs font-bold text-slate-500">{student.enrolledDate}</span>
-                  </td>
-                  <td className="py-4 text-right">
-                    <button className="p-2 text-slate-300 hover:text-[#FF6B4A] transition-colors rounded-lg hover:bg-orange-50">
-                      <MoreVertical size={16} />
-                    </button>
                   </td>
                 </tr>
               ))}

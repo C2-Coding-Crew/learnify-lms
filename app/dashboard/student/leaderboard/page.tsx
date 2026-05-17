@@ -50,7 +50,7 @@ export default async function LeaderboardPage() {
       </header>
 
       <div className="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/40 border border-slate-50 overflow-hidden">
-        <div className="p-8">
+        <div className="p-6">
           <div className="space-y-4">
             {topStudents.map((student, index) => {
               const isCurrentUser = student.id === session.user.id;
@@ -59,7 +59,7 @@ export default async function LeaderboardPage() {
               return (
                 <div 
                   key={student.id} 
-                  className={`flex items-center gap-4 p-4 rounded-2xl transition-all ${
+                  className={`flex items-center gap-3 p-3 rounded-2xl transition-all ${
                     isCurrentUser 
                       ? "bg-indigo-50 border-2 border-indigo-100 ring-4 ring-indigo-50/50" 
                       : "hover:bg-slate-50"
@@ -72,7 +72,7 @@ export default async function LeaderboardPage() {
                      `#${rank}`}
                   </div>
 
-                  <div className="w-12 h-12 bg-slate-100 rounded-xl overflow-hidden shadow-sm">
+                  <div className="w-10 h-10 bg-slate-100 rounded-xl overflow-hidden shadow-sm shrink-0">
                     <img 
                       src={student.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(student.name || "User")}`} 
                       alt={student.name || "Student"} 

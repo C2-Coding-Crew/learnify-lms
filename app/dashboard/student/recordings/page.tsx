@@ -32,6 +32,7 @@ export default async function StudentRecordingsPage() {
     title: r.title,
     course: r.course.title,
     duration: r.duration || "N/A",
+    url: r.videoUrl,
     date: r.createdDate.toLocaleDateString("en-GB", {
       day: "numeric",
       month: "short",
@@ -52,9 +53,9 @@ export default async function StudentRecordingsPage() {
             <div key={rec.id} className="bg-white border border-slate-100 rounded-3xl overflow-hidden hover:shadow-xl hover:shadow-slate-100 transition-all duration-300 group">
               {/* Thumbnail */}
               <div className="relative h-44 bg-gradient-to-br from-[#100E2E] to-indigo-800 flex items-center justify-center">
-                <button className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center group-hover:bg-white/30 transition-all group-hover:scale-110">
+                <a href={rec.url || "#"} target="_blank" rel="noopener noreferrer" className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center group-hover:bg-white/30 transition-all group-hover:scale-110">
                   <Play size={22} fill="white" className="text-white ml-1" />
-                </button>
+                </a>
                 <div className="absolute bottom-3 right-3 bg-black/50 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded-md flex items-center gap-1">
                   <Clock size={10} /> {rec.duration}
                 </div>
@@ -68,9 +69,9 @@ export default async function StudentRecordingsPage() {
                 <div className="flex items-center gap-1 mt-3 text-[11px] text-slate-400 font-medium">
                   <Calendar size={12} /> {rec.date}
                 </div>
-                <button className="mt-4 w-full h-10 bg-slate-50 hover:bg-orange-50 text-slate-600 hover:text-[#FF6B4A] rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-2">
+                <a href={rec.url || "#"} target="_blank" rel="noopener noreferrer" className="mt-4 w-full h-10 bg-slate-50 hover:bg-orange-50 text-slate-600 hover:text-[#FF6B4A] rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-2">
                   <Play size={14} /> Watch Now
-                </button>
+                </a>
               </div>
             </div>
           ))}

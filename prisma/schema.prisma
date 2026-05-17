@@ -50,6 +50,7 @@ model User {
   quizAttempts  QuizAttempt[]
   badges        UserBadge[]
   wishlists     Wishlist[]
+  withdrawals   Withdrawal[]
 
   @@map("user")
 }
@@ -180,6 +181,7 @@ model Course {
   discussions CourseDiscussion[]
   quizzes     Quiz[]
   wishlists   Wishlist[]
+  announcements Announcement[]
 }
 
 model Lesson {
@@ -343,6 +345,7 @@ model Review {
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  reply  String? @db.Text
 
   @@unique([userId, courseId])
 }
@@ -578,6 +581,7 @@ model Badge {
   createdDate     DateTime @default(now())
   lastUpdatedBy   String   @default("SYSTEM")
   lastUpdatedDate DateTime @updatedAt
+  pointsRequired  Int      @default(0)
 
   users UserBadge[]
 }
@@ -637,3 +641,38 @@ model Coupon {
   invoices        Invoice[]
 }
 
+model Withdrawal {
+  id              Int      @id @default(autoincrement())
+  instructorId    String
+  amount          Decimal
+  status          String   @default("pending") // pending, approved, rejected, completed
+  bankName        String
+  accountNumber   String
+  accountName     String
+  note            String?
+  companyCode     String   @default("LEARNIFY")
+  status_code     Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  instructor User @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+}
+
+model Announcement {
+  id              Int      @id @default(autoincrement())
+  courseId        Int
+  title           String
+  content         String   @db.Text
+  companyCode     String   @default("LEARNIFY")
+  status          Int      @default(1)
+  isDeleted       Int      @default(0)
+  createdBy       String   @default("SYSTEM")
+  createdDate     DateTime @default(now())
+  lastUpdatedBy   String   @default("SYSTEM")
+  lastUpdatedDate DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}

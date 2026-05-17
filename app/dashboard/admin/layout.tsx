@@ -24,11 +24,20 @@ export default async function AdminLayout({
 
   // Fetch pending course count for sidebar badge
   const pendingCount = await db.course.count({
-    where: { isPublished: false, isDeleted: 0, status: 1 },
+    where: { isPublished: false, isDeleted: 0, status: 2 },
+  });
+
+  // Fetch pending payout count
+  const pendingPayoutCount = await (db as any).withdrawal.count({
+    where: { status: "pending", isDeleted: 0 },
   });
 
   return (
-    <AdminLayoutContent userName={session.user.name} pendingCount={pendingCount}>
+    <AdminLayoutContent 
+      userName={session.user.name} 
+      pendingCount={pendingCount}
+      pendingPayoutCount={pendingPayoutCount}
+    >
       {children}
     </AdminLayoutContent>
   );

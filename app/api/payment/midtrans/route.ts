@@ -37,6 +37,39 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invoice tidak ditemukan atau sudah dibayar" }, { status: 404 });
   }
 
+  // ── Cek apakah invoice sudah melewati jatuh tempo (expired) ──
+  if (new Date() > new Date(invoice.dueDate)) {
+    // Auto-cancel invoice dan enrollment terkait (Soft Update)
+    await db.$transaction([
+      db.invoice.update({
+        where: { id: invoice.id },
+        data: {
+          invoiceStatus: "cancelled",
+          lastUpdatedBy: "SYSTEM",
+          lastUpdatedDate: new Date(),
+        },
+      }),
+      db.enrollment.updateMany({
+        where: {
+          userId: session.user.id,
+          courseId: invoice.courseId ?? undefined,
+          enrollmentStatus: "pending_payment",
+          isDeleted: 0,
+        },
+        data: {
+          enrollmentStatus: "cancelled",
+          lastUpdatedBy: "SYSTEM",
+          lastUpdatedDate: new Date(),
+        },
+      }),
+    ]);
+
+    return NextResponse.json(
+      { error: "Tagihan ini sudah kadaluarsa. Silakan buat pesanan baru.", code: "INVOICE_EXPIRED" },
+      { status: 410 }
+    );
+  }
+
   const serverKey = process.env.MIDTRANS_SERVER_KEY;
   const isProduction = process.env.MIDTRANS_IS_PRODUCTION === "true";
   const baseUrl = isProduction

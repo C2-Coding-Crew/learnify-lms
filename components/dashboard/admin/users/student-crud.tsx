@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Edit2, Trash2, Search, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { useToast } from "@/components/ui/toast-provider";
 import { Modal } from "@/components/ui/modal";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
@@ -23,6 +23,7 @@ interface StudentRow {
 
 export default function StudentCRUD({ initialData }: { initialData: StudentRow[] }) {
   const router = useRouter();
+  const toast = useToast();
   const [students, setStudents] = useState<StudentRow[]>(initialData);
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -53,7 +54,7 @@ export default function StudentCRUD({ initialData }: { initialData: StudentRow[]
 
   const handleSave = async () => {
     if (!formData.name || !formData.email) {
-      toast.error("Validasi Gagal", { description: "Nama dan Email wajib diisi." });
+      toast.error("Validasi Gagal", "Nama dan Email wajib diisi.");
       return;
     }
 
@@ -75,7 +76,7 @@ export default function StudentCRUD({ initialData }: { initialData: StudentRow[]
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal menyimpan data");
 
-      toast.success("Berhasil", { description: `Siswa berhasil ${isEditing ? "diperbarui" : "ditambahkan"}` });
+      toast.success("Berhasil", `Siswa berhasil ${isEditing ? "diperbarui" : "ditambahkan"}`);
       setIsSheetOpen(false);
       router.refresh(); 
 
@@ -99,7 +100,7 @@ export default function StudentCRUD({ initialData }: { initialData: StudentRow[]
         ]);
       }
     } catch (error: any) {
-      toast.error("Gagal", { description: error.message });
+      toast.error("Gagal", error.message);
     } finally {
       setIsLoading(false);
     }
@@ -113,12 +114,12 @@ export default function StudentCRUD({ initialData }: { initialData: StudentRow[]
       const res = await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Gagal menonaktifkan siswa");
       
-      toast.success("Berhasil", { description: "Siswa telah dinonaktifkan" });
+      toast.success("Berhasil", "Siswa telah dinonaktifkan");
       setStudents(students.filter(s => s.id !== id));
       router.refresh();
       setConfirmDeleteId(null);
     } catch (error: any) {
-      toast.error("Gagal", { description: error.message });
+      toast.error("Gagal", error.message);
       setConfirmDeleteId(null);
     } finally {
       setLoadingId(null);
@@ -136,7 +137,7 @@ export default function StudentCRUD({ initialData }: { initialData: StudentRow[]
   };
 
   return (
-    <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
+    <div className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-slate-100">
       {/* Toolbar */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
         <div className="relative w-full md:w-96">
@@ -159,28 +160,28 @@ export default function StudentCRUD({ initialData }: { initialData: StudentRow[]
 
       {/* Tabel */}
       <div className="overflow-x-auto pb-4">
-        <table className="w-full text-sm whitespace-nowrap min-w-[1200px]">
+        <table className="w-full text-sm whitespace-nowrap min-w-[1000px]">
           <thead>
             <tr className="border-b border-slate-100">
-              <th className="text-left pb-4 pl-4 text-[11px] font-black text-slate-400 uppercase tracking-widest sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#f1f5f9]">
+              <th className="text-left pb-3 pl-3 text-[10px] font-black text-slate-400 uppercase tracking-widest sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#f1f5f9]">
                 Aksi
               </th>
-              <th className="text-left pb-4 pl-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+              <th className="text-left pb-3 pl-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 Profil Siswa
               </th>
-              <th className="text-left pb-4 pl-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+              <th className="text-left pb-3 pl-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 Status / Progress
               </th>
-              <th className="text-left pb-4 pl-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+              <th className="text-left pb-3 pl-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 Created By
               </th>
-              <th className="text-left pb-4 pl-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+              <th className="text-left pb-3 pl-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 Created Date
               </th>
-              <th className="text-left pb-4 pl-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+              <th className="text-left pb-3 pl-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 Last Update By
               </th>
-              <th className="text-left pb-4 pl-4 pr-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+              <th className="text-left pb-3 pl-3 pr-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 Last Update Date
               </th>
             </tr>
@@ -196,15 +197,15 @@ export default function StudentCRUD({ initialData }: { initialData: StudentRow[]
               filteredStudents.map((student) => (
                 <tr key={student.id} className="hover:bg-slate-50/50 transition-colors group">
                   {/* Aksi di kiri */}
-                  <td className="py-4 pl-4 pr-6 sticky left-0 bg-white group-hover:bg-slate-50 shadow-[1px_0_0_0_#f1f5f9] transition-colors z-10">
-                    <div className="flex items-center gap-2">
+                  <td className="py-3 pl-3 pr-4 sticky left-0 bg-white group-hover:bg-slate-50 shadow-[1px_0_0_0_#f1f5f9] transition-colors z-10">
+                    <div className="flex items-center gap-1.5">
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-8 w-8 rounded-lg text-blue-500 border-blue-100 hover:bg-blue-50"
+                        className="h-7 w-7 rounded-lg text-blue-500 border-blue-100 hover:bg-blue-50"
                         onClick={() => handleOpenEdit(student)}
                       >
-                        <Edit2 className="w-4 h-4" />
+                        <Edit2 className="w-3.5 h-3.5" />
                       </Button>
                       <Button
                         variant="outline"
@@ -213,47 +214,47 @@ export default function StudentCRUD({ initialData }: { initialData: StudentRow[]
                         onClick={() => setConfirmDeleteId(student.id)}
                         disabled={loadingId === student.id}
                       >
-                        {loadingId === student.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                        {loadingId === student.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                       </Button>
                     </div>
                   </td>
                   
                   {/* Data Utama */}
-                  <td className="py-4 pl-4">
+                  <td className="py-3 pl-3">
                     <div className="flex flex-col">
-                      <span className="font-black text-slate-800">{student.name}</span>
-                      <span className="text-xs text-slate-400 font-medium">{student.email}</span>
+                      <span className="font-black text-slate-800 text-xs">{student.name}</span>
+                      <span className="text-[10px] text-slate-400 font-medium">{student.email}</span>
                     </div>
                   </td>
 
-                  <td className="py-4 pl-4">
-                    <div className="flex flex-col gap-1">
-                      <span className={`text-[10px] w-fit font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${
+                  <td className="py-3 pl-3">
+                    <div className="flex flex-col gap-0.5">
+                      <span className={`text-[9px] w-fit font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md ${
                         student.status === 1 ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
                       }`}>
                         {student.status === 1 ? "Aktif" : "Non-Aktif"}
                       </span>
-                      <span className="text-[10px] text-slate-400 font-bold">
+                      <span className="text-[9px] text-slate-400 font-bold">
                         {student.completed}/{student.enrolled} Selesai
                       </span>
                     </div>
                   </td>
 
                   {/* 4 Field Standar */}
-                  <td className="py-4 pl-4">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold bg-slate-100 text-slate-600">
+                  <td className="py-3 pl-3">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600">
                       {student.createdBy || "SYSTEM"}
                     </span>
                   </td>
-                  <td className="py-4 pl-4 text-slate-500 font-medium text-xs">
+                  <td className="py-3 pl-3 text-slate-500 font-medium text-[10px]">
                     {formatDate(student.createdDate)}
                   </td>
-                  <td className="py-4 pl-4">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold bg-slate-100 text-slate-600">
+                  <td className="py-3 pl-3">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600">
                       {student.lastUpdatedBy || "SYSTEM"}
                     </span>
                   </td>
-                  <td className="py-4 pl-4 pr-4 text-slate-500 font-medium text-xs">
+                  <td className="py-3 pl-3 pr-4 text-slate-500 font-medium text-[10px]">
                     {formatDate(student.lastUpdatedDate)}
                   </td>
                 </tr>

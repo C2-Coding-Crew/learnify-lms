@@ -33,6 +33,7 @@ export default async function StudentResourcesPage() {
     course: r.course.title,
     type: r.fileType,
     size: r.fileSize || "N/A",
+    url: r.fileUrl,
     date: r.createdDate.toLocaleDateString("en-GB", {
       day: "numeric",
       month: "short",
@@ -132,9 +133,14 @@ export default async function StudentResourcesPage() {
                       <td className="py-4 text-xs font-bold text-slate-500">{r.size}</td>
                       <td className="py-4 text-xs font-bold text-slate-400">{r.date}</td>
                       <td className="py-4 text-right">
-                        <button className="h-9 px-4 bg-[#FF6B4A] text-white rounded-xl font-bold text-xs hover:bg-[#fa5a36] transition-colors shadow-md shadow-orange-100 flex items-center gap-1.5 ml-auto opacity-0 group-hover:opacity-100">
+                        <a 
+                          href={r.url || "#"} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="h-9 px-4 bg-[#FF6B4A] text-white rounded-xl font-bold text-xs hover:bg-[#fa5a36] transition-colors shadow-md shadow-orange-100 flex items-center w-max gap-1.5 ml-auto opacity-0 group-hover:opacity-100"
+                        >
                           <Download size={14} /> Download
-                        </button>
+                        </a>
                       </td>
                     </tr>
                   ))

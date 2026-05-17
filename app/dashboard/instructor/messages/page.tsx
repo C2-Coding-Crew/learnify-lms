@@ -39,7 +39,7 @@ export default async function InstructorMessagesPage() {
   });
 
   return (
-    <main className="flex-1 p-6 md:p-10 max-w-[1600px] mx-auto w-full h-screen flex flex-col">
+    <main className="flex-1 p-6 md:p-10 max-w-[1600px] mx-auto w-full h-screen flex flex-col overflow-hidden">
       <InstructorHeader 
         userName={session.user.name} 
         userRole="Instructor" 
@@ -50,6 +50,7 @@ export default async function InstructorMessagesPage() {
       <MessagesClient 
         courses={courses} 
         currentUserId={session.user.id} 
+        userRoleId={(session.user as any).roleId}
       />
     </main>
   );
